@@ -1,0 +1,35 @@
+{
+  "name": "ai-travel-planner-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@maptiler/client": "^2.7.0",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "bottleneck": "^2.19.5",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "lru-cache": "^11.2.6",
+    "mongoose": "^9.2.4",
+    "nodemailer": "^8.0.1",
+    "openai": "^6.25.0",
+    "pdfkit": "^0.17.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

@@ -1,0 +1,249 @@
+import express from "express";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import { User } from "../models/User.js";
+import { JWT_ACCESS_SECRET, APP_URL } from "../config.js";
+import authMiddleware from "../middleware/authMiddleware.js";
+import { sendEmail } from "../utils/email.js";
+import { verificationEmail, resetPasswordEmail } from "../utils/emailTemplates.js";
+
+const router = express.Router();
+
+// Strong password regex
+const strongPassword =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+/* ============================
+   REGISTER
+============================ */
+router.post("/register", async (req, res) => {
+  try {
+    const { name, email, password, confirmPassword } = req.body;
+
+    if (!name || !email || !password || !confirmPassword)
+      return res.status(400).json({ message: "All fields are required" });
+
+    if (password !== confirmPassword)
+      return res.status(400).json({ message: "Passwords do not match" });
+
+    if (!strongPassword.test(password))
+      return res.status(400).json({
+        message:
+          "Password must be 8+ chars and include uppercase, lowercase, number, and special character",
+      });
+
+    const existing = await User.findOne({ email });
+    if (existing)
+      return res.status(400).json({ message: "Email already exists" });
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+
+    const user = await User.create({
+      name,
+      email,
+      passwordHash,
+      verificationToken,
+    });
+
+    const link = `${APP_URL}/verify/${verificationToken}`;
+    await sendEmail(email, "Verify your email", verificationEmail(name, link));
+
+    res.status(201).json({
+      message: "Account created. Check your email to verify your account.",
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ============================
+   VERIFY EMAIL
+============================ */
+router.get("/verify/:token", async (req, res) => {
+  try {
+    const user = await User.findOne({ verificationToken: req.params.token });
+
+    if (!user)
+      return res.status(400).json({ message: "Invalid or expired token" });
+
+    user.verified = true;
+    user.verificationToken = undefined;
+    await user.save();
+
+    res.json({ message: "Email verified successfully" });
+  } catch {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ============================
+   RESEND VERIFICATION
+============================ */
+router.post("/resend-verification", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (user.verified)
+      return res.status(400).json({ message: "Already verified" });
+
+    user.verificationToken = crypto.randomBytes(32).toString("hex");
+    await user.save();
+
+    const link = `${APP_URL}/verify/${user.verificationToken}`;
+    await sendEmail(
+      user.email,
+      "Verify your email",
+      verificationEmail(user.name, link)
+    );
+
+    res.json({ message: "Verification email sent" });
+  } catch {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ============================
+   LOGIN
+============================ */
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user)
+      return res.status(400).json({ message: "Invalid credentials" });
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch)
+      return res.status(400).json({ message: "Invalid credentials" });
+
+    const token = jwt.sign({ userId: user._id }, JWT_ACCESS_SECRET, {
+      expiresIn: "1d",
+    });
+
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+      })
+      .json({
+        message: "Logged in",
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          verified: user.verified,
+        },
+      });
+  } catch {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ============================
+   FORGOT PASSWORD
+============================ */
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user)
+      return res.json({ message: "If that email exists, a reset link was sent" });
+
+    user.resetToken = crypto.randomBytes(32).toString("hex");
+    user.resetTokenExpires = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    const link = `${APP_URL}/reset-password/${user.resetToken}`;
+    await sendEmail(
+      user.email,
+      "Reset your password",
+      resetPasswordEmail(user.name, link)
+    );
+
+    res.json({ message: "If that email exists, a reset link was sent" });
+  } catch {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ============================
+   RESET PASSWORD
+============================ */
+router.post("/reset-password/:token", async (req, res) => {
+  try {
+    const { newPassword, confirmPassword } = req.body;
+
+    if (!newPassword || !confirmPassword)
+      return res.status(400).json({ message: "All fields required" });
+
+    if (newPassword !== confirmPassword)
+      return res.status(400).json({ message: "Passwords do not match" });
+
+    if (!strongPassword.test(newPassword))
+      return res.status(400).json({
+        message:
+          "Password must be 8+ chars and include uppercase, lowercase, number, and special character",
+      });
+
+    const user = await User.findOne({
+      resetToken: req.params.token,
+      resetTokenExpires: { $gt: Date.now() },
+    });
+
+    if (!user)
+      return res.status(400).json({ message: "Invalid or expired token" });
+
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    user.resetToken = undefined;
+    user.resetTokenExpires = undefined;
+    await user.save();
+
+    res.json({ message: "Password reset successful" });
+  } catch {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ============================
+   LOGOUT
+============================ */
+router.post("/logout", (req, res) => {
+  res
+    .clearCookie("token", {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    })
+    .json({ message: "Logged out" });
+});
+
+/* ============================
+   ME
+============================ */
+router.get("/me", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select(
+      "name email verified"
+    );
+
+    res.json({
+      loggedIn: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        verified: user.verified,
+      },
+    });
+  } catch {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+export default router;

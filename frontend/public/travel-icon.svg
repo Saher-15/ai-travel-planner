@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="12" fill="#0f172a"/>
+  
+  <!-- Map pin -->
+  <path d="M32 10c-8 0-14 6-14 14 0 10 14 26 14 26s14-16 14-26c0-8-6-14-14-14z" fill="#38bdf8"/>
+  <circle cx="32" cy="24" r="5" fill="white"/>
+
+  <!-- Route line -->
+  <path d="M10 48 C20 40, 44 56, 54 44" stroke="#38bdf8" stroke-width="3" fill="none" stroke-dasharray="4 4"/>
+</svg>
