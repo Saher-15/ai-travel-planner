@@ -1,61 +1,85 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { useEffect, lazy, Suspense } from "react";
 import Layout from "./components/Layout.jsx";
-
-import Home from "./pages/Home.jsx";
-import Login from "./pages/Login.jsx";
-import Register from "./pages/Register.jsx";
-
-import CreateTrip from "./pages/CreateTrip.jsx";
-import TripResult from "./pages/TripResult.jsx";
-import MyTrips from "./pages/MyTrips.jsx";
-import ViewTrip from "./pages/ViewTrip.jsx";
-
-import Contact from "./pages/Contact.jsx";
-import Profile from "./pages/Profile.jsx";
-
-import ForgotPassword from "./pages/ForgotPassword.jsx";
-import ResetPassword from "./pages/ResetPassword.jsx";
-import VerifyEmail from "./pages/VerifyEmail.jsx";
-
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 
-import "leaflet/dist/leaflet.css";
+const Home            = lazy(() => import("./pages/Home.jsx"));
+const Login           = lazy(() => import("./pages/Login.jsx"));
+const Register        = lazy(() => import("./pages/Register.jsx"));
+const ForgotPassword  = lazy(() => import("./pages/ForgotPassword.jsx"));
+const ResetPassword   = lazy(() => import("./pages/ResetPassword.jsx"));
+const VerifyEmail     = lazy(() => import("./pages/VerifyEmail.jsx"));
+const Contact         = lazy(() => import("./pages/Contact.jsx"));
+const Profile         = lazy(() => import("./pages/Profile.jsx"));
+const FAQ             = lazy(() => import("./pages/FAQ.jsx"));
+const Privacy         = lazy(() => import("./pages/Privacy.jsx"));
+const Terms           = lazy(() => import("./pages/Terms.jsx"));
+const About           = lazy(() => import("./pages/About.jsx"));
+const CreateTrip      = lazy(() => import("./pages/CreateTrip.jsx"));
+const GeneratingTrip  = lazy(() => import("./pages/GeneratingTrip.jsx"));
+const MyTrips         = lazy(() => import("./pages/MyTrips.jsx"));
+const ViewTrip        = lazy(() => import("./pages/ViewTrip.jsx"));
+const EditTrip        = lazy(() => import("./pages/EditTrip.jsx"));
+const AdminContacts   = lazy(() => import("./pages/AdminContacts.jsx"));
+const NotFound        = lazy(() => import("./pages/NotFound.jsx"));
 
 const P = ({ children }) => <ProtectedRoute>{children}</ProtectedRoute>;
+
+function PageLoader() {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-sky-200 border-t-sky-600" />
+    </div>
+  );
+}
+
+function AppRoutes() {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (window.gtag) {
+      window.gtag("event", "page_view", {
+        page_path: location.pathname,
+        page_title: document.title,
+      });
+    }
+  }, [location.pathname]);
+
+  return (
+    <Layout>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/"                      element={<Home />} />
+          <Route path="/login"                 element={<Login />} />
+          <Route path="/register"              element={<Register />} />
+          <Route path="/forgot-password"       element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/verify/:token"         element={<VerifyEmail />} />
+          <Route path="/contact"               element={<Contact />} />
+          <Route path="/profile"               element={<Profile />} />
+          <Route path="/faq"                   element={<FAQ />} />
+          <Route path="/privacy"               element={<Privacy />} />
+          <Route path="/terms"                 element={<Terms />} />
+          <Route path="/about"                 element={<About />} />
+
+          <Route path="/create"               element={<P><CreateTrip /></P>} />
+          <Route path="/generating-trip"      element={<P><GeneratingTrip /></P>} />
+          <Route path="/trips"                element={<P><MyTrips /></P>} />
+          <Route path="/trip/:id"             element={<P><ViewTrip /></P>} />
+          <Route path="/trip/:id/edit"        element={<P><EditTrip /></P>} />
+          <Route path="/admin/contacts"       element={<P><AdminContacts /></P>} />
+
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </Layout>
+  );
+}
 
 export default function App() {
   return (
     <BrowserRouter>
-      <Layout>
-        <Routes>
-          {/* public */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-
-          {/* forgot/reset password */}
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-
-          {/* email verification */}
-          <Route path="/verify/:token" element={<VerifyEmail />} />
-
-          <Route path="/contact" element={<Contact />} />
-
-          {/* protected */}
-          <Route path="/create" element={<P><CreateTrip /></P>} />
-          <Route path="/result" element={<P><TripResult /></P>} />
-          <Route path="/trips" element={<P><MyTrips /></P>} />
-          <Route path="/trip/:id" element={<P><ViewTrip /></P>} />
-          <Route path="/profile" element={<P><Profile /></P>} />
-
-          {/* fallback */}
-          <Route
-            path="*"
-            element={<div className="text-sm text-slate-600">Not found</div>}
-          />
-        </Routes>
-      </Layout>
+      <AppRoutes />
     </BrowserRouter>
   );
 }

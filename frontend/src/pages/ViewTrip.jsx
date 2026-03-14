@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client.js";
 import {
@@ -9,34 +10,83 @@ import {
   CardBody,
   CardHeader,
 } from "../components/UI.jsx";
-import TripRouteMap from "../components/TripRouteMap.jsx";
 
 const BLOCKS = ["morning", "afternoon", "evening"];
 const BLOCK_ORDER = { morning: 1, afternoon: 2, evening: 3 };
 
 const fmtRange = (s, e) => (s && e ? `${s} → ${e}` : "");
+
 const clamp = (s, n = 120) => {
   const str = (s ?? "").toString();
   return str.length > n ? `${str.slice(0, n - 1)}…` : str;
 };
 
-function extractUniqueLocations(itinerary) {
+function normalizeTripMode(mode) {
+  return mode === "multi" ? "multi" : "single";
+}
+
+function normalizeText(value = "") {
+  return String(value || "").trim().toLowerCase();
+}
+
+function getTripDestinations(trip) {
+  if (Array.isArray(trip?.destinations) && trip.destinations.length) {
+    return trip.destinations.filter(Boolean);
+  }
+
+  return trip?.destination ? [trip.destination] : [];
+}
+
+function getRecommendedPlaces(trip) {
+  if (Array.isArray(trip?.recommendedPlaces)) return trip.recommendedPlaces;
+  if (Array.isArray(trip?.itinerary?.recommendedPlaces)) {
+    return trip.itinerary.recommendedPlaces;
+  }
+  if (Array.isArray(trip?.recommendations)) return trip.recommendations;
+  return [];
+}
+
+function buildPhotoQuery(item = {}, destination = "") {
+  return [
+    item?.title,
+    item?.name,
+    item?.placeName,
+    item?.location,
+    item?.address,
+    destination,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+}
+
+function extractUniqueLocations(itinerary, destination = "", placeFallback = "Place") {
   const rows =
     itinerary?.days?.flatMap((d) =>
       BLOCKS.flatMap((block) =>
         (d?.[block] ?? [])
           .map((a) => ({
             day: d.day,
+            date: d.date,
+            title: a?.title || placeFallback,
             timeBlock: block,
-            title: a?.title || "Place",
             location: (a?.location || "").trim(),
+            address: (a?.address || "").trim(),
+            notes: a?.notes || "",
+            durationHours: a?.durationHours ?? null,
+            type: a?.type || "",
+            category: a?.category || "",
+            image: a?.image || a?.imageUrl || a?.photo || a?.photoUrl || null,
+            photoQuery: buildPhotoQuery(a, destination),
           }))
-          .filter((x) => x.location)
+          .filter((x) => x.location || x.address || x.title)
       )
     ) ?? [];
 
   const unique = Array.from(
-    new Map(rows.map((x) => [x.location.toLowerCase(), x])).values()
+    new Map(
+      rows.map((x) => [normalizeText(x.address || x.location || x.title), x])
+    ).values()
   );
 
   return unique.sort(
@@ -46,7 +96,35 @@ function extractUniqueLocations(itinerary) {
   );
 }
 
+function countDayActivities(day) {
+  return (
+    (Array.isArray(day?.morning) ? day.morning.length : 0) +
+    (Array.isArray(day?.afternoon) ? day.afternoon.length : 0) +
+    (Array.isArray(day?.evening) ? day.evening.length : 0)
+  );
+}
+
+function getDayEstimatedHours(day) {
+  const activities = [
+    ...(Array.isArray(day?.morning) ? day.morning : []),
+    ...(Array.isArray(day?.afternoon) ? day.afternoon : []),
+    ...(Array.isArray(day?.evening) ? day.evening : []),
+  ];
+
+  return activities.reduce((sum, activity) => {
+    const n = Number(activity?.durationHours);
+    return Number.isFinite(n) && n > 0 ? sum + n : sum;
+  }, 0);
+}
+
+function formatHours(value) {
+  if (!Number.isFinite(value) || value <= 0) return "—";
+  if (Number.isInteger(value)) return `${value}h`;
+  return `${value.toFixed(1)}h`;
+}
+
 function useAsync(fn, deps) {
+  const { t } = useTranslation();
   const [state, setState] = useState({ data: null, loading: true, error: "" });
 
   useEffect(() => {
@@ -58,12 +136,17 @@ function useAsync(fn, deps) {
         const data = await fn();
         if (alive) setState({ data, loading: false, error: "" });
       } catch (e) {
-        if (alive)
+        if (alive) {
           setState({
             data: null,
             loading: false,
-            error: e?.response?.data?.message || "Something went wrong",
+            error:
+              e?.response?.data?.message ||
+              e?.response?.data?.details?.message ||
+              e?.message ||
+              t("viewTrip.somethingWentWrong"),
           });
+        }
       }
     })();
 
@@ -76,280 +159,439 @@ function useAsync(fn, deps) {
   return state;
 }
 
-function useGeoPoints(locations) {
+function usePlacePhotos(places, destination = "") {
+  const stablePlaces = useMemo(
+    () => (Array.isArray(places) ? places.filter(Boolean) : []),
+    [places]
+  );
+
   return useAsync(async () => {
-    if (!locations.length) return { points: [], failed: [] };
+    if (!stablePlaces.length) return [];
 
-    const normalize = (s) => String(s || "").trim().toLowerCase();
-    const includesCity = (text, city) =>
-      normalize(text).includes(normalize(city));
+    const payload = stablePlaces.map((item) => ({
+      query:
+        item.photoQuery ||
+        buildPhotoQuery(item, destination) ||
+        item.title ||
+        item.name ||
+        item.placeName ||
+        item.location ||
+        item.address ||
+        "",
+      title: item.title || item.name || item.placeName || "",
+      location: item.location || "",
+      address: item.address || "",
+      destination,
+    }));
 
-    const queries = locations.map((p) => p.location);
-    const { data: geo } = await api.post("/geocode/batch", { queries });
+    const { data } = await api.post("/places/photos", { places: payload });
+    const results = Array.isArray(data?.results) ? data.results : [];
 
-    const results = Array.isArray(geo?.results) ? geo.results : [];
-    const byQuery = new Map(results.map((r) => [normalize(r.query), r]));
+    return stablePlaces.map((item) => {
+      const itemKey = normalizeText(
+        item.photoQuery ||
+          buildPhotoQuery(item, destination) ||
+          item.title ||
+          item.name ||
+          item.placeName ||
+          item.address ||
+          item.location
+      );
 
-    const points = [];
-    const failed = [];
+const match = results.find((r) =>
+  normalizeText(r?.query) === itemKey ||
+  normalizeText(r?.matchedQuery) === itemKey
+);
 
-    async function retrySingle(forcedQuery) {
-      const { data } = await api.post("/geocode/batch", { queries: [forcedQuery] });
-      const r = Array.isArray(data?.results) ? data.results[0] : null;
-      return r && Number.isFinite(Number(r.lat)) && Number.isFinite(Number(r.lon)) ? r : null;
-    }
+      return {
+        ...item,
+        photoUrl:
+          item.photoUrl ||
+          item.image ||
+          item.imageUrl ||
+          item.photo ||
+          match?.photoUrl ||
+          null,
+        photoAttribution: item.photoAttribution || match?.photoAttribution || null,
+      };
+    });
+  }, [stablePlaces, destination]);
+}
 
-    for (const p of locations) {
-      const q = p.location.trim();
-      const qNorm = normalize(q);
+function scrollToDay(dayNumber) {
+  const el = document.getElementById(`day-${dayNumber}`);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
-      let hit = byQuery.get(qNorm) || null;
+function buildGoogleMapsUrl(place) {
+  const query =
+    place?.address?.trim() ||
+    place?.location?.trim() ||
+    [place?.title || place?.name || place?.placeName, place?.destination]
+      .filter(Boolean)
+      .join(", ")
+      .trim();
 
-      const hitLat = Number(hit?.lat);
-      const hitLon = Number(hit?.lon);
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
 
-      const wantsParis = qNorm.includes("paris");
-      const hitName = hit?.display_name || "";
+function GoogleMapsButton({ place, className = "" }) {
+  const { t } = useTranslation();
+  const url = buildGoogleMapsUrl(place);
 
-      const looksWrongCity = wantsParis && hit && !includesCity(hitName, "paris");
-
-      if (!Number.isFinite(hitLat) || !Number.isFinite(hitLon) || looksWrongCity) {
-        const forced = wantsParis
-          ? `${q.replace(/,?\s*paris.*$/i, "")}, Paris, Île-de-France, France`
-          : q;
-
-        const retried = await retrySingle(forced);
-
-        if (retried) {
-          hit = retried;
-        } else {
-          failed.push({
-            q,
-            reason: !hit
-              ? "No match returned"
-              : looksWrongCity
-              ? "Matched wrong city (retry failed)"
-              : "No lat/lon returned",
-          });
-          continue;
-        }
-      }
-
-      const lat = Number(hit?.lat);
-      const lon = Number(hit?.lon);
-
-      try {
-        const { data: detail } = await api.get("/geocode/place-details", {
-          params: { lat, lon, q },
-        });
-
-        points.push({
-          ...p,
-          lat,
-          lon,
-          photoUrl: detail?.photoUrl ?? null,
-          displayName: detail?.display_name ?? hit?.display_name ?? null,
-          category: detail?.category ?? null,
-          type: detail?.type ?? null,
-          address: detail?.address ?? null,
-          wikipedia: detail?.wikipedia ?? null,
-        });
-      } catch {
-        points.push({ ...p, lat, lon, displayName: hit?.display_name ?? null });
-      }
-    }
-
-    return { points, failed };
-  }, [locations]);
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className={className}>
+      {t("viewTrip.openInGoogleMaps")}
+    </a>
+  );
 }
 
 export default function ViewTrip() {
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const nav = useNavigate();
   const { id } = useParams();
 
   const tripState = useAsync(async () => (await api.get(`/trips/${id}`)).data, [id]);
   const trip = tripState.data;
   const summary = trip?.itinerary?.tripSummary || {};
+  const tripMode = normalizeTripMode(trip?.tripMode);
+  const destinations = getTripDestinations(trip);
+  const primaryDestination = trip?.destination || destinations[0] || "";
 
-  // ✅ PDF ref should wrap ONLY the printable content (NOT the Leaflet map)
+  const rawRecommendedPlaces = useMemo(() => getRecommendedPlaces(trip), [trip]);
+
   const pdfRef = useRef(null);
+  const [openDays, setOpenDays] = useState({});
+  const [downloadError, setDownloadError] = useState("");
+
+  useEffect(() => {
+    if (!trip?.itinerary?.days?.length) return;
+    const next = {};
+    trip.itinerary.days.forEach((day, index) => {
+      next[day.day] = false;
+    });
+    setOpenDays(next);
+  }, [trip]);
+
+  const locations = useMemo(
+    () => extractUniqueLocations(trip?.itinerary, primaryDestination, t("viewTrip.place")),
+    [trip, primaryDestination, t]
+  );
+
+  const itineraryPhotosState = usePlacePhotos(locations, primaryDestination);
+  const placesWithPhotos = itineraryPhotosState.data || locations;
+
+  const recommendedBase = useMemo(
+    () =>
+      rawRecommendedPlaces.map((place) => ({
+        ...place,
+        title: place?.title || place?.name || t("viewTrip.recommendedPlace"),
+        notes: place?.notes || place?.reason || "",
+        photoQuery: buildPhotoQuery(place, primaryDestination),
+      })),
+    [rawRecommendedPlaces, primaryDestination, t]
+  );
+
+  const recommendedPhotosState = usePlacePhotos(
+    recommendedBase,
+    primaryDestination
+  );
+  const recommendedPlaces = recommendedPhotosState.data || recommendedBase;
+
+  const totalActivities = useMemo(() => {
+    return (trip?.itinerary?.days || []).reduce(
+      (sum, day) => sum + countDayActivities(day),
+      0
+    );
+  }, [trip]);
+
+  const totalHours = useMemo(() => {
+    return (trip?.itinerary?.days || []).reduce(
+      (sum, day) => sum + getDayEstimatedHours(day),
+      0
+    );
+  }, [trip]);
+
+  const placeCount = useMemo(() => locations.length || 0, [locations]);
+
+  const tripMapPlaces = useMemo(() => {
+    return locations.map((item) => ({
+      title: item.title,
+      location: item.location,
+      address: item.address,
+    }));
+  }, [locations]);
+
+  const toggleDay = (dayNumber) => {
+    setOpenDays((prev) => ({
+      ...prev,
+      [dayNumber]: !prev[dayNumber],
+    }));
+  };
 
   const downloadPDF = async () => {
-  const res = await api.get(`/trips/${id}/pdf`, { responseType: "blob" });
-  const blob = new Blob([res.data], { type: "application/pdf" });
-  const url = window.URL.createObjectURL(blob);
+    setDownloadError("");
 
-  const safeName = (trip?.destination || "planner")
-    .toString()
-    .replace(/[^\w\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-");
+    try {
+      const res = await api.get(`/trips/${id}/pdf`, { responseType: "blob" });
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `trip-${safeName}.pdf`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  window.URL.revokeObjectURL(url);
-};
+      const contentType = res?.headers?.["content-type"] || "";
+      if (!contentType.includes("pdf")) {
+        throw new Error(t("viewTrip.failedDownloadPDF"));
+      }
 
-  const locations = useMemo(() => extractUniqueLocations(trip?.itinerary), [trip]);
-  const examples = useMemo(() => locations.slice(0, 3).map((x) => x.location), [locations]);
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
 
-  const geoState = useGeoPoints(locations);
-  const mapPoints = geoState.data?.points ?? [];
-  const geoFailed = geoState.data?.failed ?? [];
+      const safeName = (trip?.destination || "planner")
+        .toString()
+        .replace(/[^\w\s-]/g, "")
+        .trim()
+        .replace(/\s+/g, "-");
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `trip-${safeName || "planner"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download PDF error:", err);
+      setDownloadError(
+        err?.response?.data?.message || err?.message || t("viewTrip.failedDownloadPDF")
+      );
+    }
+  };
 
   if (tripState.loading) return <TripSkeleton />;
 
-  if (tripState.error)
+  if (tripState.error) {
     return (
-      <div className="max-w-2xl mx-auto space-y-4">
+      <div className="mx-auto max-w-2xl space-y-4 px-4 py-6">
         <Alert type="error">{tripState.error}</Alert>
         <div className="flex gap-2">
-          <Button onClick={() => nav("/trips")} variant="secondary">Back</Button>
-          <Button onClick={() => nav("/create")} variant="ghost">Create New</Button>
+          <Button onClick={() => nav("/trips")} variant="secondary">
+            {t("viewTrip.back")}
+          </Button>
+          <Button onClick={() => nav("/create")} variant="ghost">
+            {t("viewTrip.createNew")}
+          </Button>
         </div>
       </div>
     );
+  }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      {/* ✅ PDF AREA (Header + itinerary + tips only) */}
-      <div ref={pdfRef} className="space-y-6">
+    <div className="mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8">
+      {downloadError ? <Alert type="error">{downloadError}</Alert> : null}
+      {itineraryPhotosState.error ? (
+        <Alert type="error">{itineraryPhotosState.error}</Alert>
+      ) : null}
+      {recommendedPhotosState.error ? (
+        <Alert type="error">{recommendedPhotosState.error}</Alert>
+      ) : null}
+
+      <div
+        ref={pdfRef}
+        className="space-y-8 rounded-4xl bg-linear-to-b from-slate-50 via-white to-sky-50/40 p-1"
+      >
         <Header
           trip={trip}
           summary={summary}
+          tripMode={tripMode}
+          destinations={destinations}
           onBack={() => nav("/trips")}
           onNew={() => nav("/create")}
+          onEdit={() => nav(`/trip/${id}/edit`)}
           onDownload={downloadPDF}
         />
 
-        <div className="grid lg:grid-cols-2 gap-6">
+        <TripOverview
+          trip={trip}
+          summary={summary}
+          tripMode={tripMode}
+          destinations={destinations}
+          totalActivities={totalActivities}
+          totalHours={totalHours}
+          placeCount={placeCount}
+        />    
+
+        <CityPlanSection
+          summary={summary}
+          tripMode={tripMode}
+          destinations={destinations}
+        />
+
+        <EventsSection events={trip?.events || []} />
+
+        <div className="grid gap-6 lg:grid-cols-2">
           {trip?.itinerary?.days?.map((d) => (
-            <DayCard key={d.day} day={d} />
+            <DayCard
+              key={d.day}
+              day={d}
+              isOpen={Boolean(openDays[d.day])}
+              onToggle={() => toggleDay(d.day)}
+              destination={primaryDestination}
+            />
           ))}
         </div>
 
         {!!trip?.itinerary?.tips?.length && (
-          <Card>
-            <CardHeader title="Tips" subtitle="Helpful reminders" />
+          <Card className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur">
+            <CardHeader
+              title={t("viewTrip.tripTips")}
+              subtitle={t("viewTrip.tripTipsSubtitle")}
+            />
             <CardBody>
-              <ul className="list-disc pl-5 space-y-2 text-sm text-slate-700">
-                {trip.itinerary.tips.map((t, i) => <li key={i}>{t}</li>)}
-              </ul>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {trip.itinerary.tips.map((tip, i) => (
+                  <div
+                    key={i}
+                    className="rounded-3xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-4 text-sm leading-6 text-slate-700 shadow-sm"
+                  >
+                    <div className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-sky-600">
+                      {t("viewTrip.tip", { index: i + 1 })}
+                    </div>
+                    {tip}
+                  </div>
+                ))}
+              </div>
             </CardBody>
           </Card>
         )}
+
+        <PlacesGallery
+          points={placesWithPhotos}
+          loading={itineraryPhotosState.loading}
+        />
+
+        <RecommendedPlacesSection
+          places={recommendedPlaces}
+          // onJump={handleJumpToDay}
+          loading={recommendedPhotosState.loading}
+        />
       </div>
-
-      {/* ✅ LIVE MAP OUTSIDE PDF AREA (prevents Leaflet overlays stealing clicks + avoids export issues) */}
-      <Card className="overflow-hidden relative z-0">
-        <CardHeader title="Map" subtitle="Places + route from your itinerary" />
-        <CardBody className="space-y-3">
-          {geoState.error ? <Alert type="error">{geoState.error}</Alert> : null}
-
-          {geoState.loading ? (
-            <MapSkeleton />
-          ) : locations.length === 0 ? (
-            <NiceEmptyState
-              title="No map locations found"
-              subtitle="This saved itinerary doesn’t include activity location fields."
-              action={<Button onClick={() => nav("/create")} variant="secondary">Create a new trip</Button>}
-            />
-          ) : mapPoints.length === 0 ? (
-            <NiceEmptyState
-              title="We couldn’t geocode your locations"
-              subtitle={
-                <>
-                  Found <b>{locations.length}</b> location strings, but got <b>0</b> coordinates back.
-                </>
-              }
-              hint={
-                <div className="space-y-2">
-                  <div className="text-xs text-slate-500 wrap-break-word">
-                    Example queries: {examples.join(" | ")}
-                  </div>
-                  {geoFailed.length ? (
-                    <div className="text-xs text-slate-500 wrap-break-word">
-                      Failed examples: {geoFailed.slice(0, 3).map((x) => `${x.q} (${x.reason})`).join(" | ")}
-                    </div>
-                  ) : null}
-                </div>
-              }
-              action={
-                <div className="flex gap-2 flex-wrap">
-                  <Button onClick={() => window.location.reload()} variant="secondary">Retry</Button>
-                  <Button onClick={() => nav("/create")} variant="ghost">Create New</Button>
-                </div>
-              }
-            />
-          ) : (
-            <>
-              <div className="rounded-2xl overflow-hidden border border-slate-200 relative z-0">
-                <TripRouteMap points={mapPoints} />
-              </div>
-
-              <div className="flex items-center justify-between gap-2 flex-wrap text-xs text-slate-500">
-                <div>
-                  Showing <b>{mapPoints.length}</b> pinned places (route draws when 2+ exist).
-                </div>
-                <div>
-                  Total requested: <b>{locations.length}</b>
-                  {geoFailed.length ? (
-                    <>
-                      {" "}• Failed: <b>{geoFailed.length}</b>
-                    </>
-                  ) : null}
-                </div>
-              </div>
-            </>
-          )}
-        </CardBody>
-      </Card>
     </div>
   );
 }
 
-/* ---------------- UI bits (small + stylish) ---------------- */
-
-function Header({ trip, summary, onBack, onNew, onDownload }) {
+function Header({
+  trip,
+  summary,
+  tripMode,
+  destinations,
+  onBack,
+  onNew,
+  onEdit,
+  onDownload,
+}) {
+  const { t } = useTranslation();
   return (
-    // ✅ isolate creates a new stacking context so Leaflet can't overlay it
-    <Card className="overflow-hidden relative z-50 pointer-events-auto isolate">
-      <div className="bg-linear-to-r from-slate-950 via-slate-900 to-slate-950 text-white relative z-50 pointer-events-auto">
-        <div className="px-6 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="text-xs/5 opacity-80">Your Trip</div>
-            <div className="text-2xl font-extrabold tracking-tight">
-              {trip?.destination || "Trip"}
+    <Card className="relative overflow-hidden border-0 shadow-[0_24px_80px_-28px_rgba(37,99,235,0.55)]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.10),transparent_24%)]" />
+      <div className="relative bg-linear-to-br from-sky-700 via-blue-700 to-indigo-900 text-white">
+        <div className="flex flex-col gap-6 px-6 py-7 sm:px-8 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <div className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.25em] text-white/85">
+              {tripMode === "multi" ? t("viewTrip.multiCityItinerary") : t("viewTrip.smartTravelPlan")}
             </div>
-            <div className="text-sm opacity-90 mt-1">
+
+            <div className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">
+              {trip?.destination || t("viewTrip.trip")}
+            </div>
+
+            <div className="mt-2 text-sm text-white/85 sm:text-base">
               {fmtRange(trip?.startDate, trip?.endDate)}
             </div>
+
+            {tripMode === "multi" && destinations.length > 1 ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {destinations.map((city) => (
+                  <span
+                    key={city}
+                    className="rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white backdrop-blur-sm"
+                  >
+                    {city}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
 
-          <div className="flex flex-wrap gap-2 md:justify-end">
-            {summary.days ? <Badge>{summary.days} days</Badge> : null}
-            {summary.style ? <Badge>pace: {summary.style}</Badge> : null}
-            {summary.budget ? <Badge>budget: {summary.budget}</Badge> : null}
+          <div className="flex flex-wrap gap-2 lg:max-w-md lg:justify-end">
+            {summary.days ? (
+              <Badge className="border-white/20 bg-white/10 text-white shadow-sm">
+                {t("viewTrip.days", { count: summary.days })}
+              </Badge>
+            ) : null}
+
+            {tripMode === "multi" ? (
+              <Badge className="border-white/20 bg-white/10 text-white shadow-sm">
+                {t("viewTrip.cities", { count: destinations.length })}
+              </Badge>
+            ) : null}
+
+            {summary.style ? (
+              <Badge className="border-white/20 bg-white/10 text-white shadow-sm">
+                {t("viewTrip.pace", { pace: summary.style })}
+              </Badge>
+            ) : null}
+
+            {summary.budget ? (
+              <Badge className="border-white/20 bg-white/10 text-white shadow-sm">
+                {t("viewTrip.budget", { budget: summary.budget })}
+              </Badge>
+            ) : null}
+
+            {!!trip?.events?.length ? (
+              <Badge className="border-white/20 bg-white/10 text-white shadow-sm">
+                {t("viewTrip.events", { count: trip.events.length })}
+              </Badge>
+            ) : null}
           </div>
         </div>
 
-        <div className="px-6 pb-5 flex flex-wrap gap-2">
-          <Button type="button" onClick={onBack} variant="secondary">Back to My Trips</Button>
-          <Button type="button" onClick={onNew} variant="ghost">Create New</Button>
+        <div className="relative z-10 flex flex-wrap gap-3 px-6 pb-7 sm:px-8">
+          <Button type="button" onClick={onBack} variant="secondary">
+            {t("viewTrip.back")}
+          </Button>
+
           <Button
             type="button"
-            className="pointer-events-auto"
+            onClick={onEdit}
+            variant="secondary"
+            className="bg-white/15 text-white backdrop-blur hover:bg-white/20"
+          >
+            {t("viewTrip.editTrip")}
+          </Button>
+
+          <Button
+            type="button"
+            onClick={onNew}
+            variant="ghost"
+            className="bg-white/10 text-white backdrop-blur hover:bg-white/15"
+          >
+            {t("viewTrip.createNew")}
+          </Button>
+
+          <Button
+            type="button"
+            className=" text-sky-800 shadow-lg hover:bg-sky-50"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               onDownload?.();
             }}
           >
-            Download PDF
+            {t("viewTrip.downloadPDF")}
           </Button>
         </div>
       </div>
@@ -357,29 +599,288 @@ function Header({ trip, summary, onBack, onNew, onDownload }) {
   );
 }
 
-function DayCard({ day }) {
+function TripOverview({
+  trip,
+  summary,
+  tripMode,
+  destinations,
+  totalActivities,
+  totalHours,
+  placeCount,
+}) {
+  const { t } = useTranslation();
+  const preferences = trip?.preferences || {};
+  const interests = Array.isArray(preferences?.interests)
+    ? preferences.interests
+    : [];
+
   return (
-    <Card className="overflow-hidden">
-      <div className="p-5 bg-slate-900 text-white">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="text-xs opacity-90">Day {day.day}</div>
-            <div className="text-lg font-extrabold leading-snug">{day.title}</div>
-            <div className="text-sm opacity-90 mt-1">{day.date}</div>
-          </div>
-          <Badge>Day Plan</Badge>
+    <Card className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur">
+      <CardHeader
+        title={t("viewTrip.tripOverview")}
+        subtitle={t("viewTrip.tripOverviewSubtitle")}
+      />
+      <CardBody className="space-y-5">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <FancyInfoTile
+            label={tripMode === "multi" ? t("viewTrip.tripMode") : t("viewTrip.destination")}
+            value={tripMode === "multi" ? t("viewTrip.multiCity") : trip?.destination || "—"}
+            icon="🌍"
+          />
+          <FancyInfoTile
+            label={t("viewTrip.dates")}
+            value={fmtRange(trip?.startDate, trip?.endDate) || "—"}
+            icon="📅"
+          />
+          <FancyInfoTile
+            label={t("viewTrip.pace_label")}
+            value={summary?.style || preferences?.pace || "—"}
+            icon="⚡"
+          />
+          <FancyInfoTile
+            label={t("viewTrip.budget_label")}
+            value={summary?.budget || preferences?.budget || "—"}
+            icon="💳"
+          />
         </div>
-      </div>
 
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <FancyInfoTile label={t("viewTrip.activities")} value={totalActivities || "0"} icon="🧭" />
+          <FancyInfoTile
+            label={t("viewTrip.estimatedHours")}
+            value={formatHours(totalHours)}
+            icon="⏱️"
+          />
+          <FancyInfoTile label={t("viewTrip.events_label")} value={trip?.events?.length || "0"} icon="🎟️" />
+          <FancyInfoTile label={t("viewTrip.places")} value={placeCount || "0"} icon="📍" />
+        </div>
+
+        {tripMode === "multi" && destinations.length > 1 ? (
+          <div className="rounded-3xl border border-slate-200 bg-linear-to-r from-sky-50 to-indigo-50 p-5">
+            <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
+              {t("viewTrip.citiesInTrip")}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2.5">
+              {destinations.map((city) => (
+                <span
+                  key={city}
+                  className="rounded-full border border-white bg-white/80 px-3.5 py-1.5 text-xs font-bold text-slate-700 shadow-sm"
+                >
+                  {city}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {!!interests.length && (
+          <div>
+            <div className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
+              {t("viewTrip.interests")}
+            </div>
+            <div className="flex flex-wrap gap-2.5">
+              {interests.map((item) => (
+                <span
+                  key={item}
+                  className="rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-semibold capitalize text-slate-700"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {preferences?.notes ? (
+          <div className="rounded-3xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-5 shadow-sm">
+            <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
+              {t("viewTrip.notes")}
+            </div>
+            <div className="mt-3 text-sm leading-7 text-slate-700">
+              {preferences.notes}
+            </div>
+          </div>
+        ) : null}
+      </CardBody>
+    </Card>
+  );
+}
+
+function CityPlanSection({ summary, tripMode, destinations }) {
+  const { t } = useTranslation();
+  const cityPlan = Array.isArray(summary?.cityPlan) ? summary.cityPlan : [];
+
+  if (tripMode !== "multi" || !destinations.length) return null;
+
+  return (
+    <Card className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur">
+      <CardHeader
+        title={t("viewTrip.cityPlan")}
+        subtitle={t("viewTrip.cityPlanSubtitle")}
+        right={<Badge className="bg-sky-50 text-sky-700">{t("viewTrip.cities", { count: destinations.length })}</Badge>}
+      />
       <CardBody>
-        <MiniSection title="Morning" items={day.morning} />
-        <MiniSection title="Afternoon" items={day.afternoon} />
-        <MiniSection title="Evening" items={day.evening} />
+        {cityPlan.length ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {cityPlan.map((segment, index) => (
+              <div
+                key={`${segment.city}-${index}`}
+                className="rounded-3xl border border-slate-200 bg-linear-to-br from-white to-indigo-50/60 p-5 shadow-sm"
+              >
+                <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
+                  {t("viewTrip.city", { index: index + 1 })}
+                </div>
+                <div className="mt-2 text-lg font-extrabold tracking-tight text-slate-900">
+                  {segment.city}
+                </div>
+                <div className="mt-3 inline-flex rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-700">
+                  {segment.days} {t("viewTrip.day")}{segment.days > 1 ? "s" : ""}
+                </div>
+                <div className="mt-3 text-sm text-slate-600">
+                  {fmtRange(segment.startDate, segment.endDate)}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <SoftMessage>{t("viewTrip.multiCityTrip", { count: destinations.length })}</SoftMessage>
+        )}
+      </CardBody>
+    </Card>
+  );
+}
 
-        {(day.foodSuggestion || day.backupPlan) && (
-          <div className="mt-4 grid sm:grid-cols-2 gap-3">
-            {day.foodSuggestion ? <InfoTile label="Food" value={clamp(day.foodSuggestion)} /> : null}
-            {day.backupPlan ? <InfoTile label="Backup" value={clamp(day.backupPlan)} /> : null}
+function RecommendedPlacesSection({ places, onJump, loading }) {
+  const { t } = useTranslation();
+  if (!places?.length && !loading) return null;
+
+  return (
+    <Card className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur">
+      <CardHeader
+        title={t("viewTrip.recommendedPlaces")}
+        subtitle={t("viewTrip.recommendedPlacesSubtitle")}
+        right={
+          !loading ? (
+            <Badge className="bg-sky-50 text-sky-700">{t("viewTrip.placesCount", { count: places.length })}</Badge>
+          ) : null
+        }
+      />
+      <CardBody>
+        {loading && !places?.length ? (
+          <SoftMessage>{t("viewTrip.loadingPlacePhotos")}</SoftMessage>
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {places.map((place, i) => {
+              const title =
+                place?.title ||
+                place?.name ||
+                place?.placeName ||
+                place?.location ||
+                t("viewTrip.recommendedPlace");
+
+              const image =
+                place?.photoUrl ||
+                place?.image ||
+                place?.imageUrl ||
+                place?.photo ||
+                null;
+
+              const description =
+                place?.description ||
+                place?.notes ||
+                place?.reason ||
+                place?.summary ||
+                "";
+
+              const dayNumber = place?.day || place?.dayNumber || null;
+              const category = place?.category || place?.type || "";
+              const duration = place?.durationHours || place?.estimatedHours || null;
+
+              return (
+                <div
+                  key={place?._id || place?.id || `${title}-${i}`}
+                  className="group overflow-hidden rounded-[1.7rem] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl"
+                >
+                  <div className="relative h-56 overflow-hidden bg-slate-100">
+                    {image ? (
+                      <img
+                        src={image}
+                        alt={title}
+                        className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center bg-linear-to-br from-slate-100 to-slate-200 text-sm font-medium text-slate-500">
+                        {t("viewTrip.noPhotoAvailable")}
+                      </div>
+                    )}
+
+                    <div className="absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-black/55 to-transparent" />
+
+                    {dayNumber ? (
+                      <div className="absolute left-3 top-3 rounded-full bg-black/45 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur">
+                        {t("viewTrip.dayLabel", { number: dayNumber })}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-4 p-5">
+                    <div>
+                      <div className="text-lg font-extrabold tracking-tight text-slate-900">
+                        {title}
+                      </div>
+
+                      {place?.location ? (
+                        <div className="mt-2 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-600">
+                          📍 {place.location}
+                        </div>
+                      ) : place?.address ? (
+                        <div className="mt-2 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-600">
+                          📍 {place.address}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {category ? <Tag color="sky">{category}</Tag> : null}
+                      {duration ? (
+                        <Tag color="indigo">{formatHours(Number(duration))}</Tag>
+                      ) : null}
+                    </div>
+
+                    {description ? (
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-600">
+                        {description}
+                      </div>
+                    ) : null}
+
+                    {place?.address ? (
+                      <div className="text-xs leading-5 text-slate-500">
+                        {place.address}
+                      </div>
+                    ) : null}
+
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <GoogleMapsButton
+                        place={place}
+                        className="text-xs font-bold text-sky-700 transition hover:text-sky-800"
+                      />
+
+                      {dayNumber ? (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          className="text-xs"
+                          onClick={() => onJump?.(dayNumber)}
+                        >
+                          {t("viewTrip.goToDay", { number: dayNumber })}
+                        </Button>
+                      ) : null}
+                    </div>              
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </CardBody>
@@ -387,90 +888,409 @@ function DayCard({ day }) {
   );
 }
 
-function TripSkeleton() {
+function EventsSection({ events }) {
+  const { t } = useTranslation();
+  if (!events?.length) return null;
+
+  const grouped = events.reduce((acc, event) => {
+    const key = event?.date || t("viewTrip.unknownDate");
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(event);
+    return acc;
+  }, {});
+
+  const orderedDates = Object.keys(grouped).sort();
+
   return (
-    <div className="max-w-5xl mx-auto">
-      <Card>
-        <CardBody>
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-slate-200 animate-pulse" />
-            <div className="space-y-2 flex-1">
-              <div className="h-4 bg-slate-200 rounded animate-pulse w-1/3" />
-              <div className="h-3 bg-slate-100 rounded animate-pulse w-1/2" />
+    <Card className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur">
+      <CardHeader
+        title={t("viewTrip.eventsTitle")}
+        subtitle={t("viewTrip.eventsSubtitle")}
+        right={<Badge className="bg-sky-50 text-sky-700">{t("viewTrip.events", { count: events.length })}</Badge>}
+      />
+      <CardBody className="space-y-6">
+        {orderedDates.map((dateKey) => (
+          <div key={dateKey}>
+            <div className="mb-4 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-slate-600">
+              {dateKey}
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {grouped[dateKey].map((event, i) => (
+                <div
+                  key={`${event.name}-${event.date}-${i}`}
+                  className="rounded-3xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="text-base font-extrabold tracking-tight text-slate-900">
+                      {event.name || t("viewTrip.event")}
+                    </div>
+
+                    {event.category ? <Tag color="sky">{event.category}</Tag> : null}
+                  </div>
+
+                  <div className="mt-3 text-xs font-medium text-slate-500">
+                    {event.time || t("viewTrip.timeNotSpecified")}
+                  </div>
+
+                  {event.location ? (
+                    <div className="mt-2 text-sm font-semibold text-slate-700">
+                      {event.location}
+                    </div>
+                  ) : null}
+
+                  {event.address ? (
+                    <div className="mt-2 text-xs leading-5 text-slate-500">
+                      {event.address}
+                    </div>
+                  ) : null}
+
+                  {event.description ? (
+                    <div className="mt-4 text-sm leading-6 text-slate-600">
+                      {event.description}
+                    </div>
+                  ) : null}
+
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    {event.source ? (
+                      <span className="text-xs text-slate-500">{event.source}</span>
+                    ) : null}
+
+                    {(event.location || event.address) ? (
+                      <GoogleMapsButton
+                        place={event}
+                        className="text-xs font-bold text-sky-700 transition hover:text-sky-800"
+                      />
+                    ) : null}
+
+                    {event.link ? (
+                      <a
+                        href={event.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs font-bold text-sky-700 transition hover:text-sky-800"
+                      >
+                        {t("viewTrip.viewEvent")}
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="mt-5 h-28 bg-slate-100 rounded-xl animate-pulse" />
+        ))}
+      </CardBody>
+    </Card>
+  );
+}
+
+function PlacesGallery({ points, loading }) {
+  const { t } = useTranslation();
+  if (!points?.length && !loading) return null;
+
+  return (
+    <Card className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur">
+      <CardHeader
+        title={t("viewTrip.placesGallery")}
+        subtitle={t("viewTrip.placesGallerySubtitle")}
+        right={
+          !loading ? (
+            <Badge className="bg-sky-50 text-sky-700">{t("viewTrip.placesCount", { count: points.length })}</Badge>
+          ) : null
+        }
+      />
+      <CardBody>
+        {loading && !points?.length ? (
+          <SoftMessage>{t("viewTrip.loadingPlacePhotosGallery")}</SoftMessage>
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {points.map((place, i) => {
+
+              return (
+                <div
+                  key={`${place.address || place.location || place.title}-${i}`}
+                  className="group overflow-hidden rounded-[1.7rem] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl"
+                >
+                  <div className="relative h-56 overflow-hidden bg-slate-100">
+                    {place.photoUrl ? (
+                      <img
+                        src={place.photoUrl}
+                        alt={place.title || place.location}
+                        className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center bg-linear-to-br from-slate-100 to-slate-200 text-sm font-medium text-slate-500">
+                        {t("viewTrip.noPhotoAvailable")}
+                      </div>
+                    )}
+
+                    <div className="absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-black/55 to-transparent" />
+
+                    <div className="absolute left-3 top-3 rounded-full bg-black/45 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur">
+                      {t("viewTrip.dayTimeBlock", { day: place.day, timeBlock: place.timeBlock })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 p-5">
+                    <div>
+                      <div className="text-lg font-extrabold tracking-tight text-slate-900">
+                        {place.title || t("viewTrip.place")}
+                      </div>
+
+                      {place?.location ? (
+                        <div className="mt-2 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-600">
+                          📍 {place.location}
+                        </div>
+                      ) : place?.address ? (
+                        <div className="mt-2 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-600">
+                          📍 {place.address}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {place.durationHours ? (
+                        <Tag color="indigo">{formatHours(Number(place.durationHours))}</Tag>
+                      ) : null}
+                      {place.category ? <Tag color="slate">{place.category}</Tag> : null}
+                      {place.type ? <Tag color="sky">{place.type}</Tag> : null}
+                    </div>
+
+                    {place.notes ? (
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-600">
+                        {place.notes}
+                      </div>
+                    ) : null}
+
+                    {place.address ? (
+                      <div className="text-xs leading-5 text-slate-500">
+                        {place.address}
+                      </div>
+                    ) : null}
+
+                    <div className="flex items-center justify-between gap-3">
+                      <GoogleMapsButton
+                        place={place}
+                        className="text-xs font-bold text-sky-700 transition hover:text-sky-800"
+                      />
+                    </div>  
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardBody>
+    </Card>
+  );
+}
+
+function DayCard({ day, isOpen, onToggle }) {
+  const { t } = useTranslation();
+  const activityCount = countDayActivities(day);
+  const totalHours = getDayEstimatedHours(day);
+
+  return (
+    <Card
+      id={`day-${day.day}`}
+      className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur scroll-mt-28"
+    >
+      <div className="relative overflow-hidden bg-linear-to-br from-slate-900 via-slate-800 to-indigo-950 p-5 text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.12),transparent_20%),radial-gradient(circle_at_bottom_left,rgba(56,189,248,0.16),transparent_24%)]" />
+        <div className="relative flex items-start justify-between gap-4">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-[0.25em] text-white/70">
+              {t("viewTrip.dayLabel", { number: day.day })}
+            </div>
+            <div className="mt-2 text-2xl font-black tracking-tight leading-snug">
+              {day.title}
+            </div>
+            <div className="mt-2 text-sm text-white/80">{day.date}</div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Badge className="border-white/20 bg-white/10 text-white">
+              {t("viewTrip.activitiesCount", { count: activityCount })}
+            </Badge>
+            <Badge className="border-white/20 bg-white/10 text-white">
+              {formatHours(totalHours)}
+            </Badge>
+            <Button
+              type="button"
+              variant="secondary"
+              className="bg-white/15 text-white backdrop-blur hover:bg-white/20"
+              onClick={onToggle}
+            >
+              {isOpen ? t("viewTrip.collapse") : t("viewTrip.expand")}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {isOpen ? (
+        <CardBody className="space-y-1">
+          <MiniSection title={t("viewTrip.morning")} items={day.morning} icon="☀️" />
+          <MiniSection title={t("viewTrip.afternoon")} items={day.afternoon} icon="🌤️" />
+          <MiniSection title={t("viewTrip.evening")} items={day.evening} icon="🌙" />
+
+          {(day.foodSuggestion || day.backupPlan) && (
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              {day.foodSuggestion ? (
+                <FancyInfoTile
+                  label={t("viewTrip.foodSuggestion")}
+                  value={clamp(day.foodSuggestion)}
+                  icon="🍽️"
+                />
+              ) : null}
+              {day.backupPlan ? (
+                <FancyInfoTile
+                  label={t("viewTrip.backupPlan")}
+                  value={clamp(day.backupPlan)}
+                  icon="🛟"
+                />
+              ) : null}
+            </div>
+          )}
+        </CardBody>
+      ) : null}
+    </Card>
+  );
+}
+
+function TripSkeleton() {
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-6">
+      <Card className="overflow-hidden border border-slate-200 bg-white shadow-sm">
+        <CardBody>
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 animate-pulse rounded-full bg-slate-200" />
+            <div className="flex-1 space-y-3">
+              <div className="h-5 w-1/3 animate-pulse rounded-full bg-slate-200" />
+              <div className="h-3 w-1/2 animate-pulse rounded-full bg-slate-100" />
+            </div>
+          </div>
+          <div className="mt-6 h-36 animate-pulse rounded-3xl bg-slate-100" />
         </CardBody>
       </Card>
     </div>
   );
 }
 
-function MapSkeleton() {
+function FancyInfoTile({ label, value, icon }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-sm font-semibold text-slate-800">Finding locations…</div>
-          <div className="text-xs text-slate-500 mt-1">Converting place names into coordinates.</div>
-        </div>
-        <div className="h-8 w-8 rounded-full bg-slate-200 animate-pulse" />
-      </div>
-      <div className="mt-4 h-48 rounded-xl bg-slate-100 animate-pulse" />
-    </div>
-  );
-}
-
-function NiceEmptyState({ title, subtitle, hint, action }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-linear-to-b from-white to-slate-50 p-5">
+    <div className="rounded-3xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-start gap-3">
-        <div className="h-10 w-10 rounded-2xl bg-slate-900/10 grid place-items-center">
-          <div className="h-4 w-4 rounded bg-slate-900/30" />
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-100 text-lg">
+          {icon}
         </div>
-        <div className="flex-1">
-          <div className="text-sm font-bold text-slate-900">{title}</div>
-          <div className="text-sm text-slate-600 mt-1">{subtitle}</div>
-          {hint ? <div className="text-xs text-slate-500 mt-3 leading-relaxed">{hint}</div> : null}
-          {action ? <div className="mt-4">{action}</div> : null}
+        <div className="min-w-0">
+          <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+            {label}
+          </div>
+          <div className="mt-1 text-sm font-semibold leading-6 text-slate-800">
+            {value}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function InfoTile({ label, value }) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3">
-      <div className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="text-sm text-slate-800 mt-1 leading-relaxed">{value}</div>
-    </div>
-  );
-}
-
-function MiniSection({ title, items }) {
+function MiniSection({ title, items, icon }) {
+  const { t } = useTranslation();
   if (!items?.length) return null;
 
   return (
-    <div className="mt-4">
-      <div className="flex items-center justify-between">
-        <div className="text-xs font-bold uppercase tracking-wide text-slate-500">{title}</div>
-        <div className="text-[11px] text-slate-500">
-          {items.length} item{items.length > 1 ? "s" : ""}
+    <div className="mt-6">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
+          <span className="text-base normal-case">{icon}</span>
+          {title}
+        </div>
+        <div className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-500">
+          {items.length > 1 ? t("viewTrip.items", { count: items.length }) : t("viewTrip.item", { count: items.length })}
         </div>
       </div>
 
-      <ul className="mt-2 space-y-2 text-sm text-slate-800">
-        {items.map((x, i) => (
-          <li
-            key={x.id ?? `${x.title}-${x.location}-${i}`}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2"
-          >
-            <div className="font-semibold">{x.title}</div>
-            {x.location ? <div className="text-xs text-slate-500 mt-0.5">{x.location}</div> : null}
-          </li>
-        ))}
+      <ul className="mt-3 space-y-3 text-sm text-slate-800">
+        {items.map((x, i) => {
+
+          return (
+            <li
+              key={x.id ?? `${x.title}-${x.address || x.location}-${i}`}
+              className="rounded-[1.4rem] border border-slate-200 bg-linear-to-br from-white to-slate-50 px-4 py-4 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-extrabold tracking-tight text-slate-900">
+                    {x.title}
+                  </div>
+
+                  {x.location ? (
+                    <div className="mt-2 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-600">
+                      📍 {x.location}
+                    </div>
+                  ) : null}
+
+                  {x.address ? (
+                    <div className="mt-2 text-xs leading-5 text-slate-500">
+                      {x.address}
+                    </div>
+                  ) : null}
+
+                  {x.notes ? (
+                    <div className="mt-3 rounded-2xl border border-slate-200 bg-white/80 px-3 py-2.5 text-xs leading-5 text-slate-600">
+                      {x.notes}
+                    </div>
+                  ) : null}
+
+                  {(x.location || x.address) ? (
+                    <div className="mt-3">
+                      <GoogleMapsButton
+                        place={x}
+                        className="text-xs font-bold text-sky-700 transition hover:text-sky-800"
+                      />
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {x.durationHours ? (
+                    <Tag color="indigo">{formatHours(Number(x.durationHours))}</Tag>
+                  ) : null}
+                  {x.category ? <Tag color="slate">{x.category}</Tag> : null}
+                  {x.type ? <Tag color="sky">{x.type}</Tag> : null}
+                </div>
+              </div>
+            </li>
+          );
+        })}
       </ul>
+    </div>
+  );
+}
+
+function Tag({ children, color = "slate" }) {
+  const styles = {
+    slate: "bg-slate-100 text-slate-700",
+    sky: "bg-sky-100 text-sky-700",
+    indigo: "bg-indigo-100 text-indigo-700",
+  };
+
+  return (
+    <span
+      className={`rounded-full px-2.5 py-1 text-[11px] font-bold capitalize ${styles[color] || styles.slate}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function SoftMessage({ children }) {
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-linear-to-br from-slate-50 to-white p-4 text-sm text-slate-600">
+      {children}
     </div>
   );
 }

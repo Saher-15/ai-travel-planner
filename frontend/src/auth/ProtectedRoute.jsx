@@ -21,12 +21,12 @@ export default function ProtectedRoute({ children }) {
         <div className="font-bold text-lg">Email Not Verified</div>
         <p>You must verify your email before accessing this page.</p>
 
-        {/* <Link
+        <Link
           to="/profile"
           className="underline font-semibold text-yellow-900"
         >
           Go to Profile →
-        </Link> */}
+        </Link>
       </div>
     );
   }

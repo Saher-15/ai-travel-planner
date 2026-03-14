@@ -1,31 +1,36 @@
+import { useTranslation } from "react-i18next";
 import { Card, CardBody, CardHeader, Badge } from "../components/UI.jsx";
+import { useEffect } from "react";
 
 export default function About() {
+  const { t } = useTranslation();
+
+    useEffect(() => {
+      window.scrollTo(0, 0);
+    }, []);
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader
-          title="About Travel Planner"
-          subtitle="A clean AI travel planner built with a modern full-stack setup"
-          right={<Badge>v1</Badge>}
+          title={t("about.title")}
+          subtitle={t("about.subtitle")}
+          right={<Badge>{t("about.badge")}</Badge>}
         />
         <CardBody className="space-y-3">
           <p className="text-sm leading-6 text-slate-600">
-            Travel Planner helps you generate realistic day-by-day itineraries
-            (morning / afternoon / evening) based on destination, dates, pace, budget, and interests.
+            {t("about.p1")}
           </p>
           <p className="text-sm leading-6 text-slate-600">
-            Trips are saved to your account so you can come back anytime, edit, regenerate,
-            and plan better over time.
+            {t("about.p2")}
           </p>
           <div className="grid gap-3 sm:grid-cols-2 pt-2 text-sm">
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="font-extrabold text-slate-900">Frontend</div>
-              <div className="mt-1 text-slate-600">React + Tailwind + reusable UI kit</div>
+              <div className="font-extrabold text-slate-900">{t("about.frontendTitle")}</div>
+              <div className="mt-1 text-slate-600">{t("about.frontendText")}</div>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="font-extrabold text-slate-900">Backend</div>
-              <div className="mt-1 text-slate-600">Express + MongoDB + cookie auth</div>
+              <div className="font-extrabold text-slate-900">{t("about.backendTitle")}</div>
+              <div className="mt-1 text-slate-600">{t("about.backendText")}</div>
             </div>
           </div>
         </CardBody>

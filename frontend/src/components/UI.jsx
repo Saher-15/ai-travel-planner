@@ -26,14 +26,12 @@ export function CardHeader({ title, subtitle, right, className = "" }) {
         <h2 className="truncate text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
           {title}
         </h2>
-        {subtitle && (
-          <p className="mt-1 text-sm leading-6 text-slate-500">
-            {subtitle}
-          </p>
-        )}
+        {subtitle ? (
+          <p className="mt-1 text-sm leading-6 text-slate-500">{subtitle}</p>
+        ) : null}
       </div>
 
-      {right && <div className="shrink-0">{right}</div>}
+      {right ? <div className="shrink-0">{right}</div> : null}
     </div>
   );
 }
@@ -51,11 +49,10 @@ export function Button({
 }) {
   const variants = {
     primary:
-      "bg-slate-900 text-white shadow-sm hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md",
+      "bg-sky-600 text-white shadow-sm hover:-translate-y-0.5 hover:bg-sky-500 hover:shadow-md",
     secondary:
       "border border-slate-200 bg-white text-slate-800 shadow-sm hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md",
-    ghost:
-      "bg-transparent text-slate-700 hover:bg-slate-100",
+    ghost: "bg-transparent text-slate-700 hover:bg-slate-100",
     danger:
       "bg-rose-600 text-white shadow-sm hover:-translate-y-0.5 hover:bg-rose-500 hover:shadow-md",
   };
@@ -65,7 +62,7 @@ export function Button({
       type={type}
       className={cx(
         "inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold",
-        "transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-slate-200",
+        "transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-sky-100",
         "disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-sm",
         variants[variant] || variants.primary,
         className
@@ -80,23 +77,21 @@ export function Button({
 export function Input({ label, hint, className = "", ...props }) {
   return (
     <label className="block">
-      {label && (
-        <div className="mb-1.5 text-sm font-semibold text-slate-700">
-          {label}
-        </div>
-      )}
+      {label ? (
+        <div className="mb-1.5 text-sm font-semibold text-slate-700">{label}</div>
+      ) : null}
 
       <input
         className={cx(
           "w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm",
           "outline-none transition-all duration-200 placeholder:text-slate-400",
-          "focus:border-slate-300 focus:ring-4 focus:ring-slate-100",
+          "focus:border-sky-300 focus:ring-4 focus:ring-sky-100",
           className
         )}
         {...props}
       />
 
-      {hint && <div className="mt-1.5 text-xs text-slate-500">{hint}</div>}
+      {hint ? <div className="mt-1.5 text-xs text-slate-500">{hint}</div> : null}
     </label>
   );
 }
@@ -104,17 +99,15 @@ export function Input({ label, hint, className = "", ...props }) {
 export function Select({ label, className = "", children, ...props }) {
   return (
     <label className="block">
-      {label && (
-        <div className="mb-1.5 text-sm font-semibold text-slate-700">
-          {label}
-        </div>
-      )}
+      {label ? (
+        <div className="mb-1.5 text-sm font-semibold text-slate-700">{label}</div>
+      ) : null}
 
       <select
         className={cx(
           "w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm",
           "outline-none transition-all duration-200",
-          "focus:border-slate-300 focus:ring-4 focus:ring-slate-100",
+          "focus:border-sky-300 focus:ring-4 focus:ring-sky-100",
           className
         )}
         {...props}
@@ -129,8 +122,8 @@ export function Badge({ children, className = "" }) {
   return (
     <span
       className={cx(
-        "inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1",
-        "text-xs font-semibold text-slate-700 shadow-sm",
+        "inline-flex items-center rounded-full border border-sky-100 bg-sky-50 px-2.5 py-1",
+        "text-xs font-semibold text-sky-700 shadow-sm",
         className
       )}
     >

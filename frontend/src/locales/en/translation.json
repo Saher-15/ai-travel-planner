@@ -1,0 +1,1248 @@
+{
+  "brand": {
+    "name": "Travel Planner",
+    "tagline": "Smart trip planning made easy"
+  },
+  "nav": {
+    "home": "Home",
+    "createTrip": "Create Trip",
+    "myTrips": "My Trips",
+    "contact": "Contact",
+    "profile": "Profile",
+    "login": "Login",
+    "register": "Register",
+    "admin": "Admin",
+    "adminContacts": "Admin Contacts",
+    "logout": "Logout",
+    "planTrip": "Plan a Trip"
+  },
+  "header": {
+    "signedIn": "Signed in",
+    "welcome": "Welcome, {{name}}",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "websiteDeveloper": "Website Developer",
+    "emailNotVerified": "Your email is not verified.",
+    "verifyNow": "Verify now →"
+  },
+  "footer": {
+    "description": "Create smart travel itineraries, organize your journeys, and enjoy a clean premium planning experience focused on inspiration, structure, and ease of use.",
+    "websiteDeveloper": "Website Developer",
+    "developedBy": "Developed by Saher Saadi",
+    "viewLinkedIn": "View LinkedIn",
+    "navigation": "Navigation",
+    "support": "Support",
+    "startJourney": "Start your next journey",
+    "journeyDescription": "Turn your destination idea into a structured and inspiring travel plan in a stronger and more professional interface.",
+    "createTrip": "Create a Trip",
+    "developerLinkedIn": "Developer LinkedIn",
+    "contactSupport": "Contact Support",
+    "faq": "FAQ",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "allRightsReserved": "All rights reserved.",
+    "designedBy": "Designed and developed by"
+  },
+  "common": {
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "subject": "Subject",
+    "message": "Message",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "refresh": "Refresh",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "reset": "Reset",
+    "next": "Next",
+    "previous": "Previous",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back",
+    "close": "Close",
+    "send": "Send",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "characters": "characters",
+    "words": "words",
+    "days": "days",
+    "trip": "trip",
+    "trips": "trips",
+    "sending": "Sending...",
+    "updating": "Updating...",
+    "creating": "Creating...",
+    "destination": "Destination",
+    "interests": "Interests",
+    "notFound": "Not found",
+    "page": "Page",
+    "of": "of",
+    "showing": "Showing",
+    "messages": "messages",
+    "datesNotSet": "Dates not set"
+  },
+  "passwordRequirements": {
+    "title": "Password requirements",
+    "minLength": "At least 8 characters",
+    "uppercase": "One uppercase letter",
+    "lowercase": "One lowercase letter",
+    "number": "One number",
+    "special": "One special character",
+    "match": "Passwords match"
+  },
+  "home": {
+    "badge": "AI-powered travel planner",
+    "hero": {
+      "title1": "Turn ideas into",
+      "title2": "extraordinary travel plans.",
+      "description": "Build beautiful AI-generated itineraries without booking clutter. Focus on destination inspiration, smart daily planning, and a premium experience from the first click.",
+      "startPlanning": "Start Planning",
+      "exploreTrips": "Explore My Trips"
+    },
+    "highlights": [
+      "AI itinerary generation",
+      "Portfolio-ready planner UI",
+      "Destination-focused experience"
+    ],
+    "stats": {
+      "generationSpeed": "Generation speed",
+      "fast": "Fast",
+      "quickItinerary": "quick itinerary creation flow",
+      "dailyStructure": "Daily structure",
+      "threeBlocks": "3 blocks",
+      "morningAfternoonEvening": "morning / afternoon / evening",
+      "tripManagement": "Trip management",
+      "easy": "Easy",
+      "saveRevisit": "save and revisit your plans",
+      "experience": "Experience",
+      "premium": "Premium",
+      "modernDesign": "modern clean planner design"
+    },
+    "featureBadges": [
+      "AI itinerary builder",
+      "Smart daily trip flow",
+      "Visual travel inspiration",
+      "Saved trips experience"
+    ],
+    "howItWorks": {
+      "badge": "How it works",
+      "title": "A simple journey from inspiration to itinerary",
+      "description": "Your homepage should guide visitors naturally into creating a trip, not feel like a reservation marketplace.",
+      "steps": [
+        {
+          "title": "Choose your destination",
+          "text": "Start with the place you want to visit and define your travel dates.",
+          "number": "01"
+        },
+        {
+          "title": "Set your travel style",
+          "text": "Decide how you want your journey to feel before generating the itinerary.",
+          "number": "02"
+        },
+        {
+          "title": "Generate the trip plan",
+          "text": "Let the planner create a structured and inspiring trip for your journey.",
+          "number": "03"
+        }
+      ]
+    },
+    "planningStyles": {
+      "badge": "Planning styles",
+      "title": "Choose how the trip should feel",
+      "description": "These blocks make the planner feel smarter and more personalized.",
+      "modes": [
+        {
+          "title": "Relaxed planner",
+          "text": "For travelers who want slower days, fewer stops, and more breathing space.",
+          "icon": "🌿"
+        },
+        {
+          "title": "Balanced explorer",
+          "text": "For travelers who want a healthy mix of attractions, food, and free time.",
+          "icon": "🧭"
+        },
+        {
+          "title": "Packed adventure",
+          "text": "For travelers who want to maximize the day and explore more locations.",
+          "icon": "🔥"
+        }
+      ]
+    },
+    "destinations": {
+      "badge": "Destination inspiration",
+      "title": "Pick a place and jump directly into planning",
+      "description": "Each card acts as an inspiration-first shortcut to your Create Trip page.",
+      "startBlankTrip": "Start a blank trip",
+      "inspirationReady": "Inspiration ready",
+      "planDestination": "Plan this destination",
+      "list": [
+        {
+          "name": "Paris, France",
+          "tag": "Romantic city energy",
+          "badge": "Inspiration"
+        },
+        {
+          "name": "Tokyo, Japan",
+          "tag": "Modern culture & food",
+          "badge": "Popular"
+        },
+        {
+          "name": "Bali, Indonesia",
+          "tag": "Nature & calm escape",
+          "badge": "Relaxed"
+        },
+        {
+          "name": "New York, USA",
+          "tag": "Urban discovery",
+          "badge": "City trip"
+        }
+      ]
+    },
+    "features": {
+      "badge": "Powerful features",
+      "title": "Everything your planner needs",
+      "description": "Focused features make your product feel more complete and more believable.",
+      "list": [
+        {
+          "title": "AI day-by-day itinerary",
+          "text": "Generate practical travel plans with structured morning, afternoon, and evening activities."
+        },
+        {
+          "title": "Smart travel pacing",
+          "text": "Build trips that match different travel rhythms like relaxed, balanced, or packed adventures."
+        },
+        {
+          "title": "Save your journeys",
+          "text": "Keep all your travel plans in one place and revisit them anytime from your trip library."
+        },
+        {
+          "title": "Visual planning experience",
+          "text": "Enjoy a premium planner interface that feels modern, clean, and inspiring."
+        }
+      ]
+    },
+    "focusedIdentity": {
+      "badge": "Focused product identity",
+      "title": "A homepage that truly matches your planner",
+      "description": "Removing irrelevant booking sections makes your app cleaner, smarter, and much more convincing as a real AI travel planner.",
+      "benefits": [
+        "Cleaner project identity",
+        "More relevant user experience",
+        "Stronger AI travel planner branding",
+        "Better portfolio and recruiter impression"
+      ],
+      "buildTrip": "Build My Trip"
+    },
+    "visual": {
+      "inspirationFirst": "Inspiration first",
+      "aiPlanning": "AI planning",
+      "premiumUX": "Premium UX",
+      "visualExperience": "Visual experience",
+      "title": "Inspire the trip before generating the journey",
+      "description": "The homepage now feels more like a premium planning product and less like a generic booking website."
+    },
+    "photoCards": {
+      "topDestinations": "Top destinations",
+      "cultureFood": "Culture & food",
+      "natureEscape": "Nature & escape",
+      "inspiredPlanning": "Inspiring places, smarter planning"
+    },
+    "infoCard": {
+      "focusedPlanning": "Focused planning",
+      "noBookings": "No bookings. Just destination-first trip creation.",
+      "clearIdentity": "Clear identity",
+      "premiumPlanner": "Premium planner feel",
+      "strongVisuals": "Strong visuals, smart sections, and a cleaner project story."
+    },
+    "cta": {
+      "badge": "Ready to begin?",
+      "title": "Start planning your next unforgettable journey",
+      "description": "Choose a destination, shape the travel style, and generate a smarter itinerary with a homepage that truly fits your project.",
+      "createTrip": "Create Trip",
+      "myTrips": "My Trips"
+    }
+  },
+  "login": {
+    "badge": "Welcome Back",
+    "title": "Sign in to your travel account",
+    "description": "Access your saved trips, generate new itineraries, and continue planning with a cleaner, smarter, and more premium travel experience.",
+    "whySignIn": "Why sign in?",
+    "stats": {
+      "trips": "Trips",
+      "saved": "Saved",
+      "yourItineraries": "Your itineraries in one place",
+      "planner": "Planner",
+      "ai": "AI",
+      "generateSmarter": "Generate smarter travel plans",
+      "access": "Access",
+      "secure": "Secure",
+      "manageAccount": "Manage your account safely"
+    },
+    "benefits": {
+      "savedItineraries": "Saved itineraries",
+      "savedItinerariesText": "Open and manage the trips you already created.",
+      "aiGeneration": "AI trip generation",
+      "aiGenerationText": "Build day-by-day travel plans faster.",
+      "profileSupport": "Profile & support",
+      "profileSupportText": "Manage your account and view support replies."
+    },
+    "form": {
+      "title": "Login",
+      "subtitle": "Enter your email and password to continue",
+      "accountDetails": "Account details",
+      "accountDetailsSubtitle": "Use the same account you used to save your trips",
+      "secureLogin": "Secure login for your personal travel dashboard.",
+      "forgotPassword": "Forgot password?",
+      "signInInfo": "Sign in to create trips, save itineraries, and manage your travel plans from one place.",
+      "createAccount": "Create account →",
+      "loginButton": "Login",
+      "loggingIn": "Logging in..."
+    },
+    "whatYouGet": {
+      "title": "What you get after login",
+      "subtitle": "Your travel tools in one place",
+      "step1Title": "Access your saved trips",
+      "step1Text": "Open your personal itinerary library and continue planning.",
+      "step2Title": "Create smarter travel plans",
+      "step2Text": "Generate structured day-by-day trips for your destinations.",
+      "step3Title": "Manage your profile",
+      "step3Text": "Update account security and view support replies easily."
+    },
+    "needAccount": {
+      "title": "Need an account?",
+      "subtitle": "Start your travel planner journey",
+      "newHere": "New here?",
+      "description": "Create an account to save itineraries, access your profile, and keep your travel plans organized in one premium dashboard.",
+      "createAccount": "Create Account"
+    },
+    "errors": {
+      "enterCredentials": "Please enter your email and password.",
+      "tooManyAttempts": "Too many login attempts. Please wait a few minutes and try again.",
+      "loginFailed": "Login failed"
+    }
+  },
+  "register": {
+    "badge": "New Account",
+    "title": "Create your travel account",
+    "description": "Join your AI travel planner to generate itineraries, save trips, and manage your travel ideas in one clean and premium dashboard.",
+    "whyCreate": "Why create an account?",
+    "stats": {
+      "trips": "Trips",
+      "smart": "Smart",
+      "buildBetter": "Build better itineraries",
+      "library": "Library",
+      "saved": "Saved",
+      "keepPlans": "Keep all plans in one place",
+      "account": "Account",
+      "secure": "Secure",
+      "protectedAccess": "Protected access and profile tools"
+    },
+    "benefits": {
+      "generateSmarter": "Generate smarter trips",
+      "generateSmarterText": "Create day-by-day plans based on destination, pace, and interests.",
+      "saveEverything": "Save everything",
+      "saveEverythingText": "Store itineraries and come back to them anytime.",
+      "manageSecurely": "Manage securely",
+      "manageSecurelyText": "Keep your travel planning organized in one account."
+    },
+    "form": {
+      "title": "Register",
+      "subtitle": "Create your account to start planning trips",
+      "personalDetails": "Personal details",
+      "personalDetailsSubtitle": "Enter your basic account information",
+      "namePlaceholder": "Your name",
+      "securitySetup": "Security setup",
+      "securitySetupSubtitle": "Create a strong password for your account",
+      "passwordPlaceholder": "Create a strong password",
+      "confirmPasswordPlaceholder": "Re-enter your password",
+      "confirmPassword": "Confirm Password",
+      "registerInfo": "Create your account to start generating itineraries, saving trips, and organizing your travel plans in one place.",
+      "alreadyAccount": "Already have an account →",
+      "createButton": "Create Account",
+      "creating": "Creating..."
+    },
+    "whatNext": {
+      "title": "What happens next",
+      "subtitle": "A simple start to your travel planning",
+      "step1Title": "Create your account",
+      "step1Text": "Set up your personal travel planner profile in seconds.",
+      "step2Title": "Log in and start planning",
+      "step2Text": "Access the planner tools and create your first itinerary.",
+      "step3Title": "Save and manage trips",
+      "step3Text": "Keep your travel ideas organized in your own dashboard."
+    },
+    "alreadyMember": {
+      "title": "Already a member?",
+      "subtitle": "Sign in and continue your journey",
+      "welcomeBack": "Welcome back",
+      "description": "If you already have an account, sign in to access saved trips, manage your profile, and continue planning with your AI travel dashboard.",
+      "goToLogin": "Go to Login"
+    },
+    "errors": {
+      "fillAllFields": "Please fill in all fields.",
+      "passwordsNoMatch": "Passwords do not match.",
+      "weakPassword": "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
+      "registerFailed": "Register failed.",
+      "accountCreated": "Account created successfully. Redirecting to login..."
+    }
+  },
+  "createTrip": {
+    "badge": "Trip Builder",
+    "title": "Create Your Trip",
+    "description": "Build a personalized AI travel itinerary by setting your destination, dates, travel preferences, and interests below.",
+    "stop": "Stop {{n}}",
+    "addCity": "Add city",
+    "customTrip": "Custom trip",
+    "destination": {
+      "title": "Destination",
+      "subtitle": "Where do you want to go?",
+      "label": "Where are you going?",
+      "placeholder": "Enter a destination city...",
+      "mapTitle": "Destination map",
+      "mapSubtitle": "See your chosen destination on the map"
+    },
+    "dates": {
+      "title": "Travel Dates",
+      "subtitle": "When are you going?",
+      "startDate": "Start Date",
+      "endDate": "End Date"
+    },
+    "travelers": {
+      "title": "Travelers",
+      "subtitle": "Who is coming?",
+      "adults": "Adults",
+      "adultsSubtitle": "Age 13+",
+      "children": "Children",
+      "childrenSubtitle": "Age 2–12",
+      "infants": "Infants",
+      "infantsSubtitle": "Under 2",
+      "total": "Total"
+    },
+    "travelerSummary": {
+      "notSpecified": "Not specified",
+      "adult_one": "{{count}} adult",
+      "adult_other": "{{count}} adults",
+      "child_one": "{{count}} child",
+      "child_other": "{{count}} children",
+      "infant_one": "{{count}} infant",
+      "infant_other": "{{count}} infants"
+    },
+    "tripType": {
+      "title": "Trip Type",
+      "label": "Trip type",
+      "oneWay": "One-way",
+      "roundTrip": "Round trip",
+      "multiCity": "Multi-city"
+    },
+    "preferences": {
+      "title": "Travel Preferences",
+      "subtitle": "Customize your journey",
+      "budget": "Budget",
+      "pace": "Travel Pace",
+      "accommodation": "Accommodation",
+      "transport": "Transportation",
+      "budgetOptions": {
+        "budget": "Budget",
+        "midRange": "Mid-range",
+        "luxury": "Luxury"
+      },
+      "paceOptions": {
+        "relaxed": "Relaxed",
+        "moderate": "Moderate",
+        "fast": "Fast-paced"
+      },
+      "accommodationOptions": {
+        "hostel": "Hostel",
+        "hotel": "Hotel",
+        "resort": "Resort",
+        "airbnb": "Airbnb"
+      },
+      "transportOptions": {
+        "walking": "Walking",
+        "publicTransit": "Public Transit",
+        "rental": "Car Rental",
+        "taxi": "Taxi/Rideshare"
+      }
+    },
+    "interests": {
+      "title": "Interests",
+      "subtitle": "What do you enjoy?",
+      "history": "history",
+      "food": "food",
+      "culture": "culture",
+      "nature": "nature",
+      "shopping": "shopping",
+      "nightlife": "nightlife",
+      "family": "family"
+    },
+    "events": {
+      "title": "Local Events",
+      "subtitle": "Explore events near your destination",
+      "types": {
+        "festival": "Festivals",
+        "concert": "Concerts",
+        "culture": "Culture",
+        "nightlife": "Nightlife",
+        "food": "Food",
+        "family": "Family",
+        "sports": "Sports"
+      },
+      "festivalDesc": "Seasonal celebrations and city events",
+      "concertDesc": "Live music and performances",
+      "cultureDesc": "Museums, exhibitions, and local arts",
+      "nightlifeDesc": "Evening energy and late experiences",
+      "foodDesc": "Markets, tastings, and food events",
+      "familyDesc": "Activities perfect for families",
+      "sportsDesc": "Competitions and sporting events"
+    },
+    "generate": {
+      "button": "Generate Trip",
+      "generating": "Generating...",
+      "summary": "Trip summary",
+      "readyToGenerate": "Ready to generate your itinerary"
+    },
+    "energy": {
+      "packedHigh": "Fast, premium, and full of highlights",
+      "packed": "Busy days with maximum exploration",
+      "relaxedHigh": "Comfort-first with a luxury feel",
+      "relaxed": "Easy rhythm, less rush, more breathing room",
+      "default": "Balanced flow with smart daily pacing"
+    },
+    "previewTitle": {
+      "yourCities": "Your cities",
+      "yourDestination": "Your destination"
+    },
+    "formSummary": {
+      "chooseDestination": "Start by choosing where you want to go.",
+      "addCities": "Add the cities you want to visit in order.",
+      "tripBase": "A {{pace}} {{days}}-day trip to {{target}}",
+      "withBudget": " with a {{budget}} budget",
+      "forTravelers": " for {{summary}}",
+      "includingEvents": " including local events"
+    },
+    "eventSummary": {
+      "off": "Events are off for this trip.",
+      "mixed": "AI will look for a balanced mix of relevant local events during your dates.",
+      "prioritize": "AI will prioritize {{types}} events during your trip."
+    },
+    "errors": {
+      "chooseSuggestion": "Please choose a city from the suggestions, then click Add city.",
+      "cityAlreadyAdded": "This city is already added.",
+      "enterDestination": "Please enter a destination.",
+      "chooseDestinationSuggestion": "Please choose a destination from the suggestions list.",
+      "minCities": "Please add at least 2 cities for a multi-city trip.",
+      "selectValidDates": "Please select valid dates.",
+      "maxDays": "Please choose a trip length of 30 days or less.",
+      "minTravelers": "Please choose at least 1 traveler."
+    }
+  },
+  "myTrips": {
+    "badge": "Travel Dashboard",
+    "title": "My Trips",
+    "description": "Explore, search, and manage all your saved itineraries in one clean dashboard built for a stronger and more premium trip planning experience.",
+    "stats": {
+      "savedTrips": "Saved Trips",
+      "storedInAccount": "Stored in your account",
+      "searchResults": "Search Results",
+      "matchingFilter": "Matching your filter",
+      "plannedDays": "Planned Days",
+      "acrossItineraries": "Across all itineraries"
+    },
+    "manage": {
+      "title": "Manage your journey library",
+      "viewItineraries": "View itineraries",
+      "viewItinerariesText": "Open full day-by-day trip plans anytime.",
+      "searchQuickly": "Search quickly",
+      "searchQuicklyText": "Find trips fast by destination name.",
+      "stayOrganized": "Stay organized",
+      "stayOrganizedText": "Keep your travel ideas saved in one place."
+    },
+    "library": {
+      "title": "Trip library",
+      "subtitle": "Search your destinations and manage saved itineraries",
+      "searchLabel": "Search trips",
+      "searchPlaceholder": "Destination, pace, budget, or interest",
+      "createTrip": "Create Trip",
+      "savedInAccount": "Saved in your account",
+      "filter": "Filter: {{query}}"
+    },
+    "tripCard": {
+      "destination": "Destination",
+      "pace": "Pace: {{pace}}",
+      "budget": "Budget: {{budget}}",
+      "days": "{{count}} days",
+      "interests": "Interests",
+      "openItinerary": "Open this itinerary to explore daily plans, map routes, and trip tips in a more detailed travel view.",
+      "viewTrip": "View Trip",
+      "delete": "Delete"
+    },
+    "empty": {
+      "noTripsFound": "No matching trips found",
+      "noTrips": "No trips yet",
+      "noTripsFoundText": "Try a different destination keyword or clear your search to see all saved itineraries.",
+      "noTripsText": "You haven't saved any itineraries yet. Create your first trip and start building your personal travel dashboard.",
+      "clearSearch": "Clear Search",
+      "createTrip": "Create Trip"
+    },
+    "errors": {
+      "loadFailed": "Failed to load trips (login first)",
+      "deleteFailed": "Failed to delete trip",
+      "deleteConfirm": "Delete this trip?"
+    }
+  },
+  "contact": {
+    "badge": "Support Center",
+    "title": "Contact our travel team",
+    "description": "Need help with your itinerary, account, or planning experience? Send us a message and admin replies will appear inside your profile page so everything stays organized in one place.",
+    "stats": {
+      "tripHelp": "Trip help",
+      "ai": "AI",
+      "plannerGuidance": "Planner guidance",
+      "support": "Support",
+      "support247": "24/7",
+      "messageAnytime": "Message anytime",
+      "replies": "Replies",
+      "profile": "Profile",
+      "trackResponses": "Track responses"
+    },
+    "whatHelp": {
+      "title": "What can we help with?",
+      "tripPlanning": "Trip planning help",
+      "tripPlanningText": "Destinations, itinerary preferences, and travel ideas.",
+      "accountSupport": "Account support",
+      "accountSupportText": "Profile, login, verification, and account questions.",
+      "featureRequests": "Feature requests",
+      "featureRequestsText": "Share improvements you want to see in the planner."
+    },
+    "form": {
+      "title": "Send us a message",
+      "subtitle": "We'd love to hear from you",
+      "yourInfo": "Your information",
+      "yourInfoSubtitle": "We'll use these details for your support request",
+      "namePlaceholder": "Your name",
+      "emailPlaceholder": "you@email.com",
+      "messageDetails": "Message details",
+      "messageDetailsSubtitle": "Tell us clearly what you need help with",
+      "subjectPlaceholder": "What do you need help with?",
+      "messagePlaceholder": "Tell us how we can help you...",
+      "characters": "characters",
+      "wordsCharacters": "{{words}} words • {{chars}} characters",
+      "beSpecific": "Be specific so we can help you faster and better.",
+      "repliesNote": "Replies from admin will appear in your profile page, so you can track all support communication in one place.",
+      "clearMessages": "Clear messages usually get faster and better replies.",
+      "sendMessage": "Send Message",
+      "sending": "Sending..."
+    },
+    "howSupport": {
+      "title": "How support works",
+      "subtitle": "Simple and organized communication",
+      "step1Title": "Send your message",
+      "step1Text": "Write your support request with your subject and details.",
+      "step2Title": "Admin reviews it",
+      "step2Text": "Your message is received and checked from the admin panel.",
+      "step3Title": "Reply appears in profile",
+      "step3Text": "When admin responds, you'll see the reply inside your profile page."
+    },
+    "tips": {
+      "title": "Best message tips",
+      "subtitle": "Get better support answers",
+      "tip1": "Use a clear subject line.",
+      "tip2": "Describe the issue or request in simple steps.",
+      "tip3": "Mention where the problem happened in the app.",
+      "tip4": "Include enough detail so support can understand quickly."
+    },
+    "errors": {
+      "fillAllFields": "Please fill in all fields before sending your message.",
+      "sendFailed": "Failed to send message. Please try again.",
+      "messageSent": "Message sent successfully. We'll reply soon."
+    }
+  },
+  "faq": {
+    "badge": "Support Center",
+    "title": "Frequently Asked Questions",
+    "description": "Find quick answers about Travel Planner, trip creation, account usage, exported plans, and support.",
+    "stillNeedHelp": "Still need help?",
+    "stillNeedHelpText": "Visit the contact page and send your question. We'll be happy to help.",
+    "contactSupport": "Contact Support",
+    "questions": [
+      {
+        "q": "What is Travel Planner?",
+        "a": "Travel Planner is an AI-powered web application that helps you create organized and personalized travel itineraries based on your destination, dates, and preferences."
+      },
+      {
+        "q": "Do I need an account to create a trip?",
+        "a": "You can explore the app without an account, but creating an account gives you a better experience, including saving and managing your trips."
+      },
+      {
+        "q": "Can I plan trips for multiple cities?",
+        "a": "Yes. Travel Planner supports multi-city trip planning so you can organize more complex journeys in one place."
+      },
+      {
+        "q": "Does the planner include weather information?",
+        "a": "Yes. The planner can display weather insights for upcoming travel dates to help you prepare better."
+      },
+      {
+        "q": "Can I download my trip plan?",
+        "a": "Yes. You can export your trip plan as a PDF for easier access and sharing."
+      },
+      {
+        "q": "Is my personal data secure?",
+        "a": "We aim to protect user data using secure authentication and responsible data handling practices. You should also keep your login credentials private."
+      },
+      {
+        "q": "Can I edit my itinerary after creating it?",
+        "a": "Depending on your current feature setup, you can manage and update your saved trips from your account area."
+      },
+      {
+        "q": "How can I contact support?",
+        "a": "You can use the Contact page to send a message and receive support regarding your account or trip planning experience."
+      }
+    ]
+  },
+  "profile": {
+    "badge": "Account Center",
+    "title": "Profile & Security",
+    "description": "Manage your account details, password security, email verification, and support replies in one clean place designed for a more premium travel planner experience.",
+    "stats": {
+      "supportMessages": "Support messages",
+      "totalConversations": "Total conversations",
+      "repliesReceived": "Replies received",
+      "adminResponses": "Admin responses",
+      "pending": "Pending",
+      "waitingReply": "Waiting for reply"
+    },
+    "userCard": {
+      "accountStatus": "Account status",
+      "verified": "Verified",
+      "notVerified": "Not verified",
+      "security": "Security",
+      "passwordProtected": "Password protected",
+      "supportInbox": "Support inbox",
+      "active": "Active",
+      "noMessages": "No messages yet",
+      "noEmail": "No email found"
+    },
+    "accountOverview": {
+      "title": "Account overview",
+      "subtitle": "Your main account details and email verification",
+      "emailNotVerified": "Your email is not verified",
+      "verifyEmailText": "Verify your email to improve account security and trust.",
+      "resendVerification": "Resend Verification Email",
+      "profileInfo": "Profile information",
+      "profileInfoSubtitle": "Your name and email are currently read-only",
+      "verifiedBadge": "Verified",
+      "unverifiedBadge": "Unverified"
+    },
+    "changePassword": {
+      "title": "Change password",
+      "subtitle": "Keep your account secure with a stronger password",
+      "currentPassword": "Current Password",
+      "currentPasswordPlaceholder": "Enter your current password",
+      "newPassword": "New Password",
+      "newPasswordPlaceholder": "Enter your new password",
+      "confirmNewPassword": "Confirm New Password",
+      "confirmNewPasswordPlaceholder": "Confirm your new password",
+      "updateNote": "Update your password regularly to keep your account safe.",
+      "updateButton": "Update Password",
+      "updating": "Updating...",
+      "errors": {
+        "fillAll": "Please fill in all password fields.",
+        "noMatch": "New passwords do not match.",
+        "weak": "Password must be 8+ characters and include uppercase, lowercase, number, and special character.",
+        "success": "Password changed successfully.",
+        "failed": "Password change failed."
+      }
+    },
+    "supportInbox": {
+      "title": "Support inbox",
+      "subtitle": "Messages and replies from admin support",
+      "noMessages": "No support messages yet",
+      "noMessagesText": "When you contact support, your messages and admin replies will appear here.",
+      "searchPlaceholder": "Search subject or message",
+      "showing": "Showing",
+      "of": "of",
+      "messages": "messages",
+      "unreadReplies": "Unread replies: {{count}}",
+      "page": "Page {{current}} / {{total}}",
+      "subject": "Subject",
+      "status": "Status",
+      "sent": "Sent",
+      "reply": "Reply",
+      "action": "Action",
+      "replied": "Replied",
+      "pending": "Pending",
+      "new": "New",
+      "opened": "Opened",
+      "view": "View",
+      "yourMessage": "Your message",
+      "adminReply": "Admin reply",
+      "sentOn": "Sent on {{date}}",
+      "repliedOn": "Replied on {{date}}",
+      "noReplyYet": "No admin reply yet for this message.",
+      "selectMessage": "Select a message to view its full details.",
+      "filterAll": "All",
+      "filterReplied": "Replied",
+      "filterPending": "Pending",
+      "filterUnread": "Unread",
+      "sortNewest": "Newest",
+      "sortOldest": "Oldest",
+      "errors": {
+        "loadFailed": "Failed to load your support messages."
+      }
+    },
+    "session": {
+      "title": "Session",
+      "subtitle": "Manage your current login session",
+      "logoutTitle": "Logout from your account",
+      "logoutDescription": "End your current session securely from this device.",
+      "logout": "Logout"
+    }
+  },
+  "forgotPassword": {
+    "badge": "Password Recovery",
+    "title": "Forgot your password?",
+    "description": "Enter your email address and we'll send you a secure reset link so you can regain access to your travel account.",
+    "stats": {
+      "emailReset": "Email Reset",
+      "emailResetText": "Receive a secure reset link in your inbox.",
+      "safeAccess": "Safe Access",
+      "safeAccessText": "Protect your account with a secure password reset flow.",
+      "quickRecovery": "Quick Recovery",
+      "quickRecoveryText": "Reset your password and return to planning faster."
+    },
+    "tip": {
+      "title": "Helpful tip",
+      "text": "Use the same email address connected to your account. The reset link will be sent there if the account exists."
+    },
+    "form": {
+      "title": "Forgot Password",
+      "subtitle": "We'll send you a reset link",
+      "accountEmail": "Account email",
+      "accountEmailSubtitle": "Enter the email address you used when creating your account",
+      "checkEmail": "After submitting, check your email for the password reset link. If you do not see it, also check your spam or promotions folder.",
+      "backToLogin": "Back to login",
+      "sendResetLink": "Send Reset Link",
+      "sending": "Sending..."
+    },
+    "howItWorks": {
+      "title": "How it works",
+      "subtitle": "Simple password recovery",
+      "step1Title": "Enter your email",
+      "step1Text": "Provide the email address linked to your account.",
+      "step2Title": "Open the reset link",
+      "step2Text": "Check your inbox and open the password reset email.",
+      "step3Title": "Create a new password",
+      "step3Text": "Set a stronger password and log back into your account."
+    },
+    "errors": {
+      "enterEmail": "Please enter your email address.",
+      "resetLinkSent": "Reset link sent successfully.",
+      "somethingWrong": "Something went wrong."
+    }
+  },
+  "resetPassword": {
+    "badge": "Secure Reset",
+    "title": "Create your new password",
+    "description": "Choose a strong password to keep your travel account secure and regain access to your saved trips, itineraries, and profile.",
+    "stats": {
+      "protected": "Protected",
+      "protectedText": "Your account security comes first.",
+      "strongPassword": "Strong Password",
+      "strongPasswordText": "Use a safer password for better protection.",
+      "easyReview": "Easy Review",
+      "easyReviewText": "Show or hide passwords while typing."
+    },
+    "tip": {
+      "title": "Helpful tip",
+      "text": "Use a password you have not used before and make sure it is easy for you to remember but hard for others to guess."
+    },
+    "form": {
+      "title": "Reset Password",
+      "subtitle": "Enter and confirm your new password",
+      "newPasswordTitle": "New password",
+      "newPasswordSubtitle": "Make sure your new password meets all security requirements",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "redirectNote": "After resetting your password, you will be redirected to the login page to sign in with your new credentials.",
+      "backToLogin": "Back to login",
+      "resetButton": "Reset Password",
+      "updating": "Updating..."
+    },
+    "securityChecklist": {
+      "title": "Security checklist",
+      "subtitle": "A strong password protects your account",
+      "step1Title": "Use a unique password",
+      "step1Text": "Avoid reusing an old password from another account.",
+      "step2Title": "Keep it strong",
+      "step2Text": "Use uppercase, lowercase, numbers, and symbols.",
+      "step3Title": "Save it safely",
+      "step3Text": "Store it in a trusted password manager if needed."
+    },
+    "errors": {
+      "invalidToken": "Invalid or missing reset token.",
+      "noMatch": "Passwords do not match.",
+      "weak": "Password must be 8+ characters and include uppercase, lowercase, number, and special character.",
+      "resetSuccess": "Password reset successfully.",
+      "resetFailed": "Reset failed."
+    }
+  },
+  "verifyEmail": {
+    "title": "Email Verification",
+    "verifying": "Verifying your email...",
+    "goToLogin": "Go to Login",
+    "failed": "Verification failed"
+  },
+  "generatingTrip": {
+    "badge": "AI Generation in Progress",
+    "craftingJourney": "Crafting your journey to",
+    "description": "Your itinerary is being built with AI using your dates, travel style, interests, and trip preferences.",
+    "stats": {
+      "tripWindow": "Trip window",
+      "pace": "Pace",
+      "budget": "Budget",
+      "travelers": "Travelers"
+    },
+    "steps": [
+      {
+        "title": "Checking destination details",
+        "text": "Preparing the best starting point for your trip."
+      },
+      {
+        "title": "Designing your route",
+        "text": "Balancing pace, interests, and travel style."
+      },
+      {
+        "title": "Adding local experiences",
+        "text": "Mixing food, culture, and meaningful recommendations."
+      },
+      {
+        "title": "Building your itinerary",
+        "text": "Organizing day-by-day travel plans."
+      }
+    ],
+    "progress": {
+      "title": "Generation progress",
+      "subtitle": "Building a polished day-by-day itinerary for your trip.",
+      "redirectNote": "This page will redirect automatically as soon as your trip is ready.",
+      "backToCreate": "Back to Create Trip"
+    },
+    "aiDoing": {
+      "title": "What the AI is doing now",
+      "line1": "Analyzing your destination and trip mode",
+      "line2": "Matching pace, budget, and traveler preferences",
+      "line3": "Preparing activity ideas and local experiences",
+      "line4": "Structuring your daily itinerary blocks"
+    },
+    "premiumFlow": {
+      "title": "Premium planning flow",
+      "text": "Your itinerary is created first, then saved directly to your account so it's ready in your trip library."
+    },
+    "viewMyTrips": "View My Trips",
+    "errors": {
+      "missingDetails": "Missing trip details. Please return and generate your trip again.",
+      "generateFailed": "Generate failed. Please log in and try again.",
+      "yourDestination": "your destination"
+    }
+  },
+  "privacy": {
+    "badge": "Privacy & Security",
+    "title": "Privacy Policy",
+    "description": "This Privacy Policy explains how Travel Planner collects, uses, and protects your information when you use the platform.",
+    "sections": {
+      "1": {
+        "title": "1. Information We Collect",
+        "p1": "We may collect information such as your name, email address, account details, trip preferences, saved itineraries, and messages sent through the contact form.",
+        "p2": "We may also collect technical data such as browser type, device information, and general usage activity to improve the platform."
+      },
+      "2": {
+        "title": "2. How We Use Your Information",
+        "intro": "We use your information to:",
+        "items": [
+          "Create and manage your account",
+          "Generate and save personalized travel plans",
+          "Improve product features and user experience",
+          "Respond to support messages and user requests",
+          "Maintain platform security and reliability"
+        ]
+      },
+      "3": {
+        "title": "3. Data Protection",
+        "p1": "We take reasonable steps to protect your personal information using secure authentication, controlled access, and standard security practices.",
+        "p2": "However, no online service can guarantee absolute security, so users should also protect their account credentials carefully."
+      },
+      "4": {
+        "title": "4. Sharing of Information",
+        "p1": "We do not sell your personal information. Information may only be shared when necessary to operate the platform, comply with legal obligations, or protect the security and integrity of the service."
+      },
+      "5": {
+        "title": "5. Cookies and Analytics",
+        "p1": "Travel Planner may use cookies or analytics tools to understand platform usage, improve performance, and deliver a better experience."
+      },
+      "6": {
+        "title": "6. Your Rights",
+        "p1": "You may request access to your account information or ask for updates or deletion of certain personal data, subject to operational and legal requirements."
+      },
+      "7": {
+        "title": "7. Policy Updates",
+        "p1": "This Privacy Policy may be updated from time to time. Continued use of the platform after updates means you accept the revised policy."
+      }
+    },
+    "questions": "Questions about privacy?",
+    "questionsText": "For questions regarding your information or privacy concerns, please use the contact page.",
+    "contactUs": "Contact Us"
+  },
+  "terms": {
+    "badge": "Legal",
+    "title": "Terms of Service",
+    "description": "These Terms of Service govern your use of Travel Planner. By accessing or using the platform, you agree to these terms.",
+    "sections": {
+      "1": {
+        "title": "1. Use of the Service",
+        "p1": "Travel Planner is provided to help users generate and organize travel plans. You agree to use the platform only for lawful and appropriate purposes."
+      },
+      "2": {
+        "title": "2. Account Responsibility",
+        "p1": "If you create an account, you are responsible for maintaining the confidentiality of your login credentials and for all activity under your account."
+      },
+      "3": {
+        "title": "3. User Content",
+        "p1": "You may provide information such as destinations, travel preferences, and trip details. You are responsible for ensuring that the information you submit is accurate and appropriate."
+      },
+      "4": {
+        "title": "4. Service Availability",
+        "p1": "We aim to provide a reliable experience, but we do not guarantee that the platform will always be available, uninterrupted, or error-free."
+      },
+      "5": {
+        "title": "5. Generated Content",
+        "p1": "Travel itineraries and recommendations generated by the platform are for informational and planning purposes only. Users should independently verify travel details, bookings, schedules, prices, weather, and local requirements before making decisions."
+      },
+      "6": {
+        "title": "6. Prohibited Use",
+        "intro": "You agree not to misuse the platform, including but not limited to:",
+        "items": [
+          "Attempting unauthorized access to accounts or systems",
+          "Using the platform for illegal, harmful, or abusive activity",
+          "Disrupting service performance or platform security",
+          "Uploading misleading, harmful, or inappropriate content"
+        ]
+      },
+      "7": {
+        "title": "7. Limitation of Liability",
+        "p1": "Travel Planner is provided on an \"as is\" basis. To the extent allowed by law, we are not liable for losses, damages, or decisions made based on the use of generated travel content or platform features."
+      },
+      "8": {
+        "title": "8. Changes to the Terms",
+        "p1": "We may update these Terms of Service from time to time. Continued use of the platform after changes means you accept the updated terms."
+      }
+    },
+    "needClarification": "Need clarification?",
+    "needClarificationText": "If you have any questions about these terms, please contact us.",
+    "contactUs": "Contact Us"
+  },
+  "about": {
+    "badge": "v1",
+    "title": "About Travel Planner",
+    "subtitle": "A clean AI travel planner built with a modern full-stack setup",
+    "p1": "Travel Planner helps you generate realistic day-by-day itineraries (morning / afternoon / evening) based on destination, dates, pace, budget, and interests.",
+    "p2": "Trips are saved to your account so you can come back anytime, edit, regenerate, and plan better over time.",
+    "frontendTitle": "Frontend",
+    "frontendText": "React + Tailwind + reusable UI kit",
+    "backendTitle": "Backend",
+    "backendText": "Express + MongoDB + cookie auth"
+  },
+  "adminContacts": {
+    "title": "Contact Messages",
+    "subtitle": "Admin page for support messages and replies",
+    "refresh": "Refresh",
+    "loading": "Loading messages...",
+    "noMessages": "No contact messages yet.",
+    "loadFailed": "Failed to load messages",
+    "markReadFailed": "Failed to mark message as read",
+    "writeReply": "Write a reply first.",
+    "replySaved": "Reply saved successfully.",
+    "replyFailed": "Failed to send reply",
+    "deleteFailed": "Failed to delete message",
+    "read": "Read",
+    "new": "New",
+    "replied": "Replied",
+    "pending": "Pending",
+    "adminReply": "Admin reply",
+    "repliedAt": "Replied at {{date}}",
+    "updateReply": "Update reply",
+    "writeAReply": "Write a reply",
+    "replyPlaceholder": "Write your reply to the user...",
+    "markAsRead": "Mark as Read",
+    "savingReply": "Saving reply...",
+    "updateReplyBtn": "Update Reply",
+    "sendReply": "Send Reply",
+    "delete": "Delete"
+  },
+  "viewTrip": {
+    "back": "← Back to My Trips",
+    "editTrip": "✏️ Edit Trip",
+    "createNew": "＋ Create New",
+    "downloadPDF": "⬇ Download PDF",
+    "multiCityItinerary": "Multi-city itinerary",
+    "smartTravelPlan": "Smart travel plan",
+    "days": "{{count}} days",
+    "cities": "{{count}} cities",
+    "pace": "pace: {{pace}}",
+    "budget": "budget: {{budget}}",
+    "events": "{{count}} events",
+    "tripOverview": "Trip Overview",
+    "tripOverviewSubtitle": "A quick summary of the trip settings and preferences",
+    "tripMode": "Trip mode",
+    "destination": "Destination",
+    "multiCity": "Multi-city",
+    "dates": "Dates",
+    "pace_label": "Pace",
+    "budget_label": "Budget",
+    "activities": "Activities",
+    "estimatedHours": "Estimated Hours",
+    "events_label": "Events",
+    "places": "Places",
+    "citiesInTrip": "Cities in this trip",
+    "interests": "Interests",
+    "notes": "Notes",
+    "cityPlan": "City Plan",
+    "cityPlanSubtitle": "How your days are distributed across the cities in this trip",
+    "city": "City {{index}}",
+    "day": "day",
+    "multiCityTrip": "This is a multi-city trip with {{count}} cities.",
+    "tripTips": "Trip Tips",
+    "tripTipsSubtitle": "Helpful reminders for a smoother travel experience",
+    "tip": "Tip {{index}}",
+    "recommendedPlaces": "Recommended Places",
+    "recommendedPlacesSubtitle": "Special places selected for your trip",
+    "loadingPlacePhotos": "Loading recommended place photos...",
+    "noPhotoAvailable": "No photo available",
+    "dayLabel": "Day {{number}}",
+    "goToDay": "Go to Day {{number}}",
+    "openInGoogleMaps": "Open in Google Maps",
+    "eventsTitle": "Events During Your Trip",
+    "eventsSubtitle": "Local events, parties, concerts, and activities matching your trip dates",
+    "timeNotSpecified": "Time not specified",
+    "viewEvent": "View event →",
+    "placesGallery": "Places from your itinerary",
+    "placesGallerySubtitle": "Places from your itinerary with photos and locations",
+    "loadingPlacePhotosGallery": "Loading place photos...",
+    "dayTimeBlock": "Day {{day}} • {{timeBlock}}",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "morning": "Morning",
+    "afternoon": "Afternoon",
+    "evening": "Evening",
+    "foodSuggestion": "Food Suggestion",
+    "backupPlan": "Backup Plan",
+    "items": "{{count}} items",
+    "item": "{{count}} item",
+    "failedDownloadPDF": "Failed to download PDF.",
+    "somethingWentWrong": "Something went wrong",
+    "place": "Place",
+    "recommendedPlace": "Recommended Place",
+    "event": "Event",
+    "trip": "Trip",
+    "unknownDate": "Unknown date",
+    "placesCount": "{{count}} places"
+  },
+  "editTrip": {
+    "badge": "Manual Trip Editor",
+    "editTripTitle": "Edit Trip",
+    "description": "Reorder days, move activities between sections, and refine your itinerary in a cleaner and more premium editing experience.",
+    "days": "Days",
+    "daysSubtitle": "Organized day by day",
+    "activities": "Activities",
+    "activitiesSubtitle": "Manage all stops and plans",
+    "estimated": "Estimated",
+    "estimatedSubtitle": "Total planned time",
+    "editingStatus": "Editing status",
+    "currentState": "Current state",
+    "unsavedChanges": "You have unsaved changes.",
+    "allChangesSaved": "All changes are saved.",
+    "protectedContent": "Protected content",
+    "protectedContentText": "Recommended places, tips, and events remain preserved while editing.",
+    "flexibleEditing": "Flexible editing",
+    "flexibleEditingText": "Move activities up, down, or across morning, afternoon, and evening.",
+    "actionsTitle": "Actions",
+    "actionsSubtitle": "Save your updates or leave the editor",
+    "tripActions": "Trip actions",
+    "tripActionsSubtitle": "Manage your current editing session",
+    "saveChanges": "Save Changes",
+    "savingChanges": "Saving changes...",
+    "cancel": "Cancel",
+    "backToMyTrips": "Back to My Trips",
+    "editNote": "Edit titles, dates, durations, notes, food suggestions, and backup plans while keeping the trip structure clean and organized.",
+    "editorSummary": "Editor summary",
+    "editorSummarySubtitle": "Quick trip edit overview",
+    "daysLabel": "Days",
+    "activitiesLabel": "Activities",
+    "estimatedHours": "Estimated Hours",
+    "statusLabel": "Status",
+    "editing": "Editing...",
+    "saved": "Saved",
+    "protectedContentTitle": "Protected content",
+    "protectedContentSubtitle": "These parts stay preserved",
+    "recommendedPlaces": "Recommended Places",
+    "tips": "Tips",
+    "eventsLabel": "Events",
+    "dayLabel": "Day {{number}}",
+    "editDayPlan": "Edit day plan",
+    "editDayPlanSubtitle": "Refine the schedule, reorder activities, and improve the plan details.",
+    "activitiesCount": "{{count}} activities",
+    "moveDayUp": "↑ Move day up",
+    "moveDayDown": "↓ Move day down",
+    "cleanEmptyActivities": "Clean empty activities",
+    "dayDetails": "Day details",
+    "dayDetailsSubtitle": "Set the day title and calendar date",
+    "dayTitle": "Day title",
+    "dayTitlePlaceholder": "e.g. Historic center and local food",
+    "dayDate": "Day date",
+    "morning": "Morning",
+    "morningDesc": "Start the day with light, practical activities.",
+    "afternoon": "Afternoon",
+    "afternoonDesc": "Main visits, attractions, and experiences.",
+    "evening": "Evening",
+    "eveningDesc": "Dinner, walks, nightlife, or relaxed plans.",
+    "addActivity": "Add activity",
+    "noActivitiesYet": "No activities yet in this block.",
+    "activityLabel": "Activity {{number}}",
+    "remove": "Remove",
+    "up": "↑ Up",
+    "down": "↓ Down",
+    "prevPlan": "← Previous plan",
+    "nextPlan": "Next plan →",
+    "titleLabel": "Title",
+    "titlePlaceholder": "e.g. Visit the Colosseum",
+    "locationLabel": "Location",
+    "locationPlaceholder": "e.g. Colosseum, Rome, Italy",
+    "durationLabel": "Duration (hours)",
+    "durationPlaceholder": "e.g. 2",
+    "notesLabel": "Notes",
+    "notesPlaceholder": "Extra notes, reminders, or advice...",
+    "foodSuggestion": "Food Suggestion",
+    "foodSuggestionPlaceholder": "Recommended meal, restaurant style, or local specialty...",
+    "backupPlan": "Backup Plan",
+    "backupPlanPlaceholder": "Alternative idea in case of weather or time issues...",
+    "errors": {
+      "enterDestination": "Please enter a destination.",
+      "enterValidDates": "Please enter valid dates.",
+      "loadFailed": "Failed to load trip.",
+      "saveFailed": "Failed to update trip.",
+      "tripUpdated": "Trip updated successfully."
+    }
+  },
+  "language": {
+    "switchTo": "עברית",
+    "current": "EN"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or has been moved.",
+    "goHome": "Go to Home"
+  }
+}

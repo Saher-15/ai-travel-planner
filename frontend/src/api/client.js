@@ -1,6 +1,6 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: "/api",
-  withCredentials: true, // IMPORTANT: cookie auth
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
 });

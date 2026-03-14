@@ -6,7 +6,10 @@ import { User } from "../models/User.js";
 import { JWT_ACCESS_SECRET, APP_URL } from "../config.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import { sendEmail } from "../utils/email.js";
-import { verificationEmail, resetPasswordEmail } from "../utils/emailTemplates.js";
+import {
+  verificationEmail,
+  resetPasswordEmail,
+} from "../utils/emailTemplates.js";
 
 const router = express.Router();
 
@@ -21,41 +24,62 @@ router.post("/register", async (req, res) => {
   try {
     const { name, email, password, confirmPassword } = req.body;
 
-    if (!name || !email || !password || !confirmPassword)
+    if (!name || !email || !password || !confirmPassword) {
       return res.status(400).json({ message: "All fields are required" });
+    }
 
-    if (password !== confirmPassword)
+    if (password !== confirmPassword) {
       return res.status(400).json({ message: "Passwords do not match" });
+    }
 
-    if (!strongPassword.test(password))
+    if (!strongPassword.test(password)) {
       return res.status(400).json({
         message:
           "Password must be 8+ chars and include uppercase, lowercase, number, and special character",
       });
+    }
 
-    const existing = await User.findOne({ email });
-    if (existing)
+    const normalizedEmail = email.trim().toLowerCase();
+    const trimmedName = name.trim();
+
+    const existing = await User.findOne({ email: normalizedEmail });
+    if (existing) {
       return res.status(400).json({ message: "Email already exists" });
+    }
 
     const passwordHash = await bcrypt.hash(password, 10);
-
     const verificationToken = crypto.randomBytes(32).toString("hex");
 
-    const user = await User.create({
-      name,
-      email,
+    await User.create({
+      name: trimmedName,
+      email: normalizedEmail,
       passwordHash,
       verificationToken,
     });
 
     const link = `${APP_URL}/verify/${verificationToken}`;
-    await sendEmail(email, "Verify your email", verificationEmail(name, link));
 
-    res.status(201).json({
+    const emailResult = await sendEmail(
+      normalizedEmail,
+      "Verify your email",
+      verificationEmail(trimmedName, link)
+    );
+
+    if (!emailResult.success) {
+      console.error("REGISTER EMAIL FAILED:", emailResult.error);
+
+      return res.status(201).json({
+        message:
+          "Account created, but verification email could not be sent right now. Please try resending verification later.",
+      });
+    }
+
+    return res.status(201).json({
       message: "Account created. Check your email to verify your account.",
     });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    console.error("REGISTER ERROR:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -66,16 +90,18 @@ router.get("/verify/:token", async (req, res) => {
   try {
     const user = await User.findOne({ verificationToken: req.params.token });
 
-    if (!user)
+    if (!user) {
       return res.status(400).json({ message: "Invalid or expired token" });
+    }
 
     user.verified = true;
     user.verificationToken = undefined;
     await user.save();
 
-    res.json({ message: "Email verified successfully" });
-  } catch {
-    res.status(500).json({ message: "Server error" });
+    return res.json({ message: "Email verified successfully" });
+  } catch (err) {
+    console.error("VERIFY EMAIL ERROR:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -86,22 +112,37 @@ router.post("/resend-verification", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
 
-    if (user.verified)
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.verified) {
       return res.status(400).json({ message: "Already verified" });
+    }
 
     user.verificationToken = crypto.randomBytes(32).toString("hex");
     await user.save();
 
     const link = `${APP_URL}/verify/${user.verificationToken}`;
-    await sendEmail(
+
+    const emailResult = await sendEmail(
       user.email,
       "Verify your email",
       verificationEmail(user.name, link)
     );
 
-    res.json({ message: "Verification email sent" });
-  } catch {
-    res.status(500).json({ message: "Server error" });
+    if (!emailResult.success) {
+      console.error("RESEND VERIFICATION EMAIL FAILED:", emailResult.error);
+
+      return res.status(500).json({
+        message: "Could not send verification email right now. Please try again.",
+      });
+    }
+
+    return res.json({ message: "Verification email sent" });
+  } catch (err) {
+    console.error("RESEND VERIFICATION ERROR:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -112,23 +153,33 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user)
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Email and password are required",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
+    }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!isMatch)
+    if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
+    }
 
     const token = jwt.sign({ userId: user._id }, JWT_ACCESS_SECRET, {
       expiresIn: "1d",
     });
 
-    res
+    return res
       .cookie("token", token, {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax",
+        secure: true,
+        sameSite: "none",
       })
       .json({
         message: "Logged in",
@@ -137,10 +188,12 @@ router.post("/login", async (req, res) => {
           name: user.name,
           email: user.email,
           verified: user.verified,
+          role: user.role || "user",
         },
       });
-  } catch {
-    res.status(500).json({ message: "Server error" });
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -151,24 +204,45 @@ router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user)
-      return res.json({ message: "If that email exists, a reset link was sent" });
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      return res.json({
+        message: "If that email exists, a reset link was sent",
+      });
+    }
 
     user.resetToken = crypto.randomBytes(32).toString("hex");
-    user.resetTokenExpires = Date.now() + 3600000; // 1 hour
+    user.resetTokenExpires = Date.now() + 60 * 60 * 1000;
     await user.save();
 
     const link = `${APP_URL}/reset-password/${user.resetToken}`;
-    await sendEmail(
+
+    const emailResult = await sendEmail(
       user.email,
       "Reset your password",
       resetPasswordEmail(user.name, link)
     );
 
-    res.json({ message: "If that email exists, a reset link was sent" });
-  } catch {
-    res.status(500).json({ message: "Server error" });
+    if (!emailResult.success) {
+      console.error("FORGOT PASSWORD EMAIL FAILED:", emailResult.error);
+
+      return res.status(500).json({
+        message: "Could not send reset email right now. Please try again.",
+      });
+    }
+
+    return res.json({
+      message: "If that email exists, a reset link was sent",
+    });
+  } catch (err) {
+    console.error("FORGOT PASSWORD ERROR:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -179,34 +253,39 @@ router.post("/reset-password/:token", async (req, res) => {
   try {
     const { newPassword, confirmPassword } = req.body;
 
-    if (!newPassword || !confirmPassword)
+    if (!newPassword || !confirmPassword) {
       return res.status(400).json({ message: "All fields required" });
+    }
 
-    if (newPassword !== confirmPassword)
+    if (newPassword !== confirmPassword) {
       return res.status(400).json({ message: "Passwords do not match" });
+    }
 
-    if (!strongPassword.test(newPassword))
+    if (!strongPassword.test(newPassword)) {
       return res.status(400).json({
         message:
           "Password must be 8+ chars and include uppercase, lowercase, number, and special character",
       });
+    }
 
     const user = await User.findOne({
       resetToken: req.params.token,
       resetTokenExpires: { $gt: Date.now() },
     });
 
-    if (!user)
+    if (!user) {
       return res.status(400).json({ message: "Invalid or expired token" });
+    }
 
     user.passwordHash = await bcrypt.hash(newPassword, 10);
     user.resetToken = undefined;
     user.resetTokenExpires = undefined;
     await user.save();
 
-    res.json({ message: "Password reset successful" });
-  } catch {
-    res.status(500).json({ message: "Server error" });
+    return res.json({ message: "Password reset successful" });
+  } catch (err) {
+    console.error("RESET PASSWORD ERROR:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -214,11 +293,11 @@ router.post("/reset-password/:token", async (req, res) => {
    LOGOUT
 ============================ */
 router.post("/logout", (req, res) => {
-  res
+  return res
     .clearCookie("token", {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
     })
     .json({ message: "Logged out" });
 });
@@ -229,20 +308,26 @@ router.post("/logout", (req, res) => {
 router.get("/me", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select(
-      "name email verified"
+      "name email verified role"
     );
 
-    res.json({
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json({
       loggedIn: true,
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
         verified: user.verified,
+        role: user.role || "user",
       },
     });
-  } catch {
-    res.status(500).json({ message: "Server error" });
+  } catch (err) {
+    console.error("ME ERROR:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 

@@ -1,27 +1,48 @@
-import nodemailer from "nodemailer";
+import Mailjet from "node-mailjet";
 import {
-  EMAIL_HOST,
-  EMAIL_PORT,
-  EMAIL_USER,
-  EMAIL_PASS,
+  MJ_API_KEY,
+  MJ_API_SECRET,
   EMAIL_FROM,
 } from "../config.js";
 
-export const sendEmail = async (to, subject, html) => {
-  const transporter = nodemailer.createTransport({
-    host: EMAIL_HOST,
-    port: EMAIL_PORT,
-    secure: false,
-    auth: {
-      user: EMAIL_USER,
-      pass: EMAIL_PASS,
-    },
-  });
+const mailjet = Mailjet.apiConnect(
+  MJ_API_KEY,
+  MJ_API_SECRET
+);
 
-  await transporter.sendMail({
-    from: EMAIL_FROM,
-    to,
-    subject,
-    html,
-  });
+export const sendEmail = async (to, subject, html) => {
+  try {
+    if (!MJ_API_KEY || !MJ_API_SECRET || !EMAIL_FROM) {
+      throw new Error("Missing Mailjet environment variables");
+    }
+
+    const request = await mailjet
+      .post("send", { version: "v3.1" })
+      .request({
+        Messages: [
+          {
+            From: {
+              Email: EMAIL_FROM,
+              Name: "AI Travel Planner",
+            },
+            To: [
+              {
+                Email: to,
+              },
+            ],
+            Subject: subject,
+            HTMLPart: html,
+          },
+        ],
+      });
+
+    console.log("Email sent:", request.body.Messages[0].To[0].Email);
+    return { success: true, info: request.body };
+  } catch (err) {
+    console.error("Email send error:", err);
+    return {
+      success: false,
+      error: err?.message || "Failed to send email",
+    };
+  }
 };

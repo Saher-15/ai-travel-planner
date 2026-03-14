@@ -1,38 +1,58 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 
 const AuthCtx = createContext(null);
 
+function normalizeUser(u) {
+  return {
+    id: u?.id || u?._id || u?.userId || null,
+    name: u?.name || "",
+    email: u?.email || "",
+    verified: Boolean(u?.verified),
+    role: u?.role || "user",
+  };
+}
+
 export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
+  const [user, setUserState] = useState(null);
 
-  async function refresh() {
+  const setUser = useCallback((u) => {
+    setUserState(u ? normalizeUser(u) : null);
+  }, []);
+
+  const refresh = useCallback(async () => {
     setLoading(true);
-    try {
-      const { data } = await api.get("/auth/me");
-      const u = data?.user || null;
 
-      if (u) setUser(normalizeUser(u));
-      else setUser(null);
-    } catch {
+    try {
+      const { data } = await api.get("/auth/me", { withCredentials: true });
+
+      // supports either { user: {...} } or direct user object
+      const rawUser = data?.user || data || null;
+      setUser(rawUser);
+    } catch (err) {
+      if (err?.response?.status !== 401) {
+        console.error("Auth refresh error:", err);
+      }
       setUser(null);
     } finally {
       setLoading(false);
     }
-  }
+  }, [setUser]);
 
-  async function logout() {
+  const logout = useCallback(async () => {
     try {
-      await api.post("/auth/logout");
+      await api.post("/auth/logout", null, { withCredentials: true });
+    } catch (err) {
+      console.error("Logout error:", err);
     } finally {
       setUser(null);
     }
-  }
+  }, [setUser]);
 
   useEffect(() => {
     refresh();
-  }, []);
+  }, [refresh]);
 
   const value = useMemo(
     () => ({
@@ -42,25 +62,20 @@ export function AuthProvider({ children }) {
       isLoggedIn: Boolean(user?.id),
       refresh,
       logout,
+      setUser,
     }),
-    [loading, user]
+    [loading, user, refresh, logout, setUser]
   );
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
 
-function normalizeUser(u) {
-  return {
-    id: u.id || u._id || null,
-    name: u.name || "",
-    email: u.email || "",
-    verified: Boolean(u.verified),
-  };
-}
-
-
 export function useAuth() {
   const ctx = useContext(AuthCtx);
-  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
+
+  if (!ctx) {
+    throw new Error("useAuth must be used inside AuthProvider");
+  }
+
   return ctx;
 }

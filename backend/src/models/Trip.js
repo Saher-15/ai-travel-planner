@@ -2,10 +2,44 @@ import mongoose from "mongoose";
 
 const ActivitySchema = new mongoose.Schema(
   {
-    title: { type: String, required: true },
+    title: { type: String, required: true, trim: true },
     durationHours: { type: Number, default: null },
-    notes: { type: String, default: "" },
-    location: { type: String, default: "" },
+    notes: { type: String, default: "", trim: true },
+    location: { type: String, default: "", trim: true },
+    address: { type: String, default: "", trim: true },
+    category: { type: String, default: "", trim: true },
+    type: { type: String, default: "", trim: true },
+    rating: { type: Number, default: null },
+    image: { type: String, default: "", trim: true },
+  },
+  { _id: false }
+);
+
+const RecommendedPlaceSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    reason: { type: String, default: "", trim: true },
+    location: { type: String, default: "", trim: true },
+    address: { type: String, default: "", trim: true },
+    category: { type: String, default: "", trim: true },
+    rating: { type: Number, default: null },
+    image: { type: String, default: "", trim: true },
+  },
+  { _id: false }
+);
+
+const EventSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    date: { type: String, required: true, trim: true },
+    time: { type: String, default: "", trim: true },
+    location: { type: String, default: "", trim: true },
+    address: { type: String, default: "", trim: true },
+    category: { type: String, default: "", trim: true },
+    description: { type: String, default: "", trim: true },
+    source: { type: String, default: "", trim: true },
+    link: { type: String, default: "", trim: true },
+    rating: { type: Number, default: null },
   },
   { _id: false }
 );
@@ -13,40 +47,71 @@ const ActivitySchema = new mongoose.Schema(
 const DayPlanSchema = new mongoose.Schema(
   {
     day: { type: Number, required: true },
-    date: { type: String, required: true }, // YYYY-MM-DD
-    title: { type: String, default: "" },
+    date: { type: String, required: true },
+    title: { type: String, default: "", trim: true },
     morning: { type: [ActivitySchema], default: [] },
     afternoon: { type: [ActivitySchema], default: [] },
     evening: { type: [ActivitySchema], default: [] },
-    foodSuggestion: { type: String, default: "" },
-    backupPlan: { type: String, default: "" },
+    foodSuggestion: { type: String, default: "", trim: true },
+    backupPlan: { type: String, default: "", trim: true },
   },
   { _id: false }
 );
 
 const TripSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
-    destination: { type: String, required: true },
-    startDate: { type: String, required: true }, // YYYY-MM-DD
-    endDate: { type: String, required: true },   // YYYY-MM-DD
+    tripMode: {
+      type: String,
+      enum: ["single", "multi"],
+      default: "single",
+    },
+
+    destination: { type: String, required: true, trim: true },
+    destinations: { type: [String], default: [] },
+
+    startDate: { type: String, required: true },
+    endDate: { type: String, required: true },
 
     preferences: {
       travelers: { type: Number, default: 1 },
-      budget: { type: String, enum: ["low", "mid", "high"], default: "mid" },
-      pace: { type: String, enum: ["relaxed", "moderate", "packed"], default: "moderate" },
+      budget: {
+        type: String,
+        enum: ["low", "mid", "high"],
+        default: "mid",
+      },
+      pace: {
+        type: String,
+        enum: ["relaxed", "moderate", "packed"],
+        default: "moderate",
+      },
       interests: { type: [String], default: [] },
-      notes: { type: String, default: "" },
+      notes: { type: String, default: "", trim: true },
+      sourceTab: { type: String, default: "", trim: true },
+      tripType: { type: String, default: "", trim: true },
+      from: { type: String, default: "", trim: true },
+      includeEvents: { type: Boolean, default: true },
+      eventTypes: { type: [String], default: [] },
     },
 
     itinerary: {
       tripSummary: { type: Object, default: {} },
       days: { type: [DayPlanSchema], default: [] },
       tips: { type: [String], default: [] },
+      recommendedPlaces: { type: [RecommendedPlaceSchema], default: [] },
     },
+
+    events: { type: [EventSchema], default: [] },
   },
   { timestamps: true }
 );
+
+// Compound index: user's trips sorted by newest first
+TripSchema.index({ userId: 1, createdAt: -1 });
 
 export const Trip = mongoose.model("Trip", TripSchema);

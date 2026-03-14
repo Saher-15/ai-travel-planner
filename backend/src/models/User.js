@@ -6,7 +6,12 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     passwordHash: { type: String, required: true },
 
-    // NEW FIELDS
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
+
     verified: { type: Boolean, default: false },
     verificationToken: { type: String },
     resetToken: { type: String },
