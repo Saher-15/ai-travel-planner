@@ -254,6 +254,9 @@ function Footer({ isLoggedIn, isAdmin }) {
               <FooterLink to="/">{t("nav.home")}</FooterLink>
               <FooterLink to="/create">{t("nav.createTrip")}</FooterLink>
               {isLoggedIn ? <FooterLink to="/trips">{t("nav.myTrips")}</FooterLink> : null}
+              <FooterLink to="/hotels">{t("nav.hotels")}</FooterLink>
+              <FooterLink to="/flights">{t("nav.flights")}</FooterLink>
+              <FooterLink to="/attractions">{t("nav.attractions")}</FooterLink>
               <FooterLink to="/contact">{t("nav.contact")}</FooterLink>
               {isLoggedIn ? <FooterLink to="/profile">{t("nav.profile")}</FooterLink> : null}
               {isAdmin ? <FooterLink to="/admin/contacts">{t("nav.admin")}</FooterLink> : null}
@@ -368,6 +371,12 @@ export default function Layout({ children }) {
     navigate("/login");
   };
 
+  const bookingNavItems = [
+    { to: "/hotels", label: t("nav.hotels") },
+    { to: "/flights", label: t("nav.flights") },
+    { to: "/attractions", label: t("nav.attractions") },
+  ];
+
   const loggedInNavItems = [
     { to: "/", label: t("nav.home") },
     { to: "/create", label: t("nav.createTrip") },
@@ -438,11 +447,22 @@ export default function Layout({ children }) {
           </div>
         </div>
 
+        {/* Booking tabs strip — desktop only */}
+        <div className="hidden border-t border-slate-100 md:block">
+          <div className="mx-auto flex max-w-7xl items-center gap-1 px-4 py-1.5 sm:px-6">
+            {bookingNavItems.map((item) => (
+              <NavItem key={item.to} to={item.to}>
+                {item.label}
+              </NavItem>
+            ))}
+          </div>
+        </div>
+
         <div
           id="mobile-menu"
           className={cx(
             "overflow-hidden border-t border-slate-200 bg-white/95 backdrop-blur-xl transition-all duration-300 md:hidden",
-            mobileOpen ? "max-h-[700px] opacity-100" : "max-h-0 opacity-0"
+            mobileOpen ? "max-h-175 opacity-100" : "max-h-0 opacity-0"
           )}
         >
           <div className="mx-auto max-w-7xl space-y-3 px-4 py-4 sm:px-6">
@@ -464,6 +484,20 @@ export default function Layout({ children }) {
                 ) : null}
               </div>
             )}
+
+            {/* Booking nav — mobile */}
+            <div className="rounded-3xl border border-slate-100 bg-slate-50 p-3">
+              <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                {t("nav.bookTravel")}
+              </div>
+              <div className="grid gap-1.5">
+                {bookingNavItems.map((item) => (
+                  <NavItem key={item.to} to={item.to} mobile>
+                    {item.label}
+                  </NavItem>
+                ))}
+              </div>
+            </div>
 
             <nav className="grid gap-2">
               {(isLoggedIn ? loggedInNavItems : guestNavItems).map((item) => (

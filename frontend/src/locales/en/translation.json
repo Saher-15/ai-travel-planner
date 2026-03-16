@@ -14,7 +14,11 @@
     "admin": "Admin",
     "adminContacts": "Admin Contacts",
     "logout": "Logout",
-    "planTrip": "Plan a Trip"
+    "planTrip": "Plan a Trip",
+    "hotels": "Hotels",
+    "flights": "Flights",
+    "attractions": "Attractions",
+    "bookTravel": "Book Travel"
   },
   "header": {
     "signedIn": "Signed in",
@@ -1246,6 +1250,83 @@
       "loadFailed": "Failed to load trip.",
       "saveFailed": "Failed to update trip.",
       "tripUpdated": "Trip updated successfully."
+    }
+  },
+  "hotels": {
+    "badge": "Hotel Search",
+    "title": "Find Your Perfect Hotel",
+    "subtitle": "Search thousands of hotels worldwide and book at the best price",
+    "destination": "Destination",
+    "destinationPlaceholder": "City or hotel name...",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "guests": "Guests",
+    "adult": "Adult",
+    "adults": "Adults",
+    "searchButton": "Search Hotels",
+    "popular": "Popular Destinations",
+    "affiliateNote": "Powered by Hotellook · We may earn a commission at no extra cost to you.",
+    "whyTitle": "Why Book Through Us?",
+    "whySubtitle": "We compare prices across hundreds of booking sites",
+    "why": [
+      { "title": "Best Price Guarantee", "text": "We compare prices across 70+ booking platforms to find you the lowest rate." },
+      { "title": "Huge Selection", "text": "Access to over 2 million hotels, apartments, and unique stays worldwide." },
+      { "title": "Easy Booking", "text": "Simple search, no hidden fees. Book directly with the provider you trust." }
+    ]
+  },
+  "flights": {
+    "badge": "Flight Search",
+    "title": "Search Cheap Flights",
+    "subtitle": "Compare prices across hundreds of airlines and find the best deal",
+    "roundTrip": "Round Trip",
+    "oneWay": "One Way",
+    "from": "From",
+    "fromPlaceholder": "City or airport...",
+    "to": "To",
+    "toPlaceholder": "City or airport...",
+    "departure": "Departure",
+    "return": "Return",
+    "passengers": "Passengers",
+    "passenger": "Passenger",
+    "passengersLabel": "Passengers",
+    "searchButton": "Search Flights",
+    "popularRoutes": "Popular Routes",
+    "affiliateNote": "Powered by Jetradar · We may earn a commission at no extra cost to you.",
+    "whyTitle": "Find the Best Flight Deals",
+    "whySubtitle": "Smart search across hundreds of airlines and travel agents",
+    "why": [
+      { "title": "Compare 750+ Airlines", "text": "Search all major airlines and budget carriers in one place." },
+      { "title": "Price Alerts", "text": "Get notified when prices drop for your favorite routes." },
+      { "title": "Fast Results", "text": "Search and filter results in seconds to find your ideal flight." }
+    ]
+  },
+  "attractions": {
+    "badge": "Things To Do",
+    "title": "Discover Experiences & Attractions",
+    "subtitle": "Tours, activities, and unforgettable experiences at your destination",
+    "destination": "Destination",
+    "destinationPlaceholder": "Where are you going?",
+    "category": "Category (optional)",
+    "searchButton": "Search Attractions",
+    "popular": "Popular Destinations",
+    "poweredBy": "Powered by Viator",
+    "exploreTitle": "Explore by Category",
+    "exploreSubtitle": "Find the perfect experience for your travel style",
+    "cat": {
+      "tours": "Tours & Sightseeing",
+      "museums": "Museums & Culture",
+      "food": "Food & Dining",
+      "outdoor": "Outdoor & Nature",
+      "nightlife": "Nightlife",
+      "family": "Family Activities"
+    },
+    "catDesc": {
+      "tours": "Guided city tours, day trips, and sightseeing excursions",
+      "museums": "Art, history, science museums and cultural experiences",
+      "food": "Food tours, cooking classes, and local dining experiences",
+      "outdoor": "Hiking, diving, safaris, and nature adventures",
+      "nightlife": "Bar crawls, shows, and evening entertainment",
+      "family": "Kid-friendly activities and family-oriented experiences"
     }
   },
   "language": {

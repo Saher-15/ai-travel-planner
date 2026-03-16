@@ -21,6 +21,9 @@ const MyTrips         = lazy(() => import("./pages/MyTrips.jsx"));
 const ViewTrip        = lazy(() => import("./pages/ViewTrip.jsx"));
 const EditTrip        = lazy(() => import("./pages/EditTrip.jsx"));
 const AdminContacts   = lazy(() => import("./pages/AdminContacts.jsx"));
+const Hotels          = lazy(() => import("./pages/Hotels.jsx"));
+const Flights         = lazy(() => import("./pages/Flights.jsx"));
+const Attractions     = lazy(() => import("./pages/Attractions.jsx"));
 const NotFound        = lazy(() => import("./pages/NotFound.jsx"));
 
 const P = ({ children }) => <ProtectedRoute>{children}</ProtectedRoute>;
@@ -55,6 +58,9 @@ function AppRoutes() {
           <Route path="/forgot-password"       element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/verify/:token"         element={<VerifyEmail />} />
+          <Route path="/hotels"                element={<Hotels />} />
+          <Route path="/flights"               element={<Flights />} />
+          <Route path="/attractions"           element={<Attractions />} />
           <Route path="/contact"               element={<Contact />} />
           <Route path="/profile"               element={<Profile />} />
           <Route path="/faq"                   element={<FAQ />} />
