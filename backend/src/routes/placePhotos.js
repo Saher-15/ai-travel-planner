@@ -26,16 +26,27 @@ function cleanTitleForPhotoSearch(value = "") {
     String(value || "")
       .replace(/\b(morning|afternoon|evening)\b/gi, "")
       .replace(/\b(breakfast|lunch|dinner|brunch)\s+at\b/gi, "")
+      .replace(/\bcasual\s+(lunch|dinner|breakfast|brunch|meal)\b/gi, "")
+      .replace(/\b(casual|quick|relaxing|relaxed)\b/gi, "")
+      .replace(/\bat\s+(a|an|the)\b/gi, "")
       .replace(/\b(walking|guided|boat|bus|city|food|bike)\s+tour\b/gi, "")
       .replace(/\btour\b/gi, "")
       .replace(/\bvisit(\s+to)?\b/gi, "")
       .replace(/\bexplore\b/gi, "")
-      .replace(/\brelaxed\b/gi, "")
       .replace(/\bnearby\b/gi, "")
       .replace(/\bstroll\b/gi, "")
       .replace(/\bday\s+trip\b/gi, "")
+      .replace(/\band\s+\w+/gi, "")
       .replace(/[–—]/g, " ")
   );
+}
+
+// For food/restaurant/cafe types, the venue name is often unknown to Pixabay
+// Use category + city instead: "Barcelona restaurant"
+const FOOD_TYPES = ["restaurant", "cafe", "bistro", "bar", "food", "eatery", "diner", "brasserie"];
+function isFoodVenue(place = {}) {
+  const t = `${place?.type || ""} ${place?.category || ""}`.toLowerCase();
+  return FOOD_TYPES.some((f) => t.includes(f));
 }
 
 function uniqueStrings(values = []) {
@@ -95,18 +106,22 @@ function buildQueryCandidates(place = {}) {
   const neighborhood = extractNeighborhood(safeLocation);   // "Poble Sec" or ""
   const city         = extractCity(safeLocation);           // "Barcelona"
 
-  const venueWithCity         = venue && city ? `${venue} ${city}` : "";
+  const isFood                = isFoodVenue(place);
+  const safeVenue             = isFood ? "" : venue;   // skip specific restaurant names
+  const venueWithCity         = safeVenue && city ? `${safeVenue} ${city}` : "";
   const neighborhoodWithCity  = neighborhood && city ? `${neighborhood} ${city}` : "";
   const cleanedTitle          = clean(title);
   const titleWithCity         = cleanedTitle && city ? `${cleanedTitle} ${city}` : "";
+  const foodFallback          = isFood && city ? `${city} restaurant food` : "";
   const cityFallback          = city ? `${city} travel` : "";
 
   return uniqueStrings([
-    venue,                // "Picasso Museum"          ← named place, best
+    safeVenue,            // "Picasso Museum"              ← named place (skipped for restaurants)
     venueWithCity,        // "Picasso Museum Barcelona"
-    neighborhoodWithCity, // "Poble Sec Barcelona"     ← street fallback
-    cleanedTitle,         // "Gothic Quarter"
-    titleWithCity,        // "Gothic Quarter Barcelona"
+    cleanedTitle,         // "La Boqueria" / "Gothic Quarter"
+    titleWithCity,        // "La Boqueria Barcelona"
+    neighborhoodWithCity, // "Poble Sec Barcelona"         ← street fallback
+    foodFallback,         // "Barcelona restaurant food"   ← restaurant fallback
     cityFallback,         // "Barcelona travel"
   ]);
 }
@@ -230,6 +245,18 @@ router.post("/photos", async (req, res) => {
   } catch (error) {
     console.error("place photos error:", error);
     return res.status(500).json({ message: "Failed to fetch place photos." });
+  }
+});
+
+// Clear all cached photos so they get re-fetched with fresh queries
+router.delete("/photos/cache", async (_req, res) => {
+  try {
+    photoCache.clear();
+    await PlacePhoto.deleteMany({});
+    return res.json({ message: "Photo cache cleared." });
+  } catch (error) {
+    console.error("Clear cache error:", error);
+    return res.status(500).json({ message: "Failed to clear cache." });
   }
 });
 
