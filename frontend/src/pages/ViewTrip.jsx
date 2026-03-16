@@ -251,15 +251,6 @@ export default function ViewTrip() {
   const [openDays, setOpenDays] = useState({});
   const [downloadError, setDownloadError] = useState("");
 
-  useEffect(() => {
-    if (!trip?.itinerary?.days?.length) return;
-    const next = {};
-    trip.itinerary.days.forEach((day, index) => {
-      next[day.day] = false;
-    });
-    setOpenDays(next);
-  }, [trip]);
-
   const locations = useMemo(
     () => extractUniqueLocations(trip?.itinerary, primaryDestination, t("viewTrip.place")),
     [trip, primaryDestination, t]
@@ -1089,7 +1080,7 @@ function DayCard({ day, isOpen, onToggle, photoMap = new Map() }) {
     >
       <div className="relative overflow-hidden bg-linear-to-br from-slate-900 via-slate-800 to-indigo-950 p-5 text-white">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.12),transparent_20%),radial-gradient(circle_at_bottom_left,rgba(56,189,248,0.16),transparent_24%)]" />
-        <div className="relative flex items-start justify-between gap-4">
+        <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div>
             <div className="text-xs font-bold uppercase tracking-[0.25em] text-white/70">
               {t("viewTrip.dayLabel", { number: day.day })}
@@ -1100,7 +1091,7 @@ function DayCard({ day, isOpen, onToggle, photoMap = new Map() }) {
             <div className="mt-2 text-sm text-white/80">{day.date}</div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
             <Badge className="border-white/20 bg-white/10 text-white">
               {t("viewTrip.activitiesCount", { count: activityCount })}
             </Badge>
@@ -1258,7 +1249,7 @@ function FancyInfoTile({ label, value, icon }) {
           <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
             {label}
           </div>
-          <div className="mt-1 text-sm font-semibold leading-6 text-slate-800">
+          <div className="mt-1 text-sm font-semibold leading-6 text-slate-800 wrap-break-word">
             {value}
           </div>
         </div>
@@ -1294,7 +1285,7 @@ function MiniSection({ title, items, icon, photoMap = new Map() }) {
               className="overflow-hidden rounded-[1.4rem] border border-slate-200 bg-linear-to-br from-white to-slate-50 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md"
             >
               {photoUrl && (
-                <div className="relative h-36 w-full overflow-hidden">
+                <div className="relative h-28 sm:h-36 w-full overflow-hidden">
                   <img
                     src={photoUrl}
                     alt={x.title || x.location}
@@ -1305,7 +1296,7 @@ function MiniSection({ title, items, icon, photoMap = new Map() }) {
                 </div>
               )}
               <div className="px-4 py-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-extrabold tracking-tight text-slate-900">
                       {x.title}
