@@ -309,8 +309,7 @@ export default function CityAutoComplete({
                 key={item.id}
                 type="button"
                 onMouseEnter={() => setHighlightedIndex(index)}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => handleSelect(item)}
+                onMouseDown={(e) => { e.preventDefault(); handleSelect(item); }}
                 className={cx(
                   "flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition",
                   active ? "bg-sky-50" : "hover:bg-sky-50"
