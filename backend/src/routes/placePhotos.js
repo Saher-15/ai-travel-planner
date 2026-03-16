@@ -53,13 +53,32 @@ function isHebrew(value = "") {
   return /[\u0590-\u05FF]/.test(value);
 }
 
-// Extract venue name: first segment before comma — e.g. "Picasso Museum, Barcelona, Spain" → "Picasso Museum"
-function extractVenueName(location = "") {
-  const first = clean(location).split(",")[0];
-  return isGenericLocation(first) ? "" : first;
+const STREET_PREFIXES = /^(carrer|calle|cami|rue|via|viale|strasse|str\.|avenue|ave\.?|blvd\.?|road|rd\.?|street|st\.?|drive|dr\.?|lane|ln\.?|place|pl\.?|square|piazza|platz|passeig|paseo|rambla|avenida|rua)\b/i;
+
+function isStreetAddress(value = "") {
+  return STREET_PREFIXES.test(clean(value));
 }
 
-// Extract city: second-to-last segment — e.g. "Picasso Museum, Barcelona, Spain" → "Barcelona"
+// Extract venue: first location segment, only if it's NOT a street address
+// "Picasso Museum, Barcelona, Spain"      → "Picasso Museum"
+// "Carrer de Blai, Poble Sec, Barcelona"  → "" (skip — it's a street)
+function extractVenueName(location = "") {
+  const parts = clean(location).split(",").map((p) => clean(p)).filter(Boolean);
+  const first = parts[0] || "";
+  if (isGenericLocation(first) || isStreetAddress(first)) return "";
+  return first;
+}
+
+// Extract neighborhood: second segment when first is a street
+// "Carrer de Blai, Poble Sec, Barcelona, Spain" → "Poble Sec"
+function extractNeighborhood(location = "") {
+  const parts = clean(location).split(",").map((p) => clean(p)).filter(Boolean);
+  if (parts.length >= 3 && isStreetAddress(parts[0])) return parts[1];
+  return "";
+}
+
+// Extract city: second-to-last segment
+// "Picasso Museum, Barcelona, Spain" → "Barcelona"
 function extractCity(location = "") {
   const parts = clean(location).split(",").map((p) => clean(p)).filter(Boolean);
   return parts.length >= 2 ? parts[parts.length - 2] : "";
@@ -72,20 +91,23 @@ function buildQueryCandidates(place = {}) {
 
   const safeLocation = isGenericLocation(location) ? "" : location;
 
-  const venue = extractVenueName(safeLocation);   // "Picasso Museum"
-  const city  = extractCity(safeLocation);         // "Barcelona"
+  const venue        = extractVenueName(safeLocation);      // "Picasso Museum" or ""
+  const neighborhood = extractNeighborhood(safeLocation);   // "Poble Sec" or ""
+  const city         = extractCity(safeLocation);           // "Barcelona"
 
-  const venueWithCity  = venue && city ? `${venue} ${city}` : "";   // "Picasso Museum Barcelona"
-  const cleanedTitle   = clean(title);
-  const titleWithCity  = cleanedTitle && city ? `${cleanedTitle} ${city}` : ""; // "Gothic Quarter Barcelona"
-  const cityFallback   = city ? `${city} travel` : "";
+  const venueWithCity         = venue && city ? `${venue} ${city}` : "";
+  const neighborhoodWithCity  = neighborhood && city ? `${neighborhood} ${city}` : "";
+  const cleanedTitle          = clean(title);
+  const titleWithCity         = cleanedTitle && city ? `${cleanedTitle} ${city}` : "";
+  const cityFallback          = city ? `${city} travel` : "";
 
   return uniqueStrings([
-    venue,            // "Picasso Museum"           ← best match
-    venueWithCity,    // "Picasso Museum Barcelona"
-    cleanedTitle,     // "Gothic Quarter"
-    titleWithCity,    // "Gothic Quarter Barcelona"
-    cityFallback,     // "Barcelona travel"
+    venue,                // "Picasso Museum"          ← named place, best
+    venueWithCity,        // "Picasso Museum Barcelona"
+    neighborhoodWithCity, // "Poble Sec Barcelona"     ← street fallback
+    cleanedTitle,         // "Gothic Quarter"
+    titleWithCity,        // "Gothic Quarter Barcelona"
+    cityFallback,         // "Barcelona travel"
   ]);
 }
 
