@@ -1380,7 +1380,7 @@ function buildHotellookUrl({ destination, startDate, endDate, travelers }) {
     marker: "508405",
     currency: "USD",
   });
-  return `https://hotellook.com/search?${params.toString()}`;
+  return `https://www.hotellook.com/search?${params.toString()}`;
 }
 
 function HotelsSection({ trip }) {

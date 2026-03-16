@@ -24,7 +24,7 @@ function buildHotelUrl({ destination, checkIn, checkOut, adults, rooms }) {
     rooms: String(rooms || 1),
     marker: MARKER,
   });
-  return `https://hotellook.com/search?${params.toString()}`;
+  return `https://www.hotellook.com/search?${params.toString()}`;
 }
 
 function todayStr() {
