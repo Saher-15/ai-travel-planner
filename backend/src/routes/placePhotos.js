@@ -137,6 +137,76 @@ async function safeJson(response) {
   }
 }
 
+// ------------------------------
+// Wikipedia REST API (free, no key)
+// Great for famous landmarks, museums, cities
+// ------------------------------
+async function searchWikipedia(query) {
+  if (!query) return null;
+
+  const cacheKey = `wiki:${query.toLowerCase()}`;
+
+  // 1) In-memory cache
+  const cached = photoCache.get(cacheKey);
+  if (cached !== undefined) return cached;
+
+  // 2) MongoDB cache
+  const dbCached = await PlacePhoto.findOne({ query: cacheKey }).lean();
+  if (dbCached) {
+    const result = dbCached.photoUrl
+      ? { photoUrl: dbCached.photoUrl, photoAttribution: dbCached.photoAttribution }
+      : null;
+    photoCache.set(cacheKey, result);
+    return result;
+  }
+
+  // 3) Wikipedia REST summary API
+  try {
+    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "TravelPlannerApp/1.0 (open-source educational project)" },
+    });
+
+    const data = res.ok ? await safeJson(res) : null;
+
+    // Skip disambiguation pages and missing articles
+    const src = data?.thumbnail?.source || data?.originalimage?.source || null;
+    if (!src || data?.type === "disambiguation") {
+      photoCache.set(cacheKey, null);
+      await PlacePhoto.updateOne(
+        { query: cacheKey },
+        { query: cacheKey, photoUrl: null, photoAttribution: null },
+        { upsert: true }
+      );
+      return null;
+    }
+
+    // Upscale thumbnail to 800px wide
+    const photoUrl = src.replace(/\/\d+px-([^/]+)$/, "/800px-$1");
+
+    const result = {
+      photoUrl,
+      photoAttribution: {
+        photographer: data.description || "",
+        photographerUrl: data?.content_urls?.desktop?.page || "",
+        source: "Wikipedia",
+      },
+    };
+
+    photoCache.set(cacheKey, result);
+    await PlacePhoto.updateOne(
+      { query: cacheKey },
+      { query: cacheKey, photoUrl: result.photoUrl, photoAttribution: result.photoAttribution },
+      { upsert: true }
+    );
+
+    return result;
+  } catch {
+    photoCache.set(cacheKey, null);
+    return null;
+  }
+}
+
 async function searchPixabay(query) {
   if (!query || !PIXABAY_KEY) return null;
 
@@ -205,40 +275,36 @@ router.post("/photos", async (req, res) => {
   try {
     const places = Array.isArray(req.body?.places) ? req.body.places : [];
 
-    if (!places.length || !PIXABAY_KEY) {
+    if (!places.length) {
       return res.json({ results: [] });
     }
 
     const results = await Promise.all(
       places.map(async (place) => {
         const candidates = buildQueryCandidates(place);
-
-        // Try candidates in order — venue → venue+city → title → title+city → city
-        for (const candidate of candidates) {
-          const found = await searchPixabay(candidate);
-          if (found?.photoUrl) {
-            return {
-              query: candidate,
-              matchedQuery: found.matchedQuery,
-              title: clean(place?.title),
-              location: clean(place?.location),
-              address: clean(place?.address),
-              photoUrl: found.photoUrl,
-              photoAttribution: found.photoAttribution,
-            };
-          }
-        }
-
-        // No photo found
-        return {
-          query: clean(place?.title),
-          matchedQuery: null,
+        const base = {
           title: clean(place?.title),
           location: clean(place?.location),
           address: clean(place?.address),
-          photoUrl: null,
-          photoAttribution: null,
         };
+
+        // For each candidate: try Wikipedia first (free, real photos),
+        // then fall back to Pixabay (stock photos)
+        for (const candidate of candidates) {
+          const wiki = await searchWikipedia(candidate);
+          if (wiki?.photoUrl) {
+            return { ...base, query: candidate, matchedQuery: candidate, photoUrl: wiki.photoUrl, photoAttribution: wiki.photoAttribution };
+          }
+
+          if (PIXABAY_KEY) {
+            const pix = await searchPixabay(candidate);
+            if (pix?.photoUrl) {
+              return { ...base, query: candidate, matchedQuery: pix.matchedQuery, photoUrl: pix.photoUrl, photoAttribution: pix.photoAttribution };
+            }
+          }
+        }
+
+        return { ...base, query: clean(place?.title), matchedQuery: null, photoUrl: null, photoAttribution: null };
       })
     );
 
