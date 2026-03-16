@@ -135,7 +135,7 @@ export default function MapTilerMap({
 
     const map = new maptilersdk.Map({
       container: containerRef.current,
-      style: maptilersdk.MapStyle.OUTDOOR,
+      style: "outdoor-v2",
       center: [center.lng, center.lat],
       zoom,
     });
