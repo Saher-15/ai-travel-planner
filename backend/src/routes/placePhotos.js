@@ -2,12 +2,12 @@ import express from "express";
 import fetch from "node-fetch";
 import { LRUCache } from "lru-cache";
 
-// Cache Unsplash results for 6 hours — photos don't change often
+// Cache Pixabay results for 6 hours — photos don't change often
 const photoCache = new LRUCache({ max: 500, ttl: 1000 * 60 * 60 * 6 });
 
 const router = express.Router();
 
-const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
+const PIXABAY_KEY = process.env.PIXABAY_KEY;
 
 // ------------------------------
 // Helpers
@@ -61,15 +61,12 @@ function buildQueryCandidates(place = {}) {
   ]);
 }
 
-/* ⭐ Extract city + country from ANY location string */
 function buildCityCountryFallback(place = {}) {
   const loc = clean(place?.location || "");
   if (!loc) return null;
 
   const parts = loc.split(",").map((p) => clean(p)).filter(Boolean);
 
-  // Example Dubai:
-  // ["Burj Khalifa", "Downtown Dubai", "Dubai", "United Arab Emirates"]
   if (parts.length >= 2) {
     const city = parts[parts.length - 2];
     const country = parts[parts.length - 1];
@@ -88,26 +85,27 @@ async function safeJson(response) {
   }
 }
 
-async function searchUnsplash(query) {
-  if (!query || !UNSPLASH_KEY) return null;
+async function searchPixabay(query) {
+  if (!query || !PIXABAY_KEY) return null;
 
   const cached = photoCache.get(query);
   if (cached !== undefined) return cached;
 
   const url =
-    `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}` +
-    `&per_page=6&orientation=landscape&content_filter=high&client_id=${UNSPLASH_KEY}`;
+    `https://pixabay.com/api/?key=${PIXABAY_KEY}` +
+    `&q=${encodeURIComponent(query)}` +
+    `&image_type=photo&orientation=horizontal&per_page=5&safesearch=true&order=popular`;
 
   const response = await fetch(url);
   const data = await safeJson(response);
 
   if (!response.ok) {
-    console.error("Unsplash error:", { status: response.status, query, errors: data?.errors || data });
+    console.error("Pixabay error:", { status: response.status, query });
     photoCache.set(query, null);
     return null;
   }
 
-  const first = Array.isArray(data?.results) ? data.results[0] : null;
+  const first = Array.isArray(data?.hits) ? data.hits[0] : null;
   if (!first) {
     photoCache.set(query, null);
     return null;
@@ -115,14 +113,12 @@ async function searchUnsplash(query) {
 
   const result = {
     matchedQuery: query,
-    photoUrl: first?.urls?.regular || first?.urls?.full || first?.urls?.small || null,
-    photoAttribution: first?.user
-      ? {
-          photographer: first.user.name || "",
-          photographerUrl: first.user.links?.html || "",
-          source: "Unsplash",
-        }
-      : null,
+    photoUrl: first.largeImageURL || first.webformatURL || null,
+    photoAttribution: {
+      photographer: first.user || "",
+      photographerUrl: `https://pixabay.com/users/${first.user}-${first.user_id}/`,
+      source: "Pixabay",
+    },
   };
 
   photoCache.set(query, result);
@@ -136,7 +132,7 @@ router.post("/photos", async (req, res) => {
   try {
     const places = Array.isArray(req.body?.places) ? req.body.places : [];
 
-    if (!places.length || !UNSPLASH_KEY) {
+    if (!places.length || !PIXABAY_KEY) {
       return res.json({ results: [] });
     }
 
@@ -146,7 +142,7 @@ router.post("/photos", async (req, res) => {
 
         // 1) Try normal candidates
         for (const candidate of candidates) {
-          const found = await searchUnsplash(candidate);
+          const found = await searchPixabay(candidate);
           if (found?.photoUrl) {
             return {
               query: candidate,
@@ -163,7 +159,7 @@ router.post("/photos", async (req, res) => {
         // 2) Try city + country fallback
         const cityCountry = buildCityCountryFallback(place);
         if (cityCountry) {
-          const found = await searchUnsplash(cityCountry);
+          const found = await searchPixabay(cityCountry);
 
           if (found?.photoUrl) {
             return {
