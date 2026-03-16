@@ -498,6 +498,7 @@ function buildItineraryPrompt({
   startDate,
   endDate,
   preferences,
+  language = "en",
 }) {
   const {
     travelers = 1,
@@ -721,12 +722,17 @@ Quality rules:
 - Food suggestions should be destination-specific.
 - Tips should be practical and concise.
 
+${language === "he" ? `Language rules:
+- Write ALL text fields in Hebrew (title, notes, foodSuggestion, backupPlan, tips, reason, style, budget).
+- Keep place names, addresses, and locations in their original language (English/local) so maps and search work correctly.
+- The "destination" field in tripSummary must stay in English/original.
+` : ""}
 Return only JSON.
 `.trim();
 }
 
 export async function generateItinerary(payload) {
-  const prompt = buildItineraryPrompt(payload);
+  const prompt = buildItineraryPrompt({ ...payload, language: payload.language || "en" });
 
   const response = await openai.responses.create({
     model: "gpt-4.1-mini",

@@ -178,7 +178,7 @@ function normalizePlace(place) {
 }
 
 export default function CreateTrip() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const eventTypeCards = eventTypeCardDefs.map((item) => ({
     ...item,
@@ -508,6 +508,7 @@ export default function CreateTrip() {
 
     const payload = {
       tripMode,
+      language: i18n.language?.split("-")[0] || "en",
       destination: tripMode === "single" ? cleanDestination : cities.join(" → "),
       destinations: tripMode === "multi" ? cities : [cleanDestination],
       startDate,

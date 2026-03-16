@@ -762,7 +762,7 @@ router.post("/generate", authMiddleware, aiLimiter, async (req, res) => {
  */
 router.post("/generate-and-save", authMiddleware, aiLimiter, async (req, res) => {
   try {
-    const { tripMode, destination, destinations, startDate, endDate, preferences } = req.body;
+    const { tripMode, destination, destinations, startDate, endDate, preferences, language } = req.body;
 
     const normalizedTripMode = normalizeTripMode(tripMode);
     const cleanDestination = String(destination || "").trim();
@@ -790,6 +790,7 @@ router.post("/generate-and-save", authMiddleware, aiLimiter, async (req, res) =>
         startDate,
         endDate,
         preferences: normalizedPreferences,
+        language: language === "he" ? "he" : "en",
       }),
       fetchDestinationEvents({
         destination: cleanDestinations[0] || cleanDestination,
