@@ -44,9 +44,13 @@ function isGenericLocation(value = "") {
   );
 }
 
+function isHebrew(value = "") {
+  return /[\u0590-\u05FF]/.test(value);
+}
+
 function buildQueryCandidates(place = {}) {
   const rawTitle = clean(place?.title || place?.name || place?.placeName);
-  const title = cleanTitleForPhotoSearch(rawTitle);
+  const title = isHebrew(rawTitle) ? "" : cleanTitleForPhotoSearch(rawTitle);
   const location = clean(place?.location);
   const address = clean(place?.address);
 
@@ -55,8 +59,8 @@ function buildQueryCandidates(place = {}) {
 
   return uniqueStrings([
     title && safeLocation ? `${title}, ${safeLocation}` : "",
-    title,
     safeLocation,
+    title,
     safeAddress
   ]);
 }
