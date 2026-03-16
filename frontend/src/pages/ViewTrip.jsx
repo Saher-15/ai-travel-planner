@@ -187,32 +187,13 @@ function usePlacePhotos(places, destination = "") {
     const { data } = await api.post("/places/photos", { places: payload });
     const results = Array.isArray(data?.results) ? data.results : [];
 
-    return stablePlaces.map((item) => {
-      const itemKey = normalizeText(
-        item.photoQuery ||
-          buildPhotoQuery(item, destination) ||
-          item.title ||
-          item.name ||
-          item.placeName ||
-          item.address ||
-          item.location
-      );
-
-const match = results.find((r) =>
-  normalizeText(r?.query) === itemKey ||
-  normalizeText(r?.matchedQuery) === itemKey
-);
-
+    // Promise.all preserves order so results[i] matches stablePlaces[i]
+    return stablePlaces.map((item, idx) => {
+      const result = results[idx];
       return {
         ...item,
-        photoUrl:
-          item.photoUrl ||
-          item.image ||
-          item.imageUrl ||
-          item.photo ||
-          match?.photoUrl ||
-          null,
-        photoAttribution: item.photoAttribution || match?.photoAttribution || null,
+        photoUrl: item.photoUrl || item.image || item.imageUrl || item.photo || result?.photoUrl || null,
+        photoAttribution: item.photoAttribution || result?.photoAttribution || null,
       };
     });
   }, [stablePlaces, destination]);
