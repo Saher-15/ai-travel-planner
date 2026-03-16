@@ -35,6 +35,7 @@ export default function CityAutoComplete({
   const apiKey = import.meta.env.VITE_MAPTILER_KEY;
 
   const [query, setQuery] = useState(value || "");
+  const [searchQuery, setSearchQuery] = useState(value || "");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -47,6 +48,7 @@ export default function CityAutoComplete({
 
   useEffect(() => {
     setQuery(value || "");
+    setSearchQuery(value || "");
   }, [value]);
 
   useEffect(() => {
@@ -69,7 +71,7 @@ export default function CityAutoComplete({
       return;
     }
 
-    const trimmed = query.trim();
+    const trimmed = searchQuery.trim();
 
     if (trimmed.length < 2) {
       setResults([]);
@@ -169,7 +171,7 @@ export default function CityAutoComplete({
     }, 300);
 
     return () => clearTimeout(debounceRef.current);
-  }, [query, apiKey, disabled, i18n.language]);
+  }, [searchQuery, apiKey, disabled, i18n.language]);
 
   const showEmpty = useMemo(
     () =>
@@ -184,6 +186,7 @@ export default function CityAutoComplete({
   function handleInputChange(e) {
     const next = e.target.value;
     setQuery(next);
+    setSearchQuery(next);
     setHighlightedIndex(-1);
     onChange?.(next);
 
@@ -195,11 +198,14 @@ export default function CityAutoComplete({
   }
 
   function handleSelect(item) {
+    clearTimeout(debounceRef.current);
     setQuery(item.placeName);
-    onChange?.(item.placeName);
-    onSelect?.(item);
+    // Do NOT update searchQuery — prevents re-opening dropdown after selection
+    setResults([]);
     setOpen(false);
     setHighlightedIndex(-1);
+    onChange?.(item.placeName);
+    onSelect?.(item);
   }
 
   function handleKeyDown(e) {
