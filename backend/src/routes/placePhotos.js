@@ -160,18 +160,23 @@ async function searchWikipedia(query) {
     return result;
   }
 
-  // 3) Wikipedia REST summary API
+  // 3) Wikipedia REST summary API (5s timeout)
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
     const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
     const res = await fetch(url, {
+      signal: controller.signal,
       headers: { "User-Agent": "TravelPlannerApp/1.0 (open-source educational project)" },
     });
+    clearTimeout(timeout);
 
     const data = res.ok ? await safeJson(res) : null;
 
-    // Skip disambiguation pages and missing articles
-    const src = data?.thumbnail?.source || data?.originalimage?.source || null;
-    if (!src || data?.type === "disambiguation") {
+    // Skip disambiguation pages, missing articles, and pages without images
+    const src = data?.thumbnail?.source || null;
+    if (!src || data?.type === "disambiguation" || data?.type === "no-extract") {
       photoCache.set(cacheKey, null);
       await PlacePhoto.updateOne(
         { query: cacheKey },
@@ -181,11 +186,9 @@ async function searchWikipedia(query) {
       return null;
     }
 
-    // Upscale thumbnail to 800px wide
-    const photoUrl = src.replace(/\/\d+px-([^/]+)$/, "/800px-$1");
-
+    // Use thumbnail URL as-is — Wikimedia thumbnails are always valid direct URLs
     const result = {
-      photoUrl,
+      photoUrl: src,
       photoAttribution: {
         photographer: data.description || "",
         photographerUrl: data?.content_urls?.desktop?.page || "",
