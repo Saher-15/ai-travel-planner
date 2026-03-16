@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { MapPin, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Card, CardBody, Badge } from "../components/UI.jsx";
+import CityAutoComplete from "../components/CityAutoComplete.jsx";
 
 const VIATOR_PID = import.meta.env.VITE_VIATOR_PID || "";
 
@@ -80,20 +81,13 @@ export default function Attractions() {
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-500">
                 {t("attractions.destination")}
               </label>
-              <div className="relative">
-                <MapPin
-                  size={15}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-                <input
-                  type="text"
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  placeholder={t("attractions.destinationPlaceholder")}
-                  required
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-9 pr-4 text-sm text-slate-800 outline-none transition focus:border-emerald-300 focus:bg-white focus:ring-4 focus:ring-emerald-100"
-                />
-              </div>
+              <CityAutoComplete
+                label=""
+                value={destination}
+                onChange={setDestination}
+                onSelect={(item) => setDestination(item.placeName)}
+                placeholder={t("attractions.destinationPlaceholder")}
+              />
             </div>
 
             {/* Category filter */}

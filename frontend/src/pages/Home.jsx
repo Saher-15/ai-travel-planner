@@ -2,14 +2,11 @@ import { useMemo, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
-  Building2,
   Calendar,
   Compass,
   FolderKanban,
   Globe2,
-  MapPin,
   MapPinned,
-  PlaneLanding,
   PlaneTakeoff,
   Search,
   Sparkles,
@@ -17,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button, Card, CardBody, Badge } from "../components/UI.jsx";
 import { useTranslation } from "react-i18next";
+import CityAutoComplete from "../components/CityAutoComplete.jsx";
 
 const cx = (...c) => c.filter(Boolean).join(" ");
 
@@ -576,10 +574,7 @@ function QuickSearch() {
           >
             <div className="min-w-44 flex-1">
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("hotels.destination")}</label>
-              <div className="relative">
-                <Building2 size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" value={hotelDest} onChange={(e) => setHotelDest(e.target.value)} placeholder={t("hotels.destinationPlaceholder")} required className={INPUT_CLS} />
-              </div>
+              <CityAutoComplete label="" value={hotelDest} onChange={setHotelDest} onSelect={(item) => setHotelDest(item.placeName)} placeholder={t("hotels.destinationPlaceholder")} />
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("hotels.checkIn")}</label>
@@ -614,17 +609,11 @@ function QuickSearch() {
           >
             <div className="min-w-40 flex-1">
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("flights.from")}</label>
-              <div className="relative">
-                <PlaneTakeoff size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" value={flightFrom} onChange={(e) => setFlightFrom(e.target.value)} placeholder={t("flights.fromPlaceholder")} required className={INPUT_CLS} />
-              </div>
+              <CityAutoComplete label="" value={flightFrom} onChange={setFlightFrom} onSelect={(item) => setFlightFrom(item.placeName)} placeholder={t("flights.fromPlaceholder")} />
             </div>
             <div className="min-w-40 flex-1">
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("flights.to")}</label>
-              <div className="relative">
-                <PlaneLanding size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" value={flightTo} onChange={(e) => setFlightTo(e.target.value)} placeholder={t("flights.toPlaceholder")} required className={INPUT_CLS} />
-              </div>
+              <CityAutoComplete label="" value={flightTo} onChange={setFlightTo} onSelect={(item) => setFlightTo(item.placeName)} placeholder={t("flights.toPlaceholder")} />
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("flights.departure")}</label>
@@ -646,10 +635,7 @@ function QuickSearch() {
           >
             <div className="min-w-60 flex-1">
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("attractions.destination")}</label>
-              <div className="relative">
-                <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" value={attrDest} onChange={(e) => setAttrDest(e.target.value)} placeholder={t("attractions.destinationPlaceholder")} required className={INPUT_CLS} />
-              </div>
+              <CityAutoComplete label="" value={attrDest} onChange={setAttrDest} onSelect={(item) => setAttrDest(item.placeName)} placeholder={t("attractions.destinationPlaceholder")} />
             </div>
             <button type="submit" className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-emerald-500">
               <Search size={15} />{t("attractions.searchButton")}
@@ -664,10 +650,7 @@ function QuickSearch() {
           >
             <div className="min-w-60 flex-1">
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("cars.pickupLocation")}</label>
-              <div className="relative">
-                <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" value={aiDest} onChange={(e) => setAiDest(e.target.value)} placeholder={t("cars.locationPlaceholder")} required className={INPUT_CLS} />
-              </div>
+              <CityAutoComplete label="" value={aiDest} onChange={setAiDest} onSelect={(item) => setAiDest(item.placeName)} placeholder={t("cars.locationPlaceholder")} />
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("cars.pickupDate")}</label>
@@ -696,10 +679,7 @@ function QuickSearch() {
           >
             <div className="min-w-60 flex-1">
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("home.quickSearch.destination")}</label>
-              <div className="relative">
-                <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" value={aiDest} onChange={(e) => setAiDest(e.target.value)} placeholder={t("home.quickSearch.destinationPlaceholder")} className={INPUT_CLS} />
-              </div>
+              <CityAutoComplete label="" value={aiDest} onChange={setAiDest} onSelect={(item) => setAiDest(item.placeName)} placeholder={t("home.quickSearch.destinationPlaceholder")} />
             </div>
             <button type="submit" className="inline-flex items-center gap-2 rounded-2xl bg-sky-600 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-sky-500">
               <Search size={15} />{t("home.quickSearch.planButton")}

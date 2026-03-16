@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Car, Calendar, MapPin, Search } from "lucide-react";
+import { Car, Calendar, Search } from "lucide-react";
 import { Card, CardBody, Badge } from "../components/UI.jsx";
+import CityAutoComplete from "../components/CityAutoComplete.jsx";
 
 const RENTALCARS_CODE = import.meta.env.VITE_RENTALCARS_CODE || "";
 
@@ -83,17 +84,13 @@ export default function Cars() {
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-500">
                   {t("cars.pickupLocation")}
                 </label>
-                <div className="relative">
-                  <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                    placeholder={t("cars.locationPlaceholder")}
-                    required
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-9 pr-4 text-sm text-slate-800 outline-none transition focus:border-amber-300 focus:bg-white focus:ring-4 focus:ring-amber-100"
-                  />
-                </div>
+                <CityAutoComplete
+                  label=""
+                  value={destination}
+                  onChange={setDestination}
+                  onSelect={(item) => setDestination(item.placeName)}
+                  placeholder={t("cars.locationPlaceholder")}
+                />
               </div>
 
               {/* Pick-up date */}
