@@ -37,8 +37,9 @@ function cleanTitleForPhotoSearch(value = "") {
       .replace(/\bstroll\b/gi, "")
       .replace(/\bday\s+trip\b/gi, "")
       .replace(/\band\s+\w+/gi, "")
+      .replace(/\bmarket\b/gi, "")
       .replace(/[–—]/g, " ")
-  );
+  ).replace(/^(a|an|the)\s+/i, "");
 }
 
 // For food/restaurant/cafe types, the venue name is often unknown to Pixabay
