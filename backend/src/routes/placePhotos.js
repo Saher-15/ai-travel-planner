@@ -8,6 +8,8 @@ const photoCache = new LRUCache({ max: 500, ttl: 1000 * 60 * 60 * 6 });
 
 const router = express.Router();
 
+const PIXABAY_KEY = process.env.PIXABAY_KEY;
+
 
 // ------------------------------
 // Helpers
@@ -211,6 +213,53 @@ async function searchWikipedia(query) {
 
 
 // ------------------------------
+// Pixabay — generic city/category queries only
+// ------------------------------
+async function searchPixabay(query) {
+  if (!query || !PIXABAY_KEY) return null;
+
+  const cached = photoCache.get(query);
+  if (cached !== undefined) return cached;
+
+  const dbCached = await PlacePhoto.findOne({ query }).lean();
+  if (dbCached) {
+    const result = dbCached.photoUrl
+      ? { photoUrl: dbCached.photoUrl, photoAttribution: dbCached.photoAttribution }
+      : null;
+    photoCache.set(query, result);
+    return result;
+  }
+
+  const url =
+    `https://pixabay.com/api/?key=${PIXABAY_KEY}` +
+    `&q=${encodeURIComponent(query)}` +
+    `&image_type=photo&orientation=horizontal&per_page=5&safesearch=true&order=popular`;
+
+  const res = await fetch(url);
+  const data = await safeJson(res);
+  const first = res.ok && Array.isArray(data?.hits) ? data.hits[0] : null;
+
+  if (!first) {
+    photoCache.set(query, null);
+    await PlacePhoto.updateOne({ query }, { query, photoUrl: null, photoAttribution: null }, { upsert: true });
+    return null;
+  }
+
+  const result = {
+    photoUrl: first.largeImageURL || first.webformatURL || null,
+    photoAttribution: {
+      photographer: first.user || "",
+      photographerUrl: `https://pixabay.com/users/${first.user}-${first.user_id}/`,
+      source: "Pixabay",
+    },
+  };
+
+  photoCache.set(query, result);
+  await PlacePhoto.updateOne({ query }, { query, photoUrl: result.photoUrl, photoAttribution: result.photoAttribution }, { upsert: true });
+  return result;
+}
+
+// ------------------------------
 // Main Route
 // ------------------------------
 router.post("/photos", async (req, res) => {
@@ -230,12 +279,21 @@ router.post("/photos", async (req, res) => {
           address: clean(place?.address),
         };
 
-        // Only use Wikipedia — real, verified photos only.
-        // No Pixabay fallback: wrong stock photos (ducks for a restaurant) are worse than no photo.
+        // 1) Wikipedia first — real verified photos for landmarks/museums/cities
         for (const candidate of candidates) {
           const wiki = await searchWikipedia(candidate);
           if (wiki?.photoUrl) {
             return { ...base, query: candidate, matchedQuery: candidate, photoUrl: wiki.photoUrl, photoAttribution: wiki.photoAttribution };
+          }
+        }
+
+        // 2) Pixabay fallback — but ONLY with the last 2 generic candidates:
+        //    e.g. "Barcelona restaurant food" or "Barcelona travel"
+        //    These are always city/category level, never wrong specific names.
+        for (const candidate of candidates.slice(-2)) {
+          const pix = await searchPixabay(candidate);
+          if (pix?.photoUrl) {
+            return { ...base, query: candidate, matchedQuery: candidate, photoUrl: pix.photoUrl, photoAttribution: pix.photoAttribution };
           }
         }
 
