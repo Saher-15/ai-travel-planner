@@ -19,6 +19,7 @@
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "bottleneck": "^2.19.5",
+    "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",

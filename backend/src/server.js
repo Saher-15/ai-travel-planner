@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
+import compression from "compression";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -43,6 +44,7 @@ app.use(
   })
 );
 
+app.use(compression());
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 

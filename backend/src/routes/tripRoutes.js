@@ -878,7 +878,10 @@ router.post("/", authMiddleware, async (req, res) => {
  */
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const trips = await Trip.find({ userId: req.user.id }).sort({ createdAt: -1 }).lean();
+    const trips = await Trip.find({ userId: req.user.id })
+      .select("destination startDate endDate preferences itinerary.tripSummary createdAt")
+      .sort({ createdAt: -1 })
+      .lean();
     return res.json(trips);
   } catch {
     return res.status(500).json({ message: "Failed to fetch trips" });
