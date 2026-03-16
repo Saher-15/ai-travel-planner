@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 function cx(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -30,6 +31,7 @@ export default function CityAutoComplete({
   error = "",
   disabled = false,
 }) {
+  const { i18n } = useTranslation();
   const apiKey = import.meta.env.VITE_MAPTILER_KEY;
 
   const [query, setQuery] = useState(value || "");
@@ -86,9 +88,10 @@ export default function CityAutoComplete({
       setFetchError("");
 
       try {
+        const lang = i18n.language?.split("-")[0] || "en";
         const url = `https://api.maptiler.com/geocoding/${encodeURIComponent(
           trimmed
-        )}.json?key=${apiKey}&autocomplete=true&limit=8`;
+        )}.json?key=${apiKey}&autocomplete=true&limit=8&language=${lang}`;
 
         const res = await fetch(url);
 
@@ -103,6 +106,7 @@ export default function CityAutoComplete({
         const items = Array.isArray(data?.features)
           ? data.features.map((item, index) => {
               const placeName =
+                item[`place_name_${lang}`] ||
                 item.place_name ||
                 item.place_name_en ||
                 item.properties?.full_name ||
@@ -122,6 +126,7 @@ export default function CityAutoComplete({
                   item.id ||
                   `${placeName}-${item.center?.[0] || 0}-${item.center?.[1] || 0}-${index}`,
                 name:
+                  item[`text_${lang}`] ||
                   item.text ||
                   item.text_en ||
                   item.properties?.name ||
@@ -164,7 +169,7 @@ export default function CityAutoComplete({
     }, 300);
 
     return () => clearTimeout(debounceRef.current);
-  }, [query, apiKey, disabled]);
+  }, [query, apiKey, disabled, i18n.language]);
 
   const showEmpty = useMemo(
     () =>
@@ -341,7 +346,7 @@ export default function CityAutoComplete({
 
       {showEmpty ? (
         <div className="absolute z-30 mt-2 w-full rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 shadow-xl">
-          No matching cities found.
+          {i18n.language?.startsWith("he") ? "לא נמצאו ערים תואמות." : "No matching cities found."}
         </div>
       ) : null}
     </div>

@@ -1176,7 +1176,7 @@ export default function CreateTrip() {
                       {previewTitle}
                     </div>
                     <div className="mt-2 text-sm text-white/75">
-                      {startDate} → {endDate} • pace: {pace} • budget: {budget}
+                      {startDate} → {endDate} • {t("createTrip.preferences.pace")}: {t(`createTrip.preferences.paceOptions.${pace === "packed" ? "fast" : pace}`)} • {t("createTrip.preferences.budget")}: {t(`createTrip.preferences.budgetOptions.${budget === "low" ? "budget" : budget === "high" ? "luxury" : "midRange"}`)}
                     </div>
                   </div>
 
