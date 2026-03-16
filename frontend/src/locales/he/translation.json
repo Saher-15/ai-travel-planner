@@ -1148,7 +1148,19 @@
     "event": "אירוע",
     "trip": "טיול",
     "unknownDate": "תאריך לא ידוע",
-    "placesCount": "{{count}} מקומות"
+    "placesCount": "{{count}} מקומות",
+    "travelers": "נוסעים",
+    "hotels": {
+      "title": "היכן לישון ב{{destination}}",
+      "subtitle": "חפש והזמן את המלונות הטובים ביותר לטיול שלך",
+      "checkIn": "כניסה",
+      "checkOut": "יציאה",
+      "travelers": "{{count}} נוסע",
+      "travelers_plural": "{{count}} נוסעים",
+      "searchButton": "חפש מלונות ב-Booking.com",
+      "poweredBy": "מופעל על ידי Booking.com",
+      "affiliateNote": "אנחנו עשויים לקבל עמלה קטנה ללא עלות נוספת עבורך."
+    }
   },
   "editTrip": {
     "badge": "עורך טיולים ידני",

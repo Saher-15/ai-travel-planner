@@ -1148,7 +1148,19 @@
     "event": "Event",
     "trip": "Trip",
     "unknownDate": "Unknown date",
-    "placesCount": "{{count}} places"
+    "placesCount": "{{count}} places",
+    "travelers": "Travelers",
+    "hotels": {
+      "title": "Where to Stay in {{destination}}",
+      "subtitle": "Search and book the best hotels for your trip",
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "travelers": "{{count}} traveler",
+      "travelers_plural": "{{count}} travelers",
+      "searchButton": "Search Hotels on Booking.com",
+      "poweredBy": "Powered by Booking.com",
+      "affiliateNote": "We may earn a small commission at no extra cost to you."
+    }
   },
   "editTrip": {
     "badge": "Manual Trip Editor",

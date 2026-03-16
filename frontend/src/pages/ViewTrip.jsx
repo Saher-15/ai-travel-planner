@@ -403,7 +403,9 @@ export default function ViewTrip() {
           totalActivities={totalActivities}
           totalHours={totalHours}
           placeCount={placeCount}
-        />    
+        />
+
+        <HotelsSection trip={trip} />
 
         <CityPlanSection
           summary={summary}
@@ -1360,6 +1362,97 @@ function Tag({ children, color = "slate" }) {
     >
       {children}
     </span>
+  );
+}
+
+function buildBookingUrl({ destination, startDate, endDate, travelers }) {
+  const aid = import.meta.env.VITE_BOOKING_AID;
+  const params = new URLSearchParams({
+    ss: destination || "",
+    checkin: startDate || "",
+    checkout: endDate || "",
+    group_adults: String(travelers || 1),
+    no_rooms: "1",
+    lang: "en-gb",
+  });
+  if (aid) params.set("aid", aid);
+  return `https://www.booking.com/searchresults.html?${params.toString()}`;
+}
+
+function HotelsSection({ trip }) {
+  const { t } = useTranslation();
+  const destination = trip?.destination || "";
+  const startDate = trip?.startDate || "";
+  const endDate = trip?.endDate || "";
+  const travelers = trip?.preferences?.travelers || 1;
+
+  if (!destination) return null;
+
+  const url = buildBookingUrl({ destination, startDate, endDate, travelers });
+
+  return (
+    <Card className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur">
+      <div className="relative overflow-hidden bg-linear-to-br from-blue-700 via-blue-600 to-sky-500 px-6 py-6 text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_30%)]" />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-[0.25em] text-white/70">
+              🏨 {t("viewTrip.hotels.poweredBy")}
+            </div>
+            <div className="mt-2 text-xl font-black tracking-tight">
+              {t("viewTrip.hotels.title", { destination })}
+            </div>
+            <div className="mt-1 text-sm text-white/80">
+              {t("viewTrip.hotels.subtitle")}
+            </div>
+          </div>
+
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-blue-700 shadow-lg transition hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-xl"
+          >
+            {t("viewTrip.hotels.searchButton")} →
+          </a>
+        </div>
+      </div>
+
+      <CardBody>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {startDate && (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                {t("viewTrip.hotels.checkIn")}
+              </div>
+              <div className="mt-1 text-sm font-semibold text-slate-800">{startDate}</div>
+            </div>
+          )}
+          {endDate && (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                {t("viewTrip.hotels.checkOut")}
+              </div>
+              <div className="mt-1 text-sm font-semibold text-slate-800">{endDate}</div>
+            </div>
+          )}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              {t("viewTrip.travelers")}
+            </div>
+            <div className="mt-1 text-sm font-semibold text-slate-800">
+              {travelers > 1
+                ? t("viewTrip.hotels.travelers_plural", { count: travelers })
+                : t("viewTrip.hotels.travelers", { count: travelers })}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-3 text-[11px] text-slate-400">
+          {t("viewTrip.hotels.affiliateNote")}
+        </div>
+      </CardBody>
+    </Card>
   );
 }
 
