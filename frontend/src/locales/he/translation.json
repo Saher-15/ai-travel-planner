@@ -1169,9 +1169,9 @@
       "checkOut": "יציאה",
       "travelers": "{{count}} נוסע",
       "travelers_plural": "{{count}} נוסעים",
-      "searchButton": "חפש מלונות ב-Hotellook",
-      "poweredBy": "מופעל על ידי Hotellook (Travelpayouts)",
-      "affiliateNote": "מופעל על ידי Hotellook · אנו עשויים לקבל עמלה ללא עלות נוספת עבורך."
+      "searchButton": "חפש מלונות ב-Booking.com",
+      "poweredBy": "מופעל על ידי Booking.com",
+      "affiliateNote": "מופעל על ידי Booking.com · אנו עשויים לקבל עמלה ללא עלות נוספת עבורך."
     }
   },
   "editTrip": {
@@ -1273,7 +1273,7 @@
     "adults": "מבוגרים",
     "searchButton": "חפש מלונות",
     "popular": "יעדים פופולריים",
-    "affiliateNote": "מופעל על ידי Hotellook · אנחנו עשויים לקבל עמלה ללא עלות נוספת עבורך.",
+    "affiliateNote": "מופעל על ידי Booking.com · אנו עשויים לקבל עמלה ללא עלות נוספת עבורך.",
     "whyTitle": "למה להזמין דרכנו?",
     "whySubtitle": "אנחנו משווים מחירים ממאות אתרי הזמנות",
     "why": [

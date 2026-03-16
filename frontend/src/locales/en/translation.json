@@ -1169,9 +1169,9 @@
       "checkOut": "Check-out",
       "travelers": "{{count}} traveler",
       "travelers_plural": "{{count}} travelers",
-      "searchButton": "Search Hotels on Hotellook",
-      "poweredBy": "Powered by Hotellook (Travelpayouts)",
-      "affiliateNote": "Powered by Hotellook · We may earn a commission at no extra cost to you."
+      "searchButton": "Search Hotels on Booking.com",
+      "poweredBy": "Powered by Booking.com",
+      "affiliateNote": "Powered by Booking.com · We may earn a commission at no extra cost to you."
     }
   },
   "editTrip": {
@@ -1273,7 +1273,7 @@
     "adults": "Adults",
     "searchButton": "Search Hotels",
     "popular": "Popular Destinations",
-    "affiliateNote": "Powered by Hotellook · We may earn a commission at no extra cost to you.",
+    "affiliateNote": "Powered by Booking.com · We may earn a commission at no extra cost to you.",
     "whyTitle": "Why Book Through Us?",
     "whySubtitle": "We compare prices across hundreds of booking sites",
     "why": [

@@ -16,15 +16,17 @@ const POPULAR = [
 ];
 
 function buildHotelUrl({ destination, checkIn, checkOut, adults, rooms }) {
+  const aid = import.meta.env.VITE_BOOKING_AID;
   const params = new URLSearchParams({
-    destination: destination || "",
-    checkIn: checkIn || "",
-    checkOut: checkOut || "",
-    adults: String(adults || 1),
-    rooms: String(rooms || 1),
-    marker: MARKER,
+    ss: destination || "",
+    checkin: checkIn || "",
+    checkout: checkOut || "",
+    group_adults: String(adults || 1),
+    no_rooms: String(rooms || 1),
+    lang: "en-gb",
   });
-  return `https://www.hotellook.com/search?${params.toString()}`;
+  if (aid) params.set("aid", aid);
+  return `https://www.booking.com/searchresults.html?${params.toString()}`;
 }
 
 function todayStr() {

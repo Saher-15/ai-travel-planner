@@ -1372,15 +1372,17 @@ function Tag({ children, color = "slate" }) {
 }
 
 function buildHotellookUrl({ destination, startDate, endDate, travelers }) {
+  const aid = import.meta.env.VITE_BOOKING_AID;
   const params = new URLSearchParams({
-    destination: destination || "",
-    checkIn: startDate || "",
-    checkOut: endDate || "",
-    adults: String(travelers || 1),
-    marker: "508405",
-    currency: "USD",
+    ss: destination || "",
+    checkin: startDate || "",
+    checkout: endDate || "",
+    group_adults: String(travelers || 1),
+    no_rooms: "1",
+    lang: "en-gb",
   });
-  return `https://www.hotellook.com/search?${params.toString()}`;
+  if (aid) params.set("aid", aid);
+  return `https://www.booking.com/searchresults.html?${params.toString()}`;
 }
 
 function HotelsSection({ trip }) {
