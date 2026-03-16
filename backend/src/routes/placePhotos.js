@@ -1,8 +1,9 @@
 import express from "express";
 import fetch from "node-fetch";
 import { LRUCache } from "lru-cache";
+import { PlacePhoto } from "../models/PlacePhoto.js";
 
-// Cache Pixabay results for 6 hours — photos don't change often
+// In-memory cache — first layer (fast, avoids DB round-trips)
 const photoCache = new LRUCache({ max: 500, ttl: 1000 * 60 * 60 * 6 });
 
 const router = express.Router();
@@ -101,9 +102,21 @@ async function safeJson(response) {
 async function searchPixabay(query) {
   if (!query || !PIXABAY_KEY) return null;
 
+  // 1) In-memory cache (fastest)
   const cached = photoCache.get(query);
   if (cached !== undefined) return cached;
 
+  // 2) MongoDB cache (persistent across restarts)
+  const dbCached = await PlacePhoto.findOne({ query }).lean();
+  if (dbCached) {
+    const result = dbCached.photoUrl
+      ? { matchedQuery: query, photoUrl: dbCached.photoUrl, photoAttribution: dbCached.photoAttribution }
+      : null;
+    photoCache.set(query, result);
+    return result;
+  }
+
+  // 3) Call Pixabay API
   const url =
     `https://pixabay.com/api/?key=${PIXABAY_KEY}` +
     `&q=${encodeURIComponent(query)}` +
@@ -115,12 +128,14 @@ async function searchPixabay(query) {
   if (!response.ok) {
     console.error("Pixabay error:", { status: response.status, query });
     photoCache.set(query, null);
+    await PlacePhoto.updateOne({ query }, { query, photoUrl: null, photoAttribution: null }, { upsert: true });
     return null;
   }
 
   const first = Array.isArray(data?.hits) ? data.hits[0] : null;
   if (!first) {
     photoCache.set(query, null);
+    await PlacePhoto.updateOne({ query }, { query, photoUrl: null, photoAttribution: null }, { upsert: true });
     return null;
   }
 
@@ -134,7 +149,14 @@ async function searchPixabay(query) {
     },
   };
 
+  // Save to MongoDB and in-memory cache
   photoCache.set(query, result);
+  await PlacePhoto.updateOne(
+    { query },
+    { query, photoUrl: result.photoUrl, photoAttribution: result.photoAttribution },
+    { upsert: true }
+  );
+
   return result;
 }
 
