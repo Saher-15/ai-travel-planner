@@ -240,6 +240,12 @@ export default function ViewTrip() {
 
   const tripState = useAsync(async () => (await api.get(`/trips/${id}`)).data, [id]);
   const trip = tripState.data;
+
+  useEffect(() => {
+    if (trip?.destination) {
+      document.title = `${trip.destination} – Travel Planner`;
+    }
+  }, [trip?.destination]);
   const summary = trip?.itinerary?.tripSummary || {};
   const tripMode = normalizeTripMode(trip?.tripMode);
   const destinations = getTripDestinations(trip);
@@ -1365,18 +1371,16 @@ function Tag({ children, color = "slate" }) {
   );
 }
 
-function buildBookingUrl({ destination, startDate, endDate, travelers }) {
-  const aid = import.meta.env.VITE_BOOKING_AID;
+function buildHotellookUrl({ destination, startDate, endDate, travelers }) {
   const params = new URLSearchParams({
-    ss: destination || "",
-    checkin: startDate || "",
-    checkout: endDate || "",
-    group_adults: String(travelers || 1),
-    no_rooms: "1",
-    lang: "en-gb",
+    destination: destination || "",
+    checkIn: startDate || "",
+    checkOut: endDate || "",
+    adults: String(travelers || 1),
+    marker: "508405",
+    currency: "USD",
   });
-  if (aid) params.set("aid", aid);
-  return `https://www.booking.com/searchresults.html?${params.toString()}`;
+  return `https://hotellook.com/search?${params.toString()}`;
 }
 
 function HotelsSection({ trip }) {
@@ -1388,7 +1392,7 @@ function HotelsSection({ trip }) {
 
   if (!destination) return null;
 
-  const url = buildBookingUrl({ destination, startDate, endDate, travelers });
+  const url = buildHotellookUrl({ destination, startDate, endDate, travelers });
 
   return (
     <Card className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur">

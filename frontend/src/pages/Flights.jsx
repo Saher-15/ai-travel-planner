@@ -58,7 +58,8 @@ export default function Flights() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+    document.title = t("flights.pageTitle");
+  }, [t]);
 
   const swapCities = () => {
     setOrigin(destination);

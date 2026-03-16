@@ -257,6 +257,7 @@ function Footer({ isLoggedIn, isAdmin }) {
               <FooterLink to="/hotels">{t("nav.hotels")}</FooterLink>
               <FooterLink to="/flights">{t("nav.flights")}</FooterLink>
               <FooterLink to="/attractions">{t("nav.attractions")}</FooterLink>
+              <FooterLink to="/cars">{t("nav.cars")}</FooterLink>
               <FooterLink to="/contact">{t("nav.contact")}</FooterLink>
               {isLoggedIn ? <FooterLink to="/profile">{t("nav.profile")}</FooterLink> : null}
               {isAdmin ? <FooterLink to="/admin/contacts">{t("nav.admin")}</FooterLink> : null}
@@ -375,6 +376,7 @@ export default function Layout({ children }) {
     { to: "/hotels", label: t("nav.hotels") },
     { to: "/flights", label: t("nav.flights") },
     { to: "/attractions", label: t("nav.attractions") },
+    { to: "/cars", label: t("nav.cars") },
   ];
 
   const loggedInNavItems = [

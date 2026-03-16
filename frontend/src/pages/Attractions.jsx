@@ -45,7 +45,8 @@ export default function Attractions() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+    document.title = t("attractions.pageTitle");
+  }, [t]);
 
   const handleSearch = (e) => {
     e.preventDefault();

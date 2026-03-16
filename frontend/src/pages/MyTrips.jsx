@@ -19,7 +19,7 @@ function getInterests(trip) {
 
 export default function MyTrips() {
   const { t } = useTranslation();
-  useEffect(() => { window.scrollTo(0, 0); }, []);
+  useEffect(() => { window.scrollTo(0, 0); document.title = t("myTrips.pageTitle"); }, [t]);
 
   const nav = useNavigate();
   const [trips, setTrips] = useState([]);

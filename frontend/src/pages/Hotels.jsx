@@ -49,7 +49,8 @@ export default function Hotels() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+    document.title = t("hotels.pageTitle");
+  }, [t]);
 
   const handleSearch = (e) => {
     e.preventDefault();

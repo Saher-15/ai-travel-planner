@@ -18,7 +18,8 @@
     "hotels": "Hotels",
     "flights": "Flights",
     "attractions": "Attractions",
-    "bookTravel": "Book Travel"
+    "bookTravel": "Book Travel",
+    "cars": "Cars"
   },
   "header": {
     "signedIn": "Signed in",
@@ -269,6 +270,12 @@
       "description": "Choose a destination, shape the travel style, and generate a smarter itinerary with a homepage that truly fits your project.",
       "createTrip": "Create Trip",
       "myTrips": "My Trips"
+    },
+    "pageTitle": "Travel Planner – AI-Powered Trip Planning",
+    "quickSearch": {
+      "destination": "Where to?",
+      "destinationPlaceholder": "Enter a destination",
+      "planButton": "Plan with AI"
     }
   },
   "login": {
@@ -597,7 +604,8 @@
       "loadFailed": "Failed to load trips (login first)",
       "deleteFailed": "Failed to delete trip",
       "deleteConfirm": "Delete this trip?"
-    }
+    },
+    "pageTitle": "My Trips – Travel Planner"
   },
   "contact": {
     "badge": "Support Center",
@@ -1161,9 +1169,9 @@
       "checkOut": "Check-out",
       "travelers": "{{count}} traveler",
       "travelers_plural": "{{count}} travelers",
-      "searchButton": "Search Hotels on Booking.com",
-      "poweredBy": "Powered by Booking.com",
-      "affiliateNote": "We may earn a small commission at no extra cost to you."
+      "searchButton": "Search Hotels on Hotellook",
+      "poweredBy": "Powered by Hotellook (Travelpayouts)",
+      "affiliateNote": "Powered by Hotellook · We may earn a commission at no extra cost to you."
     }
   },
   "editTrip": {
@@ -1269,10 +1277,20 @@
     "whyTitle": "Why Book Through Us?",
     "whySubtitle": "We compare prices across hundreds of booking sites",
     "why": [
-      { "title": "Best Price Guarantee", "text": "We compare prices across 70+ booking platforms to find you the lowest rate." },
-      { "title": "Huge Selection", "text": "Access to over 2 million hotels, apartments, and unique stays worldwide." },
-      { "title": "Easy Booking", "text": "Simple search, no hidden fees. Book directly with the provider you trust." }
-    ]
+      {
+        "title": "Best Price Guarantee",
+        "text": "We compare prices across 70+ booking platforms to find you the lowest rate."
+      },
+      {
+        "title": "Huge Selection",
+        "text": "Access to over 2 million hotels, apartments, and unique stays worldwide."
+      },
+      {
+        "title": "Easy Booking",
+        "text": "Simple search, no hidden fees. Book directly with the provider you trust."
+      }
+    ],
+    "pageTitle": "Hotels – Travel Planner"
   },
   "flights": {
     "badge": "Flight Search",
@@ -1295,10 +1313,20 @@
     "whyTitle": "Find the Best Flight Deals",
     "whySubtitle": "Smart search across hundreds of airlines and travel agents",
     "why": [
-      { "title": "Compare 750+ Airlines", "text": "Search all major airlines and budget carriers in one place." },
-      { "title": "Price Alerts", "text": "Get notified when prices drop for your favorite routes." },
-      { "title": "Fast Results", "text": "Search and filter results in seconds to find your ideal flight." }
-    ]
+      {
+        "title": "Compare 750+ Airlines",
+        "text": "Search all major airlines and budget carriers in one place."
+      },
+      {
+        "title": "Price Alerts",
+        "text": "Get notified when prices drop for your favorite routes."
+      },
+      {
+        "title": "Fast Results",
+        "text": "Search and filter results in seconds to find your ideal flight."
+      }
+    ],
+    "pageTitle": "Flights – Travel Planner"
   },
   "attractions": {
     "badge": "Things To Do",
@@ -1327,7 +1355,8 @@
       "outdoor": "Hiking, diving, safaris, and nature adventures",
       "nightlife": "Bar crawls, shows, and evening entertainment",
       "family": "Kid-friendly activities and family-oriented experiences"
-    }
+    },
+    "pageTitle": "Attractions & Tours – Travel Planner"
   },
   "language": {
     "switchTo": "עברית",
@@ -1337,5 +1366,34 @@
     "title": "Page not found",
     "description": "The page you're looking for doesn't exist or has been moved.",
     "goHome": "Go to Home"
+  },
+  "cars": {
+    "pageTitle": "Car Rentals – Travel Planner",
+    "badge": "Car Rentals",
+    "title": "Find the Perfect Rental Car",
+    "subtitle": "Compare hundreds of car rental options worldwide and book the best deal for your trip.",
+    "pickupLocation": "Pick-up Location",
+    "locationPlaceholder": "City or airport",
+    "pickupDate": "Pick-up Date",
+    "dropoffDate": "Drop-off Date",
+    "searchButton": "Search Cars",
+    "affiliateNote": "Powered by RentalCars.com – best prices guaranteed",
+    "popular": "Popular Destinations",
+    "whyTitle": "Why Rent with Us?",
+    "whySubtitle": "We partner with the world's leading car rental providers for unbeatable value.",
+    "why": [
+      {
+        "title": "Global Coverage",
+        "text": "Access thousands of rental locations in over 160 countries worldwide."
+      },
+      {
+        "title": "Best Price Guarantee",
+        "text": "Compare prices from top providers to find the lowest rate every time."
+      },
+      {
+        "title": "Flexible & Secure",
+        "text": "Free cancellation on most bookings, with secure payment and full coverage options."
+      }
+    ]
   }
 }

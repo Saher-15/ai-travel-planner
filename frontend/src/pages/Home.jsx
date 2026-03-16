@@ -1,12 +1,17 @@
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
+  Building2,
+  Calendar,
   Compass,
   FolderKanban,
   Globe2,
+  MapPin,
   MapPinned,
+  PlaneLanding,
   PlaneTakeoff,
+  Search,
   Sparkles,
   Wand2,
 } from "lucide-react";
@@ -30,7 +35,8 @@ export default function Home() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+    document.title = t("home.pageTitle");
+  }, [t]);
 
   const nav = useNavigate();
   const [a, b, c] = useMemo(() => STOCK.hero, []);
@@ -69,6 +75,7 @@ export default function Home() {
   return (
     <div className="space-y-20">
       <section className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_100px_-35px_rgba(15,23,42,0.35)]">
+
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.12),transparent_30%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.14),transparent_30%),linear-gradient(to_bottom_right,#f8fbff,#ffffff,#f2f8ff)]" />
           <div className="absolute -left-10 top-0 h-72 w-72 rounded-full bg-sky-200/30 blur-3xl" />
@@ -181,6 +188,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <QuickSearch />
 
       <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white px-6 py-5 shadow-sm sm:px-8">
         <div className="flex flex-wrap items-center justify-center gap-3">
@@ -497,6 +506,208 @@ export default function Home() {
         </div>
       </section>
     </div>
+  );
+}
+
+const INPUT_CLS =
+  "w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-9 pr-4 text-sm text-slate-800 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100";
+
+function QuickSearch() {
+  const { t } = useTranslation();
+  const nav = useNavigate();
+  const [tab, setTab] = useState("hotels");
+
+  const today = new Date().toISOString().split("T")[0];
+  const nextWeek = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().split("T")[0]; })();
+
+  const [hotelDest, setHotelDest] = useState("");
+  const [checkIn, setCheckIn] = useState(today);
+  const [checkOut, setCheckOut] = useState(nextWeek);
+  const [hotelGuests, setHotelGuests] = useState(1);
+
+  const [flightFrom, setFlightFrom] = useState("");
+  const [flightTo, setFlightTo] = useState("");
+  const [flightDate, setFlightDate] = useState(nextWeek);
+
+  const [attrDest, setAttrDest] = useState("");
+  const [aiDest, setAiDest] = useState("");
+
+  const TABS = [
+    { id: "hotels",      emoji: "🏨", label: t("nav.hotels") },
+    { id: "flights",     emoji: "✈️", label: t("nav.flights") },
+    { id: "attractions", emoji: "🎯", label: t("nav.attractions") },
+    { id: "cars",        emoji: "🚗", label: t("nav.cars") },
+    { id: "plan",        emoji: "🤖", label: t("nav.createTrip") },
+  ];
+
+  function go(path, params = {}) {
+    const p = new URLSearchParams(params);
+    const q = p.toString();
+    nav(q ? `${path}?${q}` : path);
+  }
+
+  return (
+    <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_60px_-24px_rgba(15,23,42,0.18)]">
+      {/* Tab bar */}
+      <div className="flex gap-0.5 overflow-x-auto border-b border-slate-100 px-4 pt-1 sm:px-6">
+        {TABS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setTab(item.id)}
+            className={cx(
+              "flex shrink-0 items-center gap-2 border-b-2 px-4 py-3.5 text-sm font-bold transition",
+              tab === item.id
+                ? "border-sky-600 text-sky-700"
+                : "border-transparent text-slate-500 hover:text-slate-700"
+            )}
+          >
+            <span className="text-base">{item.emoji}</span>
+            <span className="hidden sm:inline">{item.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="p-5 sm:p-6">
+        {tab === "hotels" && (
+          <form
+            onSubmit={(e) => { e.preventDefault(); go("/hotels", { destination: hotelDest, checkin: checkIn, checkout: checkOut, adults: hotelGuests }); }}
+            className="flex flex-wrap items-end gap-3"
+          >
+            <div className="min-w-44 flex-1">
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("hotels.destination")}</label>
+              <div className="relative">
+                <Building2 size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input type="text" value={hotelDest} onChange={(e) => setHotelDest(e.target.value)} placeholder={t("hotels.destinationPlaceholder")} required className={INPUT_CLS} />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("hotels.checkIn")}</label>
+              <div className="relative">
+                <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input type="date" value={checkIn} min={today} onChange={(e) => setCheckIn(e.target.value)} required className={cx(INPUT_CLS, "w-40")} />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("hotels.checkOut")}</label>
+              <div className="relative">
+                <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input type="date" value={checkOut} min={checkIn} onChange={(e) => setCheckOut(e.target.value)} required className={cx(INPUT_CLS, "w-40")} />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("hotels.guests")}</label>
+              <select value={hotelGuests} onChange={(e) => setHotelGuests(Number(e.target.value))} className={cx(INPUT_CLS, "w-28 pl-4")}>
+                {[1,2,3,4,5,6].map((n) => <option key={n} value={n}>{n} {n === 1 ? t("hotels.adult") : t("hotels.adults")}</option>)}
+              </select>
+            </div>
+            <button type="submit" className="inline-flex items-center gap-2 rounded-2xl bg-sky-600 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-sky-500">
+              <Search size={15} />{t("hotels.searchButton")}
+            </button>
+          </form>
+        )}
+
+        {tab === "flights" && (
+          <form
+            onSubmit={(e) => { e.preventDefault(); go("/flights", { from: flightFrom, destination: flightTo, depart: flightDate }); }}
+            className="flex flex-wrap items-end gap-3"
+          >
+            <div className="min-w-40 flex-1">
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("flights.from")}</label>
+              <div className="relative">
+                <PlaneTakeoff size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input type="text" value={flightFrom} onChange={(e) => setFlightFrom(e.target.value)} placeholder={t("flights.fromPlaceholder")} required className={INPUT_CLS} />
+              </div>
+            </div>
+            <div className="min-w-40 flex-1">
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("flights.to")}</label>
+              <div className="relative">
+                <PlaneLanding size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input type="text" value={flightTo} onChange={(e) => setFlightTo(e.target.value)} placeholder={t("flights.toPlaceholder")} required className={INPUT_CLS} />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("flights.departure")}</label>
+              <div className="relative">
+                <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input type="date" value={flightDate} min={today} onChange={(e) => setFlightDate(e.target.value)} required className={cx(INPUT_CLS, "w-40")} />
+              </div>
+            </div>
+            <button type="submit" className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-indigo-500">
+              <Search size={15} />{t("flights.searchButton")}
+            </button>
+          </form>
+        )}
+
+        {tab === "attractions" && (
+          <form
+            onSubmit={(e) => { e.preventDefault(); go("/attractions", { destination: attrDest }); }}
+            className="flex flex-wrap items-end gap-3"
+          >
+            <div className="min-w-60 flex-1">
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("attractions.destination")}</label>
+              <div className="relative">
+                <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input type="text" value={attrDest} onChange={(e) => setAttrDest(e.target.value)} placeholder={t("attractions.destinationPlaceholder")} required className={INPUT_CLS} />
+              </div>
+            </div>
+            <button type="submit" className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-emerald-500">
+              <Search size={15} />{t("attractions.searchButton")}
+            </button>
+          </form>
+        )}
+
+        {tab === "cars" && (
+          <form
+            onSubmit={(e) => { e.preventDefault(); go("/cars", { destination: aiDest, checkin: checkIn, checkout: checkOut }); }}
+            className="flex flex-wrap items-end gap-3"
+          >
+            <div className="min-w-60 flex-1">
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("cars.pickupLocation")}</label>
+              <div className="relative">
+                <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input type="text" value={aiDest} onChange={(e) => setAiDest(e.target.value)} placeholder={t("cars.locationPlaceholder")} required className={INPUT_CLS} />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("cars.pickupDate")}</label>
+              <div className="relative">
+                <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input type="date" value={checkIn} min={today} onChange={(e) => setCheckIn(e.target.value)} required className={cx(INPUT_CLS, "w-40")} />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("cars.dropoffDate")}</label>
+              <div className="relative">
+                <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input type="date" value={checkOut} min={checkIn} onChange={(e) => setCheckOut(e.target.value)} required className={cx(INPUT_CLS, "w-40")} />
+              </div>
+            </div>
+            <button type="submit" className="inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-amber-400">
+              <Search size={15} />{t("cars.searchButton")}
+            </button>
+          </form>
+        )}
+
+        {tab === "plan" && (
+          <form
+            onSubmit={(e) => { e.preventDefault(); nav(aiDest ? `/create?destination=${encodeURIComponent(aiDest)}` : "/create"); }}
+            className="flex flex-wrap items-end gap-3"
+          >
+            <div className="min-w-60 flex-1">
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("home.quickSearch.destination")}</label>
+              <div className="relative">
+                <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input type="text" value={aiDest} onChange={(e) => setAiDest(e.target.value)} placeholder={t("home.quickSearch.destinationPlaceholder")} className={INPUT_CLS} />
+              </div>
+            </div>
+            <button type="submit" className="inline-flex items-center gap-2 rounded-2xl bg-sky-600 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-sky-500">
+              <Search size={15} />{t("home.quickSearch.planButton")}
+            </button>
+          </form>
+        )}
+      </div>
+    </section>
   );
 }
 
