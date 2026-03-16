@@ -25,10 +25,14 @@ function cleanTitleForPhotoSearch(value = "") {
     String(value || "")
       .replace(/\b(morning|afternoon|evening)\b/gi, "")
       .replace(/\b(breakfast|lunch|dinner|brunch)\s+at\b/gi, "")
-      .replace(/\bvisit\b/gi, "")
+      .replace(/\b(walking|guided|boat|bus|city|food|bike)\s+tour\b/gi, "")
+      .replace(/\btour\b/gi, "")
+      .replace(/\bvisit(\s+to)?\b/gi, "")
       .replace(/\bexplore\b/gi, "")
       .replace(/\brelaxed\b/gi, "")
       .replace(/\bnearby\b/gi, "")
+      .replace(/\bstroll\b/gi, "")
+      .replace(/\bday\s+trip\b/gi, "")
       .replace(/[–—]/g, " ")
   );
 }
@@ -48,37 +52,42 @@ function isHebrew(value = "") {
   return /[\u0590-\u05FF]/.test(value);
 }
 
+// Extract venue name: first segment before comma — e.g. "Picasso Museum, Barcelona, Spain" → "Picasso Museum"
+function extractVenueName(location = "") {
+  const first = clean(location).split(",")[0];
+  return isGenericLocation(first) ? "" : first;
+}
+
+// Extract city: second-to-last segment — e.g. "Picasso Museum, Barcelona, Spain" → "Barcelona"
+function extractCity(location = "") {
+  const parts = clean(location).split(",").map((p) => clean(p)).filter(Boolean);
+  return parts.length >= 2 ? parts[parts.length - 2] : "";
+}
+
 function buildQueryCandidates(place = {}) {
   const rawTitle = clean(place?.title || place?.name || place?.placeName);
   const title = isHebrew(rawTitle) ? "" : cleanTitleForPhotoSearch(rawTitle);
   const location = clean(place?.location);
-  const address = clean(place?.address);
 
   const safeLocation = isGenericLocation(location) ? "" : location;
-  const safeAddress = address.toLowerCase().includes("depends on stay location") ? "" : address;
+
+  const venue = extractVenueName(safeLocation);   // "Picasso Museum"
+  const city  = extractCity(safeLocation);         // "Barcelona"
+
+  const venueWithCity  = venue && city ? `${venue} ${city}` : "";   // "Picasso Museum Barcelona"
+  const cleanedTitle   = clean(title);
+  const titleWithCity  = cleanedTitle && city ? `${cleanedTitle} ${city}` : ""; // "Gothic Quarter Barcelona"
+  const cityFallback   = city ? `${city} travel` : "";
 
   return uniqueStrings([
-    title && safeLocation ? `${title}, ${safeLocation}` : "",
-    safeLocation,
-    title,
-    safeAddress
+    venue,            // "Picasso Museum"           ← best match
+    venueWithCity,    // "Picasso Museum Barcelona"
+    cleanedTitle,     // "Gothic Quarter"
+    titleWithCity,    // "Gothic Quarter Barcelona"
+    cityFallback,     // "Barcelona travel"
   ]);
 }
 
-function buildCityCountryFallback(place = {}) {
-  const loc = clean(place?.location || "");
-  if (!loc) return null;
-
-  const parts = loc.split(",").map((p) => clean(p)).filter(Boolean);
-
-  if (parts.length >= 2) {
-    const city = parts[parts.length - 2];
-    const country = parts[parts.length - 1];
-    return `${city}, ${country}`;
-  }
-
-  return null;
-}
 
 async function safeJson(response) {
   const text = await response.text();
@@ -144,7 +153,7 @@ router.post("/photos", async (req, res) => {
       places.map(async (place) => {
         const candidates = buildQueryCandidates(place);
 
-        // 1) Try normal candidates
+        // Try candidates in order — venue → venue+city → title → title+city → city
         for (const candidate of candidates) {
           const found = await searchPixabay(candidate);
           if (found?.photoUrl) {
@@ -160,25 +169,7 @@ router.post("/photos", async (req, res) => {
           }
         }
 
-        // 2) Try city + country fallback
-        const cityCountry = buildCityCountryFallback(place);
-        if (cityCountry) {
-          const found = await searchPixabay(cityCountry);
-
-          if (found?.photoUrl) {
-            return {
-              query: cityCountry,
-              matchedQuery: found.matchedQuery,
-              title: clean(place?.title),
-              location: clean(place?.location),
-              address: clean(place?.address),
-              photoUrl: found.photoUrl,
-              photoAttribution: found.photoAttribution,
-            };
-          }
-        }
-
-        // 3) No photo found
+        // No photo found
         return {
           query: clean(place?.title),
           matchedQuery: null,
