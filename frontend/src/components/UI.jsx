@@ -4,8 +4,8 @@ export function Card({ children, className = "" }) {
   return (
     <div
       className={cx(
-        "rounded-3xl border border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-sm",
-        "transition-all duration-200 hover:shadow-lg hover:shadow-slate-200/60",
+        "rounded-3xl border border-slate-200/70 bg-white shadow-[0_2px_20px_-4px_rgba(15,23,42,0.08),0_8px_24px_-8px_rgba(15,23,42,0.06)]",
+        "transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_32px_-6px_rgba(15,23,42,0.13),0_16px_40px_-12px_rgba(15,23,42,0.09)]",
         className
       )}
     >
@@ -49,12 +49,18 @@ export function Button({
 }) {
   const variants = {
     primary:
-      "bg-sky-600 text-white shadow-sm hover:-translate-y-0.5 hover:bg-sky-500 hover:shadow-md",
+      "bg-linear-to-r from-sky-500 to-blue-600 text-white shadow-md shadow-sky-200/60 " +
+      "hover:-translate-y-0.5 hover:shadow-lg hover:shadow-sky-300/50 hover:from-sky-400 hover:to-blue-500 " +
+      "active:translate-y-0 active:shadow-md",
     secondary:
-      "border border-slate-200 bg-white text-slate-800 shadow-sm hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md",
-    ghost: "bg-transparent text-slate-700 hover:bg-slate-100",
+      "border border-slate-200 bg-white text-slate-700 shadow-sm " +
+      "hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md hover:text-slate-900 " +
+      "active:translate-y-0",
+    ghost: "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900",
     danger:
-      "bg-rose-600 text-white shadow-sm hover:-translate-y-0.5 hover:bg-rose-500 hover:shadow-md",
+      "bg-linear-to-r from-rose-500 to-rose-600 text-white shadow-md shadow-rose-200/60 " +
+      "hover:-translate-y-0.5 hover:shadow-lg hover:shadow-rose-300/50 hover:from-rose-400 hover:to-rose-500 " +
+      "active:translate-y-0",
   };
 
   return (
@@ -62,8 +68,8 @@ export function Button({
       type={type}
       className={cx(
         "inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold",
-        "transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-sky-100",
-        "disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-sm",
+        "transition-all duration-200 focus:outline-none focus-visible:ring-4 focus-visible:ring-sky-200",
+        "disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0 disabled:hover:shadow-md",
         variants[variant] || variants.primary,
         className
       )}
@@ -83,9 +89,10 @@ export function Input({ label, hint, className = "", ...props }) {
 
       <input
         className={cx(
-          "w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm",
-          "outline-none transition-all duration-200 placeholder:text-slate-400",
-          "focus:border-sky-300 focus:ring-4 focus:ring-sky-100",
+          "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800",
+          "shadow-sm transition-all duration-200 placeholder:text-slate-400",
+          "focus:border-sky-400 focus:shadow-[0_0_0_4px_rgba(14,165,233,0.12)] focus:outline-none",
+          "hover:border-slate-300",
           className
         )}
         {...props}
@@ -105,9 +112,10 @@ export function Select({ label, className = "", children, ...props }) {
 
       <select
         className={cx(
-          "w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm",
-          "outline-none transition-all duration-200",
-          "focus:border-sky-300 focus:ring-4 focus:ring-sky-100",
+          "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800",
+          "shadow-sm transition-all duration-200",
+          "focus:border-sky-400 focus:shadow-[0_0_0_4px_rgba(14,165,233,0.12)] focus:outline-none",
+          "hover:border-slate-300",
           className
         )}
         {...props}
@@ -134,16 +142,16 @@ export function Badge({ children, className = "" }) {
 
 export function Alert({ type = "info", children, className = "" }) {
   const variants = {
-    info: "border-slate-200 bg-slate-50 text-slate-800",
+    info:    "border-blue-200   bg-blue-50   text-blue-800",
     success: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    error: "border-rose-200 bg-rose-50 text-rose-800",
-    warning: "border-amber-200 bg-amber-50 text-amber-800",
+    error:   "border-rose-200   bg-rose-50   text-rose-800",
+    warning: "border-amber-200  bg-amber-50  text-amber-800",
   };
 
   return (
     <div
       className={cx(
-        "rounded-2xl border px-4 py-3 text-sm shadow-sm",
+        "rounded-2xl border px-4 py-3.5 text-sm leading-relaxed shadow-sm",
         variants[type] || variants.info,
         className
       )}

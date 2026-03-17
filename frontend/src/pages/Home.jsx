@@ -102,13 +102,13 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-wrap gap-2.5">
               {highlights.map((item) => (
                 <div
                   key={item}
-                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm"
                 >
-                  <span className="text-emerald-600">✓</span>
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">✓</span>
                   {item}
                 </div>
               ))}
@@ -116,19 +116,20 @@ export default function Home() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button
-                className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2.5 px-7 py-4 text-base sm:w-auto"
                 onClick={() => nav("/create")}
               >
-                <PlaneTakeoff size={16} />
+                <PlaneTakeoff size={18} />
                 {t("home.hero.startPlanning")}
+                <ArrowRight size={16} className="-mr-1" />
               </Button>
 
               <Button
                 variant="secondary"
-                className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 px-6 py-4 text-base sm:w-auto"
                 onClick={() => nav("/trips")}
               >
-                <FolderKanban size={16} />
+                <FolderKanban size={17} />
                 {t("home.hero.exploreTrips")}
               </Button>
             </div>
@@ -137,15 +138,15 @@ export default function Home() {
               {stats.map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lg"
+                  className="rounded-3xl border border-slate-200/80 bg-white/90 p-4 shadow-[0_2px_12px_-3px_rgba(15,23,42,0.08)] backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_-6px_rgba(15,23,42,0.14)]"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 text-white">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 text-white shadow-md shadow-sky-200/60">
                     {item.icon}
                   </div>
-                  <div className="mt-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  <div className="mt-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
                     {item.label}
                   </div>
-                  <div className="mt-2 text-2xl font-black text-slate-900">
+                  <div className="mt-1.5 text-2xl font-black text-slate-900">
                     {item.value}
                   </div>
                   <div className="mt-1 text-xs leading-5 text-slate-500">
@@ -189,12 +190,12 @@ export default function Home() {
 
       <QuickSearch />
 
-      <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white px-6 py-5 shadow-sm sm:px-8">
-        <div className="flex flex-wrap items-center justify-center gap-3">
+      <section className="overflow-hidden rounded-[2rem] border border-sky-100 bg-linear-to-r from-sky-50 via-white to-blue-50 px-6 py-5 shadow-sm sm:px-8">
+        <div className="flex flex-wrap items-center justify-center gap-2.5">
           {featureBadges.map((item) => (
             <span
               key={item}
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm"
+              className="rounded-full border border-sky-200/70 bg-white px-4 py-2 text-xs font-semibold text-sky-800 shadow-sm"
             >
               {item}
             </span>
