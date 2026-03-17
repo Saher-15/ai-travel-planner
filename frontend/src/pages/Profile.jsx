@@ -210,8 +210,8 @@ export default function Profile() {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[2rem] border border-slate-200/70 bg-white shadow-[0_20px_60px_-25px_rgba(15,23,42,0.18)]">
-        <div className="absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-indigo-50" />
+      <section className="relative overflow-hidden rounded-4xl border border-slate-200/70 bg-white shadow-[0_20px_60px_-25px_rgba(15,23,42,0.18)]">
+        <div className="absolute inset-0 bg-linear-to-br from-sky-50 via-white to-indigo-50" />
         <div className="absolute right-0 top-0 h-56 w-56 rounded-full bg-sky-200/30 blur-3xl" />
         <div className="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-indigo-200/30 blur-3xl" />
 
@@ -231,7 +231,7 @@ export default function Profile() {
           <div className="lg:col-span-4">
             <div className="rounded-[1.75rem] border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur">
               <div className="flex items-center gap-4">
-                <div className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 text-lg font-black text-white shadow-lg">
+                <div className="grid h-14 w-14 place-items-center rounded-2xl bg-linear-to-br from-sky-500 via-blue-600 to-indigo-700 text-lg font-black text-white shadow-lg">
                   {(user?.name || "T").trim().charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
@@ -253,11 +253,11 @@ export default function Profile() {
         <div className="space-y-6 xl:col-span-7">
           <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
             <CardHeader title={t("profile.accountOverview.title")} subtitle={t("profile.accountOverview.subtitle")} />
-            <CardBody className="space-y-6 bg-gradient-to-b from-white to-slate-50/60">
+            <CardBody className="space-y-6 bg-linear-to-b from-white to-slate-50/60">
               {msg ? <Alert type={msg.type === "error" ? "error" : "success"}>{msg.text}</Alert> : null}
 
               {!user?.verified && (
-                <div className="rounded-[1.5rem] border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 p-5">
+                <div className="rounded-3xl border border-amber-200 bg-linear-to-r from-amber-50 to-yellow-50 p-5">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <div className="text-base font-bold text-amber-900">{t("profile.accountOverview.emailNotVerified")}</div>
@@ -268,7 +268,7 @@ export default function Profile() {
                 </div>
               )}
 
-              <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="text-lg font-bold text-slate-900">{t("profile.accountOverview.profileInfo")}</div>
@@ -288,14 +288,14 @@ export default function Profile() {
 
           <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
             <CardHeader title={t("profile.changePassword.title")} subtitle={t("profile.changePassword.subtitle")} />
-            <CardBody className="space-y-6 bg-gradient-to-b from-white to-slate-50/60">
+            <CardBody className="space-y-6 bg-linear-to-b from-white to-slate-50/60">
               <div className="grid gap-4">
                 <PasswordField label={t("profile.changePassword.currentPassword")} value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} show={showOldPassword} onToggle={() => setShowOldPassword((p) => !p)} placeholder={t("profile.changePassword.currentPasswordPlaceholder")} autoComplete="current-password" />
                 <PasswordField label={t("profile.changePassword.newPassword")} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} show={showNewPassword} onToggle={() => setShowNewPassword((p) => !p)} placeholder={t("profile.changePassword.newPasswordPlaceholder")} autoComplete="new-password" />
                 <PasswordField label={t("profile.changePassword.confirmNewPassword")} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} show={showConfirmPassword} onToggle={() => setShowConfirmPassword((p) => !p)} placeholder={t("profile.changePassword.confirmNewPasswordPlaceholder")} autoComplete="new-password" />
               </div>
 
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                 <div className="text-sm font-bold text-slate-800">{t("passwordRequirements.title")}</div>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   <Requirement ok={passwordChecks.minLength} text={t("passwordRequirements.minLength")} />
@@ -327,13 +327,13 @@ export default function Profile() {
                 </Button>
               }
             />
-            <CardBody className="space-y-4 bg-gradient-to-b from-white to-slate-50/60">
+            <CardBody className="space-y-4 bg-linear-to-b from-white to-slate-50/60">
               {supportError ? <Alert type="error">{supportError}</Alert> : null}
 
               {supportLoading ? (
                 <SkeletonTable />
               ) : supportItems.length === 0 ? (
-                <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-white p-8 text-center">
+                <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center">
                   <div className="text-lg font-bold text-slate-900">{t("profile.supportInbox.noMessages")}</div>
                   <div className="mt-2 text-sm leading-6 text-slate-500">{t("profile.supportInbox.noMessagesText")}</div>
                 </div>
@@ -380,8 +380,8 @@ export default function Profile() {
                     </div>
                   </div>
 
-                  <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
-                    <div className="max-h-[360px] overflow-auto">
+                  <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+                    <div className="max-h-90 overflow-auto">
                       <table className="min-w-full border-collapse text-sm">
                         <thead className="sticky top-0 z-10 bg-slate-50">
                           <tr className="border-b border-slate-200">
@@ -451,7 +451,7 @@ export default function Profile() {
                   ) : null}
 
                   {selectedSupport ? (
-                    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                           <div className="text-lg font-bold text-slate-900">{selectedSupport.subject}</div>
@@ -470,7 +470,7 @@ export default function Profile() {
                       </div>
 
                       {selectedSupport.adminReply ? (
-                        <div className="mt-4 rounded-2xl border border-sky-100 bg-gradient-to-r from-sky-50 to-indigo-50 p-4">
+                        <div className="mt-4 rounded-2xl border border-sky-100 bg-linear-to-r from-sky-50 to-indigo-50 p-4">
                           <div className="flex items-center gap-2">
                             <div className="grid h-8 w-8 place-items-center rounded-full bg-sky-600 text-xs font-bold text-white">A</div>
                             <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-sky-700">{t("profile.supportInbox.adminReply")}</div>
@@ -487,7 +487,7 @@ export default function Profile() {
                       )}
                     </div>
                   ) : (
-                    <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
+                    <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
                       {t("profile.supportInbox.selectMessage")}
                     </div>
                   )}
@@ -498,8 +498,8 @@ export default function Profile() {
 
           <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
             <CardHeader title={t("profile.session.title")} subtitle={t("profile.session.subtitle")} />
-            <CardBody className="bg-gradient-to-b from-white to-slate-50/60">
-              <div className="rounded-[1.5rem] border border-rose-100 bg-gradient-to-r from-rose-50 to-white p-5">
+            <CardBody className="bg-linear-to-b from-white to-slate-50/60">
+              <div className="rounded-3xl border border-rose-100 bg-linear-to-r from-rose-50 to-white p-5">
                 <div className="text-base font-bold text-slate-900">{t("profile.session.logoutTitle")}</div>
                 <div className="mt-2 text-sm leading-6 text-slate-600">{t("profile.session.logoutDescription")}</div>
                 <div className="mt-5">
@@ -519,8 +519,8 @@ export default function Profile() {
 
 function HeroStat({ icon, title, value, subtitle }) {
   return (
-    <div className="rounded-[1.5rem] border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur">
-      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 text-white">{icon}</div>
+    <div className="rounded-3xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur">
+      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-sky-500 via-blue-600 to-indigo-700 text-white">{icon}</div>
       <div className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">{title}</div>
       <div className="mt-2 text-3xl font-black tracking-tight text-slate-900">{value}</div>
       <div className="mt-1 text-sm text-slate-500">{subtitle}</div>
@@ -553,13 +553,13 @@ function SkeletonTable() {
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="h-16 animate-pulse rounded-[1rem] bg-slate-100" />
+        <div className="h-16 animate-pulse rounded-2xl bg-slate-100" />
         <div className="grid grid-cols-2 gap-3">
-          <div className="h-16 animate-pulse rounded-[1rem] bg-slate-100" />
-          <div className="h-16 animate-pulse rounded-[1rem] bg-slate-100" />
+          <div className="h-16 animate-pulse rounded-2xl bg-slate-100" />
+          <div className="h-16 animate-pulse rounded-2xl bg-slate-100" />
         </div>
       </div>
-      <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white">
+      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
         <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
           <div className="h-4 w-40 animate-pulse rounded bg-slate-200" />
         </div>
@@ -578,7 +578,7 @@ function SkeletonTable() {
           ))}
         </div>
       </div>
-      <div className="h-40 animate-pulse rounded-[1.5rem] bg-slate-100" />
+      <div className="h-40 animate-pulse rounded-3xl bg-slate-100" />
     </div>
   );
 }

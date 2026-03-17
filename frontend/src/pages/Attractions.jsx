@@ -58,7 +58,7 @@ export default function Attractions() {
   return (
     <div className="space-y-10">
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_100px_-35px_rgba(15,23,42,0.35)]">
+      <section className="relative overflow-hidden rounded-4xl border border-slate-200 bg-white shadow-[0_30px_100px_-35px_rgba(15,23,42,0.35)]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.10),transparent_30%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.10),transparent_30%),linear-gradient(to_bottom_right,#f8fffc,#ffffff,#f2fff8)]" />
         <div className="absolute -left-10 top-0 h-72 w-72 rounded-full bg-emerald-200/25 blur-3xl" />
         <div className="absolute right-0 top-16 h-80 w-80 rounded-full bg-sky-200/20 blur-3xl" />

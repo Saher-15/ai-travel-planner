@@ -59,7 +59,7 @@ export default function Cars() {
   return (
     <div className="space-y-10">
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_100px_-35px_rgba(15,23,42,0.35)]">
+      <section className="relative overflow-hidden rounded-4xl border border-slate-200 bg-white shadow-[0_30px_100px_-35px_rgba(15,23,42,0.35)]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(234,179,8,0.08),transparent_30%),radial-gradient(circle_at_top_right,rgba(249,115,22,0.08),transparent_30%),linear-gradient(to_bottom_right,#fffdf5,#ffffff,#fffbeb)]" />
         <div className="absolute -left-10 top-0 h-72 w-72 rounded-full bg-amber-200/20 blur-3xl" />
         <div className="absolute right-0 top-16 h-80 w-80 rounded-full bg-orange-200/15 blur-3xl" />

@@ -80,7 +80,7 @@ export default function GeneratingTrip() {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[2rem] border border-slate-800/80 bg-slate-950 text-white shadow-[0_30px_90px_-35px_rgba(15,23,42,0.75)]">
+      <section className="relative overflow-hidden rounded-4xl border border-slate-800/80 bg-slate-950 text-white shadow-[0_30px_90px_-35px_rgba(15,23,42,0.75)]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.18),transparent_28%),radial-gradient(circle_at_top_right,rgba(99,102,241,0.18),transparent_26%),radial-gradient(circle_at_bottom,rgba(14,165,233,0.10),transparent_30%)]" />
         <div className="absolute -left-12 top-0 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
         <div className="absolute right-0 top-10 h-80 w-80 rounded-full bg-indigo-500/10 blur-3xl" />
@@ -93,13 +93,13 @@ export default function GeneratingTrip() {
               {t("generatingTrip.badge")}
             </Badge>
 
-            <div className="mx-auto mt-6 flex h-18 w-18 items-center justify-center rounded-[1.75rem] bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 text-white shadow-[0_16px_40px_-12px_rgba(59,130,246,0.6)]">
+            <div className="mx-auto mt-6 flex h-18 w-18 items-center justify-center rounded-[1.75rem] bg-linear-to-br from-sky-500 via-blue-600 to-indigo-700 text-white shadow-[0_16px_40px_-12px_rgba(59,130,246,0.6)]">
               <Sparkles size={28} />
             </div>
 
             <h1 className="mt-6 text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
               {t("generatingTrip.craftingJourney")}{" "}
-              <span className="bg-gradient-to-r from-sky-300 via-cyan-200 to-indigo-200 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-sky-300 via-cyan-200 to-indigo-200 bg-clip-text text-transparent">
                 {destinationLabel}
               </span>
             </h1>
@@ -127,9 +127,9 @@ export default function GeneratingTrip() {
       <div className="grid gap-6 xl:grid-cols-12">
         <div className="xl:col-span-7">
           <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
-            <CardBody className="space-y-4 bg-gradient-to-b from-white to-slate-50/60 p-6">
+            <CardBody className="space-y-4 bg-linear-to-b from-white to-slate-50/60 p-6">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 text-white shadow-sm">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-sky-500 via-blue-600 to-indigo-700 text-white shadow-sm">
                   <Wand2 size={18} />
                 </div>
                 <div>
@@ -177,8 +177,8 @@ export default function GeneratingTrip() {
 
         <div className="xl:col-span-5">
           <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
-            <CardBody className="space-y-4 bg-gradient-to-b from-white to-slate-50/60 p-6">
-              <div className="rounded-[1.5rem] border border-sky-100 bg-gradient-to-r from-sky-50 to-indigo-50 p-5">
+            <CardBody className="space-y-4 bg-linear-to-b from-white to-slate-50/60 p-6">
+              <div className="rounded-[1.5rem] border border-sky-100 bg-linear-to-r from-sky-50 to-indigo-50 p-5">
                 <div className="text-base font-bold text-slate-900">{t("generatingTrip.aiDoing.title")}</div>
                 <div className="mt-4 space-y-3">
                   <InfoLine text={t("generatingTrip.aiDoing.line1")} />

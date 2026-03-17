@@ -19,7 +19,7 @@ export default function Privacy() {
 
   return (
     <section className="mx-auto max-w-5xl">
-      <div className="rounded-[2rem] border border-sky-100 bg-white/90 p-6 shadow-[0_20px_60px_-30px_rgba(2,132,199,0.35)] sm:p-8">
+      <div className="rounded-4xl border border-sky-100 bg-white/90 p-6 shadow-[0_20px_60px_-30px_rgba(2,132,199,0.35)] sm:p-8">
         <div className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-sky-700">
           {t("privacy.badge")}
         </div>

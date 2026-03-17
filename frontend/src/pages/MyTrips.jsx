@@ -70,16 +70,21 @@ export default function MyTrips() {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[2rem] border border-slate-200/70 bg-white shadow-[0_20px_60px_-25px_rgba(15,23,42,0.18)]">
-        <div className="absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-indigo-50" />
-        <div className="absolute right-0 top-0 h-56 w-56 rounded-full bg-sky-200/30 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-indigo-200/30 blur-3xl" />
+      <section className="relative overflow-hidden rounded-4xl shadow-[0_20px_60px_-25px_rgba(15,23,42,0.28)]">
+        {/* Full-width hero photo */}
+        <img
+          src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600&q=80"
+          alt="Travel"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-linear-to-b from-slate-900/70 to-slate-900/60" />
 
         <div className="relative grid gap-6 p-6 lg:grid-cols-12 lg:p-8">
           <div className="lg:col-span-8">
-            <Badge className="border-sky-200 bg-sky-50 text-sky-700">{t("myTrips.badge")}</Badge>
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">{t("myTrips.title")}</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">{t("myTrips.description")}</p>
+            <Badge className="border-white/30 bg-white/15 text-white backdrop-blur">{t("myTrips.badge")}</Badge>
+            <h1 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl">{t("myTrips.title")}</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/80 sm:text-base">{t("myTrips.description")}</p>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
               <HeroStat icon={<Compass size={18} />} title={t("myTrips.stats.savedTrips")} value={totalTrips} subtitle={t("myTrips.stats.storedInAccount")} />
@@ -89,8 +94,8 @@ export default function MyTrips() {
           </div>
 
           <div className="lg:col-span-4">
-            <div className="rounded-[1.75rem] border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur">
-              <div className="text-sm font-bold text-slate-900">{t("myTrips.manage.title")}</div>
+            <div className="rounded-4xl border border-white/20 bg-white/10 p-5 shadow-sm backdrop-blur">
+              <div className="text-sm font-bold text-white">{t("myTrips.manage.title")}</div>
               <div className="mt-4 grid gap-3">
                 <MiniInfo title={t("myTrips.manage.viewItineraries")} text={t("myTrips.manage.viewItinerariesText")} />
                 <MiniInfo title={t("myTrips.manage.searchQuickly")} text={t("myTrips.manage.searchQuicklyText")} />
@@ -103,7 +108,7 @@ export default function MyTrips() {
 
       <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
         <CardHeader title={t("myTrips.library.title")} subtitle={t("myTrips.library.subtitle")} />
-        <CardBody className="space-y-5 bg-gradient-to-b from-white to-slate-50/60">
+        <CardBody className="space-y-5 bg-linear-to-b from-white to-slate-50/60">
           <div className="grid gap-4 lg:grid-cols-12 lg:items-end">
             <div className="lg:col-span-5">
               <Input label={t("myTrips.library.searchLabel")} placeholder={t("myTrips.library.searchPlaceholder")} value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -153,6 +158,22 @@ export default function MyTrips() {
   );
 }
 
+const DEST_GRADIENTS = {
+  a: "from-sky-600 via-sky-500 to-cyan-400",
+  b: "from-indigo-600 via-indigo-500 to-blue-400",
+  c: "from-emerald-600 via-emerald-500 to-teal-400",
+  d: "from-rose-600 via-rose-500 to-pink-400",
+  e: "from-violet-600 via-violet-500 to-purple-400",
+  f: "from-amber-600 via-amber-500 to-yellow-400",
+};
+
+function getDestGradient(name) {
+  const char = (name || "").trim().toLowerCase()[0] || "a";
+  const keys = Object.keys(DEST_GRADIENTS);
+  const idx = char.charCodeAt(0) % keys.length;
+  return DEST_GRADIENTS[keys[idx]];
+}
+
 function TripCard({ trip, onView, onDelete }) {
   const { t } = useTranslation();
   const destination = trip.destination || t("common.notFound");
@@ -160,20 +181,31 @@ function TripCard({ trip, onView, onDelete }) {
   const budget = trip.preferences?.budget;
   const pace = trip.preferences?.pace;
   const interests = getInterests(trip);
+  const gradient = getDestGradient(destination);
+  const photoUrl = `https://source.unsplash.com/featured/600x200/?${encodeURIComponent(destination)},travel`;
 
   return (
-    <Card className="group overflow-hidden border border-slate-200/80 transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-24px_rgba(15,23,42,0.24)]">
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 p-5 text-white">
-        <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute bottom-0 left-0 h-20 w-20 rounded-full bg-sky-400/10 blur-2xl" />
+    <Card className="group overflow-hidden border border-slate-200/80 transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-24px_rgba(15,23,42,0.30)]">
+      <div className={`relative overflow-hidden bg-linear-to-br ${gradient} p-6 pb-8 text-white min-h-52`}>
+        {/* Destination photo as background */}
+        <img
+          src={photoUrl}
+          alt={destination}
+          className="absolute inset-0 h-full w-full object-cover opacity-30 transition duration-500 group-hover:opacity-40 group-hover:scale-105"
+        />
+        {/* Gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" />
+        {/* Decorative blobs */}
+        <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
+        <div className="absolute bottom-0 left-0 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
         <div className="relative">
-          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">{t("myTrips.tripCard.destination")}</div>
-          <div className="mt-2 line-clamp-2 text-2xl font-black tracking-tight">{destination}</div>
-          <div className="mt-3 text-sm text-white/85">{fmtRange(trip.startDate, trip.endDate, t("common.datesNotSet"))}</div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/75">{t("myTrips.tripCard.destination")}</div>
+          <div className="mt-2 line-clamp-2 text-3xl font-black tracking-tight drop-shadow-md">{destination}</div>
+          <div className="mt-3 text-sm text-white/90 drop-shadow-sm">{fmtRange(trip.startDate, trip.endDate, t("common.datesNotSet"))}</div>
         </div>
       </div>
 
-      <CardBody className="space-y-5 bg-gradient-to-b from-white to-slate-50/50">
+      <CardBody className="space-y-5 bg-linear-to-b from-white to-slate-50/50">
         <div className="flex flex-wrap gap-2">
           {pace ? <Badge className="border-sky-200 bg-sky-50 text-sky-700">{t("myTrips.tripCard.pace", { pace })}</Badge> : null}
           {budget ? <Badge className="border-violet-200 bg-violet-50 text-violet-700">{t("myTrips.tripCard.budget", { budget })}</Badge> : null}
@@ -191,7 +223,7 @@ function TripCard({ trip, onView, onDelete }) {
           </div>
         )}
 
-        <div className="rounded-[1.25rem] border border-dashed border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
           {t("myTrips.tripCard.openItinerary")}
         </div>
 
@@ -214,9 +246,9 @@ function EmptyTrips({ onCreate, onClear, hasSearch }) {
   const { t } = useTranslation();
   return (
     <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
-      <CardBody className="bg-gradient-to-b from-white to-slate-50/60">
-        <div className="rounded-[1.75rem] border border-dashed border-slate-300 bg-white p-8 text-center sm:p-10">
-          <div className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 text-xl font-black text-white shadow-lg">✈</div>
+      <CardBody className="bg-linear-to-b from-white to-slate-50/60">
+        <div className="rounded-4xl border border-dashed border-slate-300 bg-white p-8 text-center sm:p-10">
+          <div className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-linear-to-br from-sky-500 via-blue-600 to-indigo-700 text-xl font-black text-white shadow-lg">✈</div>
           <div className="mt-5 text-2xl font-black tracking-tight text-slate-900">
             {hasSearch ? t("myTrips.empty.noTripsFound") : t("myTrips.empty.noTrips")}
           </div>
@@ -266,7 +298,7 @@ function TripsSkeleton() {
               </div>
             </div>
             {/* Itinerary hint box */}
-            <div className="h-16 animate-pulse rounded-[1.25rem] bg-slate-100" />
+            <div className="h-16 animate-pulse rounded-2xl bg-slate-100" />
             {/* Buttons */}
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="h-10 animate-pulse rounded-2xl bg-slate-100" />
@@ -282,7 +314,7 @@ function TripsSkeleton() {
 function HeroStat({ icon, title, value, subtitle }) {
   return (
     <div className="rounded-3xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur">
-      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 text-white">{icon}</div>
+      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-sky-500 via-blue-600 to-indigo-700 text-white">{icon}</div>
       <div className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">{title}</div>
       <div className="mt-2 text-3xl font-black tracking-tight text-slate-900">{value}</div>
       <div className="mt-1 text-sm text-slate-500">{subtitle}</div>

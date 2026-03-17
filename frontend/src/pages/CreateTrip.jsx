@@ -562,8 +562,8 @@ export default function CreateTrip() {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[2rem] border border-slate-200/70 bg-white shadow-[0_20px_60px_-25px_rgba(15,23,42,0.18)]">
-        <div className="absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-indigo-50" />
+      <section className="relative overflow-hidden rounded-4xl border border-slate-200/70 bg-white shadow-[0_20px_60px_-25px_rgba(15,23,42,0.18)]">
+        <div className="absolute inset-0 bg-linear-to-br from-sky-50 via-white to-indigo-50" />
         <div className="absolute right-0 top-0 h-56 w-56 rounded-full bg-sky-200/30 blur-3xl" />
         <div className="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-indigo-200/30 blur-3xl" />
 
@@ -615,7 +615,7 @@ export default function CreateTrip() {
           </div>
 
           <div className="lg:col-span-4">
-            <div className="rounded-[1.75rem] border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur">
+            <div className="rounded-4xl border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur">
               <div className="text-sm font-bold text-slate-900">
                 {t("createTrip.generate.readyToGenerate")}
               </div>
@@ -651,7 +651,7 @@ export default function CreateTrip() {
               }
             />
 
-            <CardBody className="space-y-6 bg-gradient-to-b from-white to-slate-50/60">
+            <CardBody className="space-y-6 bg-linear-to-b from-white to-slate-50/60">
               <form onSubmit={generate} className="space-y-6">
                 <SectionBlock
                   title={t("createTrip.tripType.title")}
@@ -739,7 +739,7 @@ export default function CreateTrip() {
                           {multiCityPlaces.map((city, index) => (
                             <div
                               key={city.id}
-                              className="flex flex-col gap-3 rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+                              className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
                             >
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2">
@@ -803,7 +803,7 @@ export default function CreateTrip() {
                           ))}
                         </div>
                       ) : (
-                        <div className="rounded-[1.25rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">
+                        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">
                           {t("createTrip.destination.mapSubtitle")}
                         </div>
                       )}
@@ -856,7 +856,7 @@ export default function CreateTrip() {
                     </Select>
                   </div>
 
-                  <div className="mt-4 rounded-[1.25rem] border border-sky-100 bg-sky-50/70 px-4 py-3">
+                  <div className="mt-4 rounded-2xl border border-sky-100 bg-sky-50/70 px-4 py-3">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-sky-700">
                       {t("createTrip.generate.summary")}
                     </div>
@@ -907,7 +907,7 @@ export default function CreateTrip() {
                     />
                   </div>
 
-                  <div className="mt-4 rounded-[1.25rem] border border-slate-200 bg-slate-50 px-4 py-3">
+                  <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                       {t("createTrip.travelers.total")}
                     </div>
@@ -968,9 +968,9 @@ export default function CreateTrip() {
                   <div className="space-y-4">
                     <div
                       className={cx(
-                        "rounded-[1.25rem] border p-4 transition-all",
+                        "rounded-2xl border p-4 transition-all",
                         includeEvents
-                          ? "border-indigo-200 bg-gradient-to-r from-indigo-50 to-sky-50"
+                          ? "border-indigo-200 bg-linear-to-r from-indigo-50 to-sky-50"
                           : "border-slate-200 bg-slate-50"
                       )}
                     >
@@ -1043,7 +1043,7 @@ export default function CreateTrip() {
                                 key={item.id}
                                 onClick={() => toggleEventType(item.id)}
                                 className={cx(
-                                  "rounded-[1.25rem] border p-4 text-left transition-all duration-200",
+                                  "rounded-2xl border p-4 text-left transition-all duration-200",
                                   active
                                     ? "border-indigo-500 bg-indigo-50 shadow-sm"
                                     : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
@@ -1091,7 +1091,7 @@ export default function CreateTrip() {
                         </div>
                       </>
                     ) : (
-                      <div className="rounded-[1.25rem] border border-dashed border-slate-200 bg-white px-4 py-4 text-sm text-slate-500">
+                      <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-4 text-sm text-slate-500">
                         {t("createTrip.events.subtitle")}
                       </div>
                     )}
@@ -1113,7 +1113,7 @@ export default function CreateTrip() {
                       maxLength={300}
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder={t("createTrip.destination.placeholder")}
-                      className="min-h-36 w-full rounded-[1.25rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 shadow-sm outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+                      className="min-h-36 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 shadow-sm outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
                     />
                   </label>
                 </SectionBlock>
@@ -1128,7 +1128,7 @@ export default function CreateTrip() {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-sky-500 to-blue-600 py-4 text-base font-black text-white shadow-lg shadow-sky-200/60 transition hover:-translate-y-0.5 hover:from-sky-400 hover:to-blue-500 hover:shadow-xl sm:w-auto sm:px-8"
                   >
                     <Wand2 size={16} />
                     {loading ? t("createTrip.generate.generating") : t("createTrip.generate.button")}
@@ -1160,7 +1160,7 @@ export default function CreateTrip() {
 
         <div className="space-y-6 xl:col-span-7">
           <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
-            <div className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-6 text-white">
+            <div className="relative overflow-hidden bg-linear-to-br from-slate-950 via-slate-900 to-slate-800 p-6 text-white">
               <div className="absolute inset-0">
                 <div className="absolute -right-10 top-0 h-40 w-40 rounded-full bg-sky-500/20 blur-3xl" />
                 <div className="absolute bottom-0 left-0 h-40 w-40 rounded-full bg-indigo-500/20 blur-3xl" />
@@ -1212,7 +1212,7 @@ export default function CreateTrip() {
               </div>
             </div>
 
-            <CardBody className="space-y-6 bg-gradient-to-b from-white to-slate-50/60">
+            <CardBody className="space-y-6 bg-linear-to-b from-white to-slate-50/60">
               <div className="grid gap-4 sm:grid-cols-2">
                 <PreviewCard
                   title={t("createTrip.dates.title")}
@@ -1285,7 +1285,7 @@ export default function CreateTrip() {
               )}
 
               {includeEvents ? (
-                <div className="rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-sky-50 p-4 text-sm text-slate-600">
+                <div className="rounded-3xl border border-indigo-100 bg-linear-to-r from-indigo-50 to-sky-50 p-4 text-sm text-slate-600">
                   <div className="mb-1 font-bold text-slate-900">
                     {t("createTrip.events.title")}
                   </div>
@@ -1334,7 +1334,7 @@ export default function CreateTrip() {
               }
             />
 
-            <CardBody className="space-y-4 bg-gradient-to-b from-white to-slate-50/60">
+            <CardBody className="space-y-4 bg-linear-to-b from-white to-slate-50/60">
               <div className="overflow-hidden rounded-3xl border border-slate-200 shadow-sm">
                 <MapTilerMap query={mapQuery} height={400} />
               </div>
@@ -1355,11 +1355,19 @@ export default function CreateTrip() {
 function SectionBlock({ title, subtitle, right, children, tone = "default" }) {
   const toneClass =
     tone === "indigo"
-      ? "border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-sky-50"
+      ? "border-indigo-100 bg-linear-to-br from-indigo-50 via-white to-sky-50"
       : "border-slate-200 bg-white";
 
+  const accentBarClass =
+    tone === "indigo"
+      ? "bg-linear-to-b from-indigo-500 to-sky-500"
+      : "bg-linear-to-b from-sky-500 to-blue-600";
+
   return (
-    <section className={`rounded-3xl border p-4 shadow-sm ${toneClass}`}>
+    <section className={`relative overflow-hidden rounded-3xl border p-4 pl-5 shadow-sm ${toneClass}`}>
+      <div
+        className={`absolute left-0 top-3 bottom-3 w-1 rounded-full ${accentBarClass}`}
+      />
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="text-sm font-bold text-slate-900">{title}</div>
@@ -1388,7 +1396,7 @@ function ModeCard({ active, tone, title, text, onClick }) {
       type="button"
       onClick={onClick}
       className={cx(
-        "group rounded-[1.25rem] border px-4 py-4 text-left transition-all duration-200",
+        "group rounded-2xl border px-4 py-4 text-left transition-all duration-200",
         active
           ? activeClasses
           : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
@@ -1424,7 +1432,7 @@ function TravelerRow({
   disableIncrease,
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-[1.25rem] border border-slate-200 bg-white px-4 py-4 shadow-sm">
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
       <div>
         <div className="text-sm font-bold text-slate-900">{title}</div>
         <div className="mt-1 text-xs text-slate-500">{subtitle}</div>
@@ -1469,8 +1477,8 @@ function TravelerRow({
 
 function TopHeroStat({ icon, label, value }) {
   return (
-    <div className="rounded-[1.25rem] border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur">
-      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 text-white">
+    <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur">
+      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-sky-500 to-blue-600 text-white">
         {icon}
       </div>
       <div className="mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">

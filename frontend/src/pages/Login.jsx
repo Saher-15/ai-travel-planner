@@ -87,8 +87,8 @@ export default function Login() {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[2rem] border border-slate-200/70 bg-white shadow-[0_20px_60px_-25px_rgba(15,23,42,0.18)]">
-        <div className="absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-indigo-50" />
+      <section className="relative overflow-hidden rounded-4xl border border-slate-200/70 bg-white shadow-[0_20px_60px_-25px_rgba(15,23,42,0.18)]">
+        <div className="absolute inset-0 bg-linear-to-br from-sky-50 via-white to-indigo-50" />
         <div className="absolute right-0 top-0 h-56 w-56 rounded-full bg-sky-200/30 blur-3xl" />
         <div className="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-indigo-200/30 blur-3xl" />
 
@@ -106,7 +106,7 @@ export default function Login() {
           </div>
 
           <div className="lg:col-span-4">
-            <div className="rounded-[1.75rem] border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur">
+            <div className="rounded-4xl border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur">
               <div className="text-sm font-bold text-slate-900">{t("login.whySignIn")}</div>
               <div className="mt-4 grid gap-3">
                 <MiniInfo title={t("login.benefits.savedItineraries")} text={t("login.benefits.savedItinerariesText")} />
@@ -122,7 +122,7 @@ export default function Login() {
         <div className="xl:col-span-7">
           <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
             <CardHeader title={t("login.form.title")} subtitle={t("login.form.subtitle")} />
-            <CardBody className="space-y-6 bg-gradient-to-b from-white to-slate-50/60">
+            <CardBody className="space-y-6 bg-linear-to-b from-white to-slate-50/60">
               <form onSubmit={onSubmit} className="space-y-6">
                 <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                   <div className="mb-5">
@@ -164,7 +164,7 @@ export default function Login() {
         <div className="space-y-6 xl:col-span-5">
           <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
             <CardHeader title={t("login.whatYouGet.title")} subtitle={t("login.whatYouGet.subtitle")} />
-            <CardBody className="bg-gradient-to-b from-white to-slate-50/60">
+            <CardBody className="bg-linear-to-b from-white to-slate-50/60">
               <div className="space-y-4">
                 <StepCard number="1" title={t("login.whatYouGet.step1Title")} text={t("login.whatYouGet.step1Text")} />
                 <StepCard number="2" title={t("login.whatYouGet.step2Title")} text={t("login.whatYouGet.step2Text")} />
@@ -175,8 +175,8 @@ export default function Login() {
 
           <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
             <CardHeader title={t("login.needAccount.title")} subtitle={t("login.needAccount.subtitle")} />
-            <CardBody className="bg-gradient-to-b from-white to-slate-50/60">
-              <div className="rounded-3xl border border-sky-100 bg-gradient-to-r from-sky-50 to-indigo-50 p-5">
+            <CardBody className="bg-linear-to-b from-white to-slate-50/60">
+              <div className="rounded-3xl border border-sky-100 bg-linear-to-r from-sky-50 to-indigo-50 p-5">
                 <div className="text-base font-bold text-slate-900">{t("login.needAccount.newHere")}</div>
                 <div className="mt-2 text-sm leading-6 text-slate-600">{t("login.needAccount.description")}</div>
                 <div className="mt-5">
@@ -196,7 +196,7 @@ export default function Login() {
 function HeroStat({ icon, title, value, subtitle }) {
   return (
     <div className="rounded-3xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur">
-      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 text-white">{icon}</div>
+      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-sky-500 via-blue-600 to-indigo-700 text-white">{icon}</div>
       <div className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">{title}</div>
       <div className="mt-2 text-3xl font-black tracking-tight text-slate-900">{value}</div>
       <div className="mt-1 text-sm text-slate-500">{subtitle}</div>
@@ -216,7 +216,7 @@ function MiniInfo({ title, text }) {
 function StepCard({ number, title, text }) {
   return (
     <div className="flex gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 text-sm font-black text-white">{number}</div>
+      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-linear-to-br from-sky-500 via-blue-600 to-indigo-700 text-sm font-black text-white">{number}</div>
       <div>
         <div className="text-sm font-bold text-slate-900">{title}</div>
         <div className="mt-1 text-sm leading-6 text-slate-600">{text}</div>

@@ -183,7 +183,7 @@ function MiniInfo({ label, value }) {
 function HeroStat({ icon, title, value, subtitle }) {
   return (
     <div className="rounded-3xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur">
-      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 text-white">
+      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-sky-500 via-blue-600 to-indigo-700 text-white">
         {icon}
       </div>
       <div className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
@@ -543,8 +543,8 @@ export default function EditTrip() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <section className="relative overflow-hidden rounded-[2rem] border border-slate-200/70 bg-white shadow-[0_20px_60px_-25px_rgba(15,23,42,0.18)]">
-          <div className="absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-indigo-50" />
+        <section className="relative overflow-hidden rounded-4xl border border-slate-200/70 bg-white shadow-[0_20px_60px_-25px_rgba(15,23,42,0.18)]">
+          <div className="absolute inset-0 bg-linear-to-br from-sky-50 via-white to-indigo-50" />
           <div className="relative p-6 lg:p-8">
             <div className="h-7 w-40 animate-pulse rounded bg-slate-200" />
             <div className="mt-4 h-10 w-72 animate-pulse rounded bg-slate-200" />
@@ -576,8 +576,8 @@ export default function EditTrip() {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[2rem] border border-slate-200/70 bg-white shadow-[0_20px_60px_-25px_rgba(15,23,42,0.18)]">
-        <div className="absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-indigo-50" />
+      <section className="relative overflow-hidden rounded-4xl border border-slate-200/70 bg-white shadow-[0_20px_60px_-25px_rgba(15,23,42,0.18)]">
+        <div className="absolute inset-0 bg-linear-to-br from-sky-50 via-white to-indigo-50" />
         <div className="absolute right-0 top-0 h-56 w-56 rounded-full bg-sky-200/30 blur-3xl" />
         <div className="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-indigo-200/30 blur-3xl" />
 
@@ -652,7 +652,7 @@ export default function EditTrip() {
               title={t("editTrip.actionsTitle")}
               subtitle={t("editTrip.actionsSubtitle")}
             />
-            <CardBody className="space-y-4 bg-gradient-to-b from-white to-slate-50/60">
+            <CardBody className="space-y-4 bg-linear-to-b from-white to-slate-50/60">
               <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="mb-5">
                   <div className="text-lg font-bold text-slate-900">
@@ -699,7 +699,7 @@ export default function EditTrip() {
               title={t("editTrip.editorSummary")}
               subtitle={t("editTrip.editorSummarySubtitle")}
             />
-            <CardBody className="bg-gradient-to-b from-white to-slate-50/60">
+            <CardBody className="bg-linear-to-b from-white to-slate-50/60">
               <div className="space-y-4">
                 <MiniInfo label={t("editTrip.daysLabel")} value={safeArray(form?.itinerary?.days).length} />
                 <MiniInfo label={t("editTrip.activitiesLabel")} value={totalActivities} />
@@ -717,7 +717,7 @@ export default function EditTrip() {
               title={t("editTrip.protectedContentTitle")}
               subtitle={t("editTrip.protectedContentSubtitle")}
             />
-            <CardBody className="bg-gradient-to-b from-white to-slate-50/60">
+            <CardBody className="bg-linear-to-b from-white to-slate-50/60">
               <div className="space-y-4">
                 <MiniInfo
                   label={t("editTrip.recommendedPlaces")}
@@ -740,7 +740,7 @@ export default function EditTrip() {
                 key={dayIndex}
                 className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]"
               >
-                <div className="relative overflow-hidden border-b border-slate-200 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-5 py-5 text-white">
+                <div className="relative overflow-hidden border-b border-slate-200 bg-linear-to-r from-slate-900 via-slate-800 to-slate-900 px-5 py-5 text-white">
                   <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-white/5 blur-3xl" />
 
                   <div className="relative flex flex-col gap-4">
@@ -800,7 +800,7 @@ export default function EditTrip() {
                   </div>
                 </div>
 
-                <CardBody className="space-y-6 bg-gradient-to-b from-white to-slate-50/60">
+                <CardBody className="space-y-6 bg-linear-to-b from-white to-slate-50/60">
                   <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div className="mb-5">
                       <div className="text-lg font-bold text-slate-900">

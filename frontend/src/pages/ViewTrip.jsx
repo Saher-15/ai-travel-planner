@@ -254,13 +254,21 @@ export default function ViewTrip() {
   const rawRecommendedPlaces = useMemo(() => getRecommendedPlaces(trip), [trip]);
 
   const pdfRef = useRef(null);
-  const [openDays, setOpenDays] = useState({});
+  const [openDays, setOpenDays] = useState({ 1: true });
   const [downloadError, setDownloadError] = useState("");
 
   const locations = useMemo(
     () => extractUniqueLocations(trip?.itinerary, primaryDestination, t("viewTrip.place")),
     [trip, primaryDestination, t]
   );
+
+  const coverPhotoState = usePlacePhotos(
+    primaryDestination
+      ? [{ title: primaryDestination, location: primaryDestination, photoQuery: primaryDestination }]
+      : [],
+    primaryDestination
+  );
+  const coverPhoto = coverPhotoState.data?.[0]?.photoUrl || null;
 
   const itineraryPhotosState = usePlacePhotos(locations, primaryDestination);
   const placesWithPhotos = itineraryPhotosState.data || locations;
@@ -395,6 +403,7 @@ export default function ViewTrip() {
           summary={summary}
           tripMode={tripMode}
           destinations={destinations}
+          coverPhoto={coverPhoto}
           onBack={() => nav("/trips")}
           onNew={() => nav("/create")}
           onEdit={() => nav(`/trip/${id}/edit`)}
@@ -478,6 +487,7 @@ function Header({
   summary,
   tripMode,
   destinations,
+  coverPhoto,
   onBack,
   onNew,
   onEdit,
@@ -486,9 +496,17 @@ function Header({
   const { t } = useTranslation();
   return (
     <Card className="relative overflow-hidden border-0 shadow-[0_24px_80px_-28px_rgba(37,99,235,0.55)]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.10),transparent_24%)]" />
-      <div className="relative bg-linear-to-br from-sky-700 via-blue-700 to-indigo-900 text-white">
-        <div className="flex flex-col gap-6 px-6 py-7 sm:px-8 lg:flex-row lg:items-end lg:justify-between">
+      <div className="relative text-white">
+        {/* Background: city photo or fallback gradient */}
+        {coverPhoto ? (
+          <img
+            src={coverPhoto}
+            alt={trip?.destination || ""}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : null}
+        <div className={`absolute inset-0 ${coverPhoto ? "bg-linear-to-br from-slate-900/80 via-blue-900/70 to-indigo-950/80" : "bg-linear-to-br from-sky-700 via-blue-700 to-indigo-900"}`} />
+        <div className="relative z-10 flex flex-col gap-6 px-6 py-7 sm:px-8 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
             <div className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.25em] text-white/85">
               {tripMode === "multi" ? t("viewTrip.multiCityItinerary") : t("viewTrip.smartTravelPlan")}
@@ -789,7 +807,7 @@ function RecommendedPlacesSection({ places, onJump, loading }) {
               return (
                 <div
                   key={place?._id || place?.id || `${title}-${i}`}
-                  className="group overflow-hidden rounded-[1.7rem] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl"
+                  className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl"
                 >
                   <div className="relative h-56 overflow-hidden bg-slate-100">
                     {image ? (
@@ -999,7 +1017,7 @@ function PlacesGallery({ points, loading }) {
               return (
                 <div
                   key={`${place.address || place.location || place.title}-${i}`}
-                  className="group overflow-hidden rounded-[1.7rem] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl"
+                  className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl"
                 >
                   <div className="relative h-56 overflow-hidden bg-slate-100">
                     {place.photoUrl ? (
@@ -1076,6 +1094,19 @@ function PlacesGallery({ points, loading }) {
   );
 }
 
+const DAY_GRADIENTS = [
+  "from-slate-900 via-slate-800 to-indigo-950",
+  "from-sky-900 via-blue-900 to-indigo-950",
+  "from-indigo-900 via-violet-900 to-purple-950",
+  "from-emerald-900 via-teal-900 to-cyan-950",
+  "from-rose-900 via-red-900 to-orange-950",
+  "from-amber-900 via-orange-900 to-rose-950",
+  "from-violet-900 via-purple-900 to-indigo-950",
+];
+function getDayGradient(dayNumber) {
+  return DAY_GRADIENTS[(Number(dayNumber) - 1) % DAY_GRADIENTS.length];
+}
+
 function DayCard({ day, isOpen, onToggle, photoMap = new Map() }) {
   const { t } = useTranslation();
   const activityCount = countDayActivities(day);
@@ -1086,7 +1117,7 @@ function DayCard({ day, isOpen, onToggle, photoMap = new Map() }) {
       id={`day-${day.day}`}
       className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur scroll-mt-28"
     >
-      <div className="relative overflow-hidden bg-linear-to-br from-slate-900 via-slate-800 to-indigo-950 p-5 text-white">
+      <div className={`relative overflow-hidden bg-linear-to-br ${getDayGradient(day.day)} p-5 text-white`}>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.12),transparent_20%),radial-gradient(circle_at_bottom_left,rgba(56,189,248,0.16),transparent_24%)]" />
         <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div>
@@ -1290,7 +1321,7 @@ function MiniSection({ title, items, icon, photoMap = new Map() }) {
           return (
             <li
               key={x.id ?? `${x.title}-${x.address || x.location}-${i}`}
-              className="overflow-hidden rounded-[1.4rem] border border-slate-200 bg-linear-to-br from-white to-slate-50 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md"
+              className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-sky-200"
             >
               {photoUrl && (
                 <div className="relative h-28 sm:h-36 w-full overflow-hidden">
