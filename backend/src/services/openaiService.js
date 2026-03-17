@@ -499,6 +499,7 @@ function buildItineraryPrompt({
   endDate,
   preferences,
   language = "en",
+  multiCityMeta = [],
 }) {
   const {
     travelers = 1,
@@ -511,13 +512,31 @@ function buildItineraryPrompt({
     from = "",
   } = preferences || {};
 
-  const days = getDayCount(startDate, endDate);
   const cleanTripMode = normalizeTripMode(tripMode);
   const cleanDestinations = normalizeDestinationsArray(destinations, destination);
   const isMultiCity = cleanTripMode === "multi" && cleanDestinations.length > 1;
+
+  // Use per-city dates from multiCityMeta when available, otherwise split evenly
+  const hasCityDates =
+    isMultiCity &&
+    Array.isArray(multiCityMeta) &&
+    multiCityMeta.length === cleanDestinations.length &&
+    multiCityMeta.every((c) => c.startDate && c.endDate);
+
   const cityPlan = isMultiCity
-    ? splitDaysAcrossCities(startDate, endDate, cleanDestinations)
+    ? hasCityDates
+      ? cleanDestinations.map((city, i) => ({
+          city,
+          days: getDayCount(multiCityMeta[i].startDate, multiCityMeta[i].endDate),
+          startDate: multiCityMeta[i].startDate,
+          endDate: multiCityMeta[i].endDate,
+        }))
+      : splitDaysAcrossCities(startDate, endDate, cleanDestinations)
     : [];
+
+  const days = isMultiCity && cityPlan.length
+    ? cityPlan.reduce((sum, c) => sum + c.days, 0)
+    : getDayCount(startDate, endDate);
 
   const plannerHints = buildPlannerHints({
     sourceTab,

@@ -75,6 +75,17 @@ const TripSchema = new mongoose.Schema(
     destination: { type: String, required: true, trim: true },
     destinations: { type: [String], default: [] },
 
+    // English place metadata — used for city photo lookups even when destination is in Hebrew
+    placeMeta: {
+      name: { type: String, default: "" },
+      label: { type: String, default: "" },
+      country: { type: String, default: "" },
+      region: { type: String, default: "" },
+      lng: { type: Number, default: null },
+      lat: { type: Number, default: null },
+    },
+    multiCityMeta: { type: [Object], default: [] },
+
     startDate: { type: String, required: true },
     endDate: { type: String, required: true },
 

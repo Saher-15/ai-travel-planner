@@ -549,7 +549,9 @@
       "minCities": "Please add at least 2 cities for a multi-city trip.",
       "selectValidDates": "Please select valid dates.",
       "maxDays": "Please choose a trip length of 30 days or less.",
-      "minTravelers": "Please choose at least 1 traveler."
+      "minTravelers": "Please choose at least 1 traveler.",
+      "cityDatesRequired": "Please add start and end dates for all cities.",
+      "cityDatesInvalid": "City dates must be in a valid sequence (each city must start after the previous one ends)."
     }
   },
   "myTrips": {

@@ -176,8 +176,8 @@ async function searchWikipedia(query) {
     const data = res.ok ? await safeJson(res) : null;
 
     // Skip disambiguation pages, missing articles, and pages without images
-    const src = data?.thumbnail?.source || null;
-    if (!src || data?.type === "disambiguation" || data?.type === "no-extract") {
+    const thumbnailSrc = data?.thumbnail?.source || null;
+    if (!thumbnailSrc || data?.type === "disambiguation" || data?.type === "no-extract") {
       photoCache.set(cacheKey, null);
       await PlacePhoto.updateOne(
         { query: cacheKey },
@@ -186,6 +186,11 @@ async function searchWikipedia(query) {
       );
       return null;
     }
+
+    // Prefer originalimage (full resolution). If unavailable, upgrade the thumbnail
+    // URL from its native width (e.g. 320px) to 1200px for a sharp cover-quality image.
+    const originalSrc = data?.originalimage?.source || null;
+    const src = originalSrc || thumbnailSrc.replace(/\/\d+px-/, "/1200px-");
 
     // Use thumbnail URL as-is — Wikimedia thumbnails are always valid direct URLs
     const result = {
@@ -233,7 +238,7 @@ async function searchPixabay(query) {
   const url =
     `https://pixabay.com/api/?key=${PIXABAY_KEY}` +
     `&q=${encodeURIComponent(query)}` +
-    `&image_type=photo&orientation=horizontal&per_page=5&safesearch=true&order=popular`;
+    `&image_type=photo&orientation=horizontal&per_page=5&safesearch=true&order=popular&min_width=1200`;
 
   const res = await fetch(url);
   const data = await safeJson(res);

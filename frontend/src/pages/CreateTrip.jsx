@@ -287,6 +287,16 @@ export default function CreateTrip() {
   const travelerSummary = useMemo(() => getTravelerSummary(travelers, t), [travelers, t]);
 
   const daysCount = useMemo(() => {
+    if (tripMode === "multi") {
+      if (!multiCityPlaces.length) return null;
+      const first = multiCityPlaces[0];
+      const last = multiCityPlaces[multiCityPlaces.length - 1];
+      if (!first?.startDate || !last?.endDate) return null;
+      const s = new Date(`${first.startDate}T12:00:00`);
+      const e = new Date(`${last.endDate}T12:00:00`);
+      if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime()) || s >= e) return null;
+      return Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1;
+    }
     const s = new Date(`${startDate}T12:00:00`);
     const e = new Date(`${endDate}T12:00:00`);
 
@@ -295,7 +305,7 @@ export default function CreateTrip() {
     }
 
     return Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1;
-  }, [startDate, endDate]);
+  }, [tripMode, multiCityPlaces, startDate, endDate]);
 
   const tripEnergy = useMemo(() => getTripEnergy(pace, budget, t), [pace, budget, t]);
 
@@ -420,10 +430,25 @@ export default function CreateTrip() {
       return;
     }
 
-    setMultiCityPlaces((prev) => [...prev, normalized]);
+    setMultiCityPlaces((prev) => {
+      const prevCity = prev[prev.length - 1];
+      const cityStart = prevCity?.endDate
+        ? addDays(prevCity.endDate, 1)
+        : clampToToday(todayISOPlus(0));
+      const cityEnd = addDays(cityStart, 1);
+      return [...prev, { ...normalized, startDate: cityStart, endDate: cityEnd }];
+    });
     setMultiCityInput("");
     setMultiCitySelectedPlace(null);
     setErr("");
+  }
+
+  function updateCityDate(index, field, value) {
+    setMultiCityPlaces((prev) => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], [field]: value };
+      return copy;
+    });
   }
 
   function removeMultiCity(index) {
@@ -491,6 +516,21 @@ export default function CreateTrip() {
       return;
     }
 
+    if (tripMode === "multi") {
+      const allHaveDates = multiCityPlaces.every((c) => c.startDate && c.endDate);
+      if (!allHaveDates) {
+        setErr(t("createTrip.errors.cityDatesRequired"));
+        return;
+      }
+
+      for (let i = 1; i < multiCityPlaces.length; i++) {
+        if (multiCityPlaces[i].startDate < multiCityPlaces[i - 1].endDate) {
+          setErr(t("createTrip.errors.cityDatesInvalid"));
+          return;
+        }
+      }
+    }
+
     if (!daysCount) {
       setErr(t("createTrip.errors.selectValidDates"));
       return;
@@ -506,13 +546,16 @@ export default function CreateTrip() {
       return;
     }
 
+    const multiStart = tripMode === "multi" ? multiCityPlaces[0].startDate : startDate;
+    const multiEnd = tripMode === "multi" ? multiCityPlaces[multiCityPlaces.length - 1].endDate : endDate;
+
     const payload = {
       tripMode,
       language: i18n.language?.split("-")[0] || "en",
       destination: tripMode === "single" ? cleanDestination : cities.join(" → "),
       destinations: tripMode === "multi" ? cities : [cleanDestination],
-      startDate,
-      endDate,
+      startDate: tripMode === "multi" ? multiStart : startDate,
+      endDate: tripMode === "multi" ? multiEnd : endDate,
       preferences: {
         pace,
         budget,
@@ -551,6 +594,8 @@ export default function CreateTrip() {
               region: city.region || "",
               lng: city.center?.[0] ?? null,
               lat: city.center?.[1] ?? null,
+              startDate: city.startDate,
+              endDate: city.endDate,
             }))
           : [],
     };
@@ -739,65 +784,90 @@ export default function CreateTrip() {
                           {multiCityPlaces.map((city, index) => (
                             <div
                               key={city.id}
-                              className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+                              className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
                             >
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-lg">{city.flag || "🌍"}</span>
-                                  <span className="rounded-full bg-sky-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-700">
-                                    {t("createTrip.stop", { n: index + 1 })}
-                                  </span>
-                                </div>
-
-                                <div className="mt-2 text-sm font-bold text-slate-900">
-                                  {city.placeName}
-                                </div>
-
-                                {(city.region || city.country) && (
-                                  <div className="mt-1 text-xs text-slate-500">
-                                    {[city.region, city.country]
-                                      .filter(Boolean)
-                                      .join(", ")}
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg">{city.flag || "🌍"}</span>
+                                    <span className="rounded-full bg-sky-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-700">
+                                      {t("createTrip.stop", { n: index + 1 })}
+                                    </span>
                                   </div>
-                                )}
+
+                                  <div className="mt-2 text-sm font-bold text-slate-900">
+                                    {city.placeName}
+                                  </div>
+
+                                  {(city.region || city.country) && (
+                                    <div className="mt-1 text-xs text-slate-500">
+                                      {[city.region, city.country]
+                                        .filter(Boolean)
+                                        .join(", ")}
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => moveMultiCityUp(index)}
+                                    disabled={index === 0}
+                                    className={cx(
+                                      "rounded-xl border px-3 py-2 text-xs font-semibold transition",
+                                      index === 0
+                                        ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-300"
+                                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                                    )}
+                                  >
+                                    ↑ {t("common.previous")}
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => moveMultiCityDown(index)}
+                                    disabled={index === multiCityPlaces.length - 1}
+                                    className={cx(
+                                      "rounded-xl border px-3 py-2 text-xs font-semibold transition",
+                                      index === multiCityPlaces.length - 1
+                                        ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-300"
+                                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                                    )}
+                                  >
+                                    ↓ {t("common.next")}
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => removeMultiCity(index)}
+                                    className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100"
+                                  >
+                                    {t("common.delete")}
+                                  </button>
+                                </div>
                               </div>
 
-                              <div className="flex flex-wrap gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => moveMultiCityUp(index)}
-                                  disabled={index === 0}
-                                  className={cx(
-                                    "rounded-xl border px-3 py-2 text-xs font-semibold transition",
-                                    index === 0
-                                      ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-300"
-                                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                                  )}
-                                >
-                                  ↑ {t("common.previous")}
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => moveMultiCityDown(index)}
-                                  disabled={index === multiCityPlaces.length - 1}
-                                  className={cx(
-                                    "rounded-xl border px-3 py-2 text-xs font-semibold transition",
-                                    index === multiCityPlaces.length - 1
-                                      ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-300"
-                                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                                  )}
-                                >
-                                  ↓ {t("common.next")}
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => removeMultiCity(index)}
-                                  className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100"
-                                >
-                                  {t("common.delete")}
-                                </button>
+                              <div className="grid grid-cols-2 gap-3 border-t border-slate-100 pt-3">
+                                <Input
+                                  label={t("createTrip.dates.startDate")}
+                                  type="date"
+                                  value={city.startDate || ""}
+                                  min={minStartDate}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    updateCityDate(index, "startDate", val);
+                                    if (!city.endDate || val >= city.endDate) {
+                                      updateCityDate(index, "endDate", addDays(val, 1));
+                                    }
+                                  }}
+                                />
+                                <Input
+                                  label={t("createTrip.dates.endDate")}
+                                  type="date"
+                                  value={city.endDate || ""}
+                                  min={city.startDate ? addDays(city.startDate, 1) : minStartDate}
+                                  onChange={(e) => updateCityDate(index, "endDate", e.target.value)}
+                                />
                               </div>
                             </div>
                           ))}
@@ -811,24 +881,26 @@ export default function CreateTrip() {
                   )}
                 </SectionBlock>
 
-                <SectionBlock title={t("createTrip.dates.title")} subtitle={t("createTrip.dates.subtitle")}>
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <Input
-                      label={t("createTrip.dates.startDate")}
-                      type="date"
-                      value={startDate}
-                      min={minStartDate}
-                      onChange={(e) => handleStartDateChange(e.target.value)}
-                    />
-                    <Input
-                      label={t("createTrip.dates.endDate")}
-                      type="date"
-                      value={endDate}
-                      min={minEndDate}
-                      onChange={(e) => handleEndDateChange(e.target.value)}
-                    />
-                  </div>
-                </SectionBlock>
+                {tripMode === "single" && (
+                  <SectionBlock title={t("createTrip.dates.title")} subtitle={t("createTrip.dates.subtitle")}>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <Input
+                        label={t("createTrip.dates.startDate")}
+                        type="date"
+                        value={startDate}
+                        min={minStartDate}
+                        onChange={(e) => handleStartDateChange(e.target.value)}
+                      />
+                      <Input
+                        label={t("createTrip.dates.endDate")}
+                        type="date"
+                        value={endDate}
+                        min={minEndDate}
+                        onChange={(e) => handleEndDateChange(e.target.value)}
+                      />
+                    </div>
+                  </SectionBlock>
+                )}
 
                 <SectionBlock
                   title={t("createTrip.preferences.title")}

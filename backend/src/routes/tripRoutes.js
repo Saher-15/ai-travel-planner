@@ -710,7 +710,7 @@ function drawRecommendedPlaces(doc, places = []) {
  */
 router.post("/generate", authMiddleware, aiLimiter, async (req, res) => {
   try {
-    const { tripMode, destination, destinations, startDate, endDate, preferences } = req.body;
+    const { tripMode, destination, destinations, startDate, endDate, preferences, multiCityMeta } = req.body;
 
     const normalizedTripMode = normalizeTripMode(tripMode);
     const cleanDestination = String(destination || "").trim();
@@ -738,6 +738,7 @@ router.post("/generate", authMiddleware, aiLimiter, async (req, res) => {
         startDate,
         endDate,
         preferences: normalizedPreferences,
+        multiCityMeta: Array.isArray(multiCityMeta) ? multiCityMeta : [],
       }),
       fetchDestinationEvents({
         destination: cleanDestinations[0] || cleanDestination,
@@ -762,7 +763,7 @@ router.post("/generate", authMiddleware, aiLimiter, async (req, res) => {
  */
 router.post("/generate-and-save", authMiddleware, aiLimiter, async (req, res) => {
   try {
-    const { tripMode, destination, destinations, startDate, endDate, preferences, language } = req.body;
+    const { tripMode, destination, destinations, startDate, endDate, preferences, language, multiCityMeta, placeMeta } = req.body;
 
     const normalizedTripMode = normalizeTripMode(tripMode);
     const cleanDestination = String(destination || "").trim();
@@ -781,6 +782,7 @@ router.post("/generate-and-save", authMiddleware, aiLimiter, async (req, res) =>
     }
 
     const normalizedPreferences = normalizePreferences(preferences);
+    const cleanMultiCityMeta = Array.isArray(multiCityMeta) ? multiCityMeta : [];
 
     const [itinerary, fetchedEvents] = await Promise.all([
       generateItinerary({
@@ -791,6 +793,7 @@ router.post("/generate-and-save", authMiddleware, aiLimiter, async (req, res) =>
         endDate,
         preferences: normalizedPreferences,
         language: language === "he" ? "he" : "en",
+        multiCityMeta: cleanMultiCityMeta,
       }),
       fetchDestinationEvents({
         destination: cleanDestinations[0] || cleanDestination,
@@ -810,6 +813,8 @@ router.post("/generate-and-save", authMiddleware, aiLimiter, async (req, res) =>
       preferences: normalizedPreferences,
       itinerary: normalizeItinerary(itinerary),
       events: normalizeEvents(fetchedEvents),
+      placeMeta: placeMeta && typeof placeMeta === "object" ? placeMeta : {},
+      multiCityMeta: cleanMultiCityMeta,
     });
 
     return res.status(201).json(trip);

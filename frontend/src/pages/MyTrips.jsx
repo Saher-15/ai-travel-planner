@@ -26,13 +26,43 @@ export default function MyTrips() {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [coverPhotos, setCoverPhotos] = useState({});
 
   async function load() {
     setErr("");
     setLoading(true);
     try {
       const { data } = await api.get("/trips");
-      setTrips(Array.isArray(data) ? data : []);
+      const loaded = Array.isArray(data) ? data : [];
+      setTrips(loaded);
+
+      // Fetch cover photos for all trips in one batch.
+      // Use the stored English place name (placeMeta.name) so Hebrew destination
+      // names don't break the photo search.
+      if (loaded.length) {
+        try {
+          const places = loaded.map((trip) => {
+            const englishName =
+              trip.placeMeta?.name ||
+              trip.placeMeta?.label ||
+              (trip.tripMode === "multi"
+                ? trip.multiCityMeta?.[0]?.name || trip.multiCityMeta?.[0]?.label
+                : null) ||
+              trip.destination ||
+              "";
+            return { query: englishName, title: englishName, destination: englishName };
+          });
+          const { data: photoData } = await api.post("/places/photos", { places });
+          const results = Array.isArray(photoData?.results) ? photoData.results : [];
+          const photoMap = {};
+          loaded.forEach((trip, i) => {
+            if (results[i]?.photoUrl) photoMap[trip._id] = results[i].photoUrl;
+          });
+          setCoverPhotos(photoMap);
+        } catch {
+          // photos are optional — silently ignore
+        }
+      }
     } catch (e2) {
       setErr(e2?.response?.data?.message || t("myTrips.errors.loadFailed"));
     } finally {
@@ -148,7 +178,7 @@ export default function MyTrips() {
       ) : filtered.length ? (
         <div className="grid gap-6 md:grid-cols-2 2xl:grid-cols-3">
           {filtered.map((trip) => (
-            <TripCard key={trip._id} trip={trip} onView={() => nav(`/trip/${trip._id}`)} onDelete={() => del(trip._id)} />
+            <TripCard key={trip._id} trip={trip} onView={() => nav(`/trip/${trip._id}`)} onDelete={() => del(trip._id)} coverPhoto={coverPhotos[trip._id] || null} />
           ))}
         </div>
       ) : (
@@ -174,7 +204,7 @@ function getDestGradient(name) {
   return DEST_GRADIENTS[keys[idx]];
 }
 
-function TripCard({ trip, onView, onDelete }) {
+function TripCard({ trip, onView, onDelete, coverPhoto }) {
   const { t } = useTranslation();
   const destination = trip.destination || t("common.notFound");
   const tripDays = getTripDays(trip);
@@ -182,22 +212,27 @@ function TripCard({ trip, onView, onDelete }) {
   const pace = trip.preferences?.pace;
   const interests = getInterests(trip);
   const gradient = getDestGradient(destination);
-  const photoUrl = `https://source.unsplash.com/featured/600x200/?${encodeURIComponent(destination)},travel`;
 
   return (
     <Card className="group overflow-hidden border border-slate-200/80 transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-24px_rgba(15,23,42,0.30)]">
       <div className={`relative overflow-hidden bg-linear-to-br ${gradient} p-6 pb-8 text-white min-h-52`}>
-        {/* Destination photo as background */}
-        <img
-          src={photoUrl}
-          alt={destination}
-          className="absolute inset-0 h-full w-full object-cover opacity-30 transition duration-500 group-hover:opacity-40 group-hover:scale-105"
-        />
+        {/* City photo as background */}
+        {coverPhoto && (
+          <img
+            src={coverPhoto}
+            alt={destination}
+            className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          />
+        )}
         {/* Gradient overlay for text readability */}
-        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" />
-        {/* Decorative blobs */}
-        <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute bottom-0 left-0 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
+        <div className={`absolute inset-0 ${coverPhoto ? "bg-linear-to-t from-black/75 via-black/30 to-black/10" : "bg-linear-to-t from-black/60 via-black/20 to-transparent"}`} />
+        {/* Decorative blobs (only without photo) */}
+        {!coverPhoto && (
+          <>
+            <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
+            <div className="absolute bottom-0 left-0 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
+          </>
+        )}
         <div className="relative">
           <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/75">{t("myTrips.tripCard.destination")}</div>
           <div className="mt-2 line-clamp-2 text-3xl font-black tracking-tight drop-shadow-md">{destination}</div>
