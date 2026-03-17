@@ -117,6 +117,11 @@ function buildQueryCandidates(place = {}) {
   const foodFallback          = isFood && city ? `${city} restaurant food` : "";
   const cityFallback          = city ? `${city} travel` : "";
 
+  // For city-cover queries (no location context, just a city name):
+  // generate landscape-friendly Pixabay terms for professional travel photos
+  const coverSkyline = cleanedTitle && !city ? `${cleanedTitle} skyline` : "";
+  const coverPanorama = cleanedTitle && !city ? `${cleanedTitle} panorama travel` : "";
+
   return uniqueStrings([
     safeVenue,            // "Picasso Museum"              ← named place (skipped for restaurants)
     venueWithCity,        // "Picasso Museum Barcelona"
@@ -125,6 +130,8 @@ function buildQueryCandidates(place = {}) {
     neighborhoodWithCity, // "Poble Sec Barcelona"         ← street fallback
     foodFallback,         // "Barcelona restaurant food"   ← restaurant fallback
     cityFallback,         // "Barcelona travel"
+    coverSkyline,         // "Barcelona skyline"           ← city cover landscape
+    coverPanorama,        // "Barcelona panorama travel"   ← city cover wide shot
   ]);
 }
 
@@ -145,7 +152,7 @@ async function safeJson(response) {
 async function searchWikipedia(query) {
   if (!query) return null;
 
-  const cacheKey = `wiki:${query.toLowerCase()}`;
+  const cacheKey = `wiki_v3:${query.toLowerCase()}`;
 
   // 1) In-memory cache
   const cached = photoCache.get(cacheKey);
@@ -326,15 +333,17 @@ async function searchHebrewWikipedia(hebrewQuery) {
 async function searchPixabay(query) {
   if (!query || !PIXABAY_KEY) return null;
 
-  const cached = photoCache.get(query);
+  const cacheKey = `pix_v2:${query}`;
+
+  const cached = photoCache.get(cacheKey);
   if (cached !== undefined) return cached;
 
-  const dbCached = await PlacePhoto.findOne({ query }).lean();
+  const dbCached = await PlacePhoto.findOne({ query: cacheKey }).lean();
   if (dbCached) {
     const result = dbCached.photoUrl
       ? { photoUrl: dbCached.photoUrl, photoAttribution: dbCached.photoAttribution }
       : null;
-    photoCache.set(query, result);
+    photoCache.set(cacheKey, result);
     return result;
   }
 
@@ -348,8 +357,8 @@ async function searchPixabay(query) {
   const first = res.ok && Array.isArray(data?.hits) ? data.hits[0] : null;
 
   if (!first) {
-    photoCache.set(query, null);
-    await PlacePhoto.updateOne({ query }, { query, photoUrl: null, photoAttribution: null }, { upsert: true });
+    photoCache.set(cacheKey, null);
+    await PlacePhoto.updateOne({ query: cacheKey }, { query: cacheKey, photoUrl: null, photoAttribution: null }, { upsert: true });
     return null;
   }
 
@@ -362,8 +371,8 @@ async function searchPixabay(query) {
     },
   };
 
-  photoCache.set(query, result);
-  await PlacePhoto.updateOne({ query }, { query, photoUrl: result.photoUrl, photoAttribution: result.photoAttribution }, { upsert: true });
+  photoCache.set(cacheKey, result);
+  await PlacePhoto.updateOne({ query: cacheKey }, { query: cacheKey, photoUrl: result.photoUrl, photoAttribution: result.photoAttribution }, { upsert: true });
   return result;
 }
 
