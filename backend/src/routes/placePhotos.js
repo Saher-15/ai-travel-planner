@@ -218,6 +218,70 @@ async function searchWikipedia(query) {
 
 
 // ------------------------------
+// Hebrew Wikipedia — for Hebrew city/place names (existing trips without placeMeta)
+// he.wikipedia.org has full articles + photos for all major world cities in Hebrew
+// ------------------------------
+async function searchHebrewWikipedia(hebrewQuery) {
+  if (!hebrewQuery || !isHebrew(hebrewQuery)) return null;
+
+  // Take the first segment before a comma: "ברצלונה, ספרד" → "ברצלונה"
+  const city = hebrewQuery.split(",")[0].trim();
+  if (!city) return null;
+
+  const cacheKey = `hewiki:${city}`;
+
+  const cached = photoCache.get(cacheKey);
+  if (cached !== undefined) return cached;
+
+  const dbCached = await PlacePhoto.findOne({ query: cacheKey }).lean();
+  if (dbCached) {
+    const result = dbCached.photoUrl
+      ? { photoUrl: dbCached.photoUrl, photoAttribution: dbCached.photoAttribution }
+      : null;
+    photoCache.set(cacheKey, result);
+    return result;
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const url = `https://he.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(city)}`;
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: { "User-Agent": "TravelPlannerApp/1.0 (open-source educational project)" },
+    });
+    clearTimeout(timeout);
+
+    const data = res.ok ? await safeJson(res) : null;
+    const thumbnailSrc = data?.thumbnail?.source || null;
+    if (!thumbnailSrc || data?.type === "disambiguation" || data?.type === "no-extract") {
+      photoCache.set(cacheKey, null);
+      await PlacePhoto.updateOne({ query: cacheKey }, { query: cacheKey, photoUrl: null, photoAttribution: null }, { upsert: true });
+      return null;
+    }
+
+    const originalSrc = data?.originalimage?.source || null;
+    const src = originalSrc || thumbnailSrc.replace(/\/\d+px-/, "/1200px-");
+
+    const result = {
+      photoUrl: src,
+      photoAttribution: {
+        photographer: data.description || "",
+        photographerUrl: data?.content_urls?.desktop?.page || "",
+        source: "Wikipedia",
+      },
+    };
+
+    photoCache.set(cacheKey, result);
+    await PlacePhoto.updateOne({ query: cacheKey }, { query: cacheKey, photoUrl: result.photoUrl, photoAttribution: result.photoAttribution }, { upsert: true });
+    return result;
+  } catch {
+    photoCache.set(cacheKey, null);
+    return null;
+  }
+}
+
+// ------------------------------
 // Pixabay — generic city/category queries only
 // ------------------------------
 async function searchPixabay(query) {
@@ -299,6 +363,16 @@ router.post("/photos", async (req, res) => {
           const pix = await searchPixabay(candidate);
           if (pix?.photoUrl) {
             return { ...base, query: candidate, matchedQuery: candidate, photoUrl: pix.photoUrl, photoAttribution: pix.photoAttribution };
+          }
+        }
+
+        // 3) Hebrew Wikipedia — handles existing trips where destination is stored in Hebrew
+        //    e.g. "ברצלונה, ספרד" or "נפולי, איטליה"
+        const rawQuery = clean(place?.query || place?.title);
+        if (isHebrew(rawQuery)) {
+          const heWiki = await searchHebrewWikipedia(rawQuery);
+          if (heWiki?.photoUrl) {
+            return { ...base, query: rawQuery, matchedQuery: rawQuery, photoUrl: heWiki.photoUrl, photoAttribution: heWiki.photoAttribution };
           }
         }
 
