@@ -21,6 +21,7 @@ const MyTrips         = lazy(() => import("./pages/MyTrips.jsx"));
 const ViewTrip        = lazy(() => import("./pages/ViewTrip.jsx"));
 const EditTrip        = lazy(() => import("./pages/EditTrip.jsx"));
 const AdminContacts   = lazy(() => import("./pages/AdminContacts.jsx"));
+const AdminDashboard  = lazy(() => import("./pages/AdminDashboard.jsx"));
 const Hotels          = lazy(() => import("./pages/Hotels.jsx"));
 const Flights         = lazy(() => import("./pages/Flights.jsx"));
 const Attractions     = lazy(() => import("./pages/Attractions.jsx"));
@@ -75,7 +76,8 @@ function AppRoutes() {
           <Route path="/trips"                element={<P><MyTrips /></P>} />
           <Route path="/trip/:id"             element={<P><ViewTrip /></P>} />
           <Route path="/trip/:id/edit"        element={<P><EditTrip /></P>} />
-          <Route path="/admin/contacts"       element={<P><AdminContacts /></P>} />
+          <Route path="/admin/contacts"        element={<P><AdminContacts /></P>} />
+          <Route path="/admin/dashboard"       element={<P><AdminDashboard /></P>} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

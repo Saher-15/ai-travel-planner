@@ -260,6 +260,7 @@ function Footer({ isLoggedIn, isAdmin }) {
               <FooterLink to="/cars">{t("nav.cars")}</FooterLink>
               <FooterLink to="/contact">{t("nav.contact")}</FooterLink>
               {isLoggedIn ? <FooterLink to="/profile">{t("nav.profile")}</FooterLink> : null}
+              {isAdmin ? <FooterLink to="/admin/dashboard">Dashboard</FooterLink> : null}
               {isAdmin ? <FooterLink to="/admin/contacts">{t("nav.admin")}</FooterLink> : null}
             </div>
           </div>
@@ -416,7 +417,10 @@ export default function Layout({ children }) {
                 ))}
 
                 {isLoggedIn && isAdmin ? (
-                  <NavItem to="/admin/contacts">{t("nav.admin")}</NavItem>
+                  <>
+                    <NavItem to="/admin/dashboard">Dashboard</NavItem>
+                    <NavItem to="/admin/contacts">{t("nav.admin")}</NavItem>
+                  </>
                 ) : null}
               </nav>
 
@@ -514,9 +518,12 @@ export default function Layout({ children }) {
               ))}
 
               {isLoggedIn && isAdmin ? (
-                <NavItem to="/admin/contacts" mobile>
-                  {t("nav.adminContacts")}
-                </NavItem>
+                <>
+                  <NavItem to="/admin/dashboard" mobile>Dashboard</NavItem>
+                  <NavItem to="/admin/contacts" mobile>
+                    {t("nav.adminContacts")}
+                  </NavItem>
+                </>
               ) : null}
 
               {isLoggedIn ? (

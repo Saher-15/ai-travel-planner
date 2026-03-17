@@ -11,6 +11,7 @@ import authRoutes from "./routes/authRoutes.js";
 import tripRoutes from "./routes/tripRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import placePhotosRoutes from "./routes/placePhotos.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 dotenv.config();
 
@@ -113,6 +114,8 @@ app.use("/api/contact", contactLimiter, contactRoutes);
 app.use("/api/trips/generate", aiLimiter);
 app.use("/api/trips/generate-and-save", aiLimiter);
 app.use("/api/trips", readLimiter, tripRoutes);
+
+app.use("/api/admin", readLimiter, adminRoutes);
 
 // 404
 app.use((_req, res) => {
