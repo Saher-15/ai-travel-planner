@@ -218,18 +218,57 @@ async function searchWikipedia(query) {
 
 
 // ------------------------------
-// Hebrew Wikipedia — for Hebrew city/place names (existing trips without placeMeta)
-// he.wikipedia.org has full articles + photos for all major world cities in Hebrew
+// Hebrew → English title resolver
+// Uses he.wikipedia.org language-links API to get the canonical English title,
+// so "ברצלונה" resolves to "Barcelona" and shares the same cached photo as the
+// English search path — both languages always return an identical image.
+// ------------------------------
+async function resolveHebrewToEnglishTitle(hebrewCity) {
+  if (!hebrewCity) return null;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const url =
+      `https://he.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(hebrewCity)}` +
+      `&prop=langlinks&lllang=en&format=json&origin=*`;
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: { "User-Agent": "TravelPlannerApp/1.0 (open-source educational project)" },
+    });
+    clearTimeout(timeout);
+    const data = res.ok ? await safeJson(res) : null;
+    const pages = data?.query?.pages || {};
+    const page = Object.values(pages)[0];
+    const englishTitle = page?.langlinks?.[0]?.["*"] || null;
+    return englishTitle;
+  } catch {
+    return null;
+  }
+}
+
+// ------------------------------
+// Hebrew city photo lookup
+// Resolves Hebrew → English title first so both language paths share one cached photo.
 // ------------------------------
 async function searchHebrewWikipedia(hebrewQuery) {
   if (!hebrewQuery || !isHebrew(hebrewQuery)) return null;
 
-  // Take the first segment before a comma: "ברצלונה, ספרד" → "ברצלונה"
-  const city = hebrewQuery.split(",")[0].trim();
-  if (!city) return null;
+  // "ברצלונה, ספרד" → "ברצלונה"
+  const hebrewCity = hebrewQuery.split(",")[0].trim();
+  if (!hebrewCity) return null;
 
-  const cacheKey = `hewiki:${city}`;
+  // Step 1: resolve to English title ("ברצלונה" → "Barcelona")
+  const englishTitle = await resolveHebrewToEnglishTitle(hebrewCity);
 
+  // Step 2: if we got an English title, delegate to the shared English Wikipedia
+  // lookup — this guarantees the same cached photo as the English search path.
+  if (englishTitle) {
+    const result = await searchWikipedia(englishTitle);
+    if (result?.photoUrl) return result;
+  }
+
+  // Step 3: fallback — query Hebrew Wikipedia directly (no English equivalent found)
+  const cacheKey = `hewiki:${hebrewCity}`;
   const cached = photoCache.get(cacheKey);
   if (cached !== undefined) return cached;
 
@@ -245,7 +284,7 @@ async function searchHebrewWikipedia(hebrewQuery) {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
-    const url = `https://he.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(city)}`;
+    const url = `https://he.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(hebrewCity)}`;
     const res = await fetch(url, {
       signal: controller.signal,
       headers: { "User-Agent": "TravelPlannerApp/1.0 (open-source educational project)" },
