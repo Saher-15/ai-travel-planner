@@ -230,7 +230,7 @@ export default function AdminDashboard() {
               arrowCls: "group-hover:text-sky-600",
             },
             {
-              href: "https://viator.partnerize.com/partner/dashboard",
+              href: "https://www.viator.com/affiliate-dashboard/",
               icon: Star,
               label: "Viator",
               sub: "Tours · Attractions",
@@ -284,8 +284,8 @@ export default function AdminDashboard() {
                 {users.recent.map(u => (
                   <tr key={u._id} className="hover:bg-slate-50">
                     <td className="py-2 pr-3">
-                      <div className="font-medium text-slate-700 truncate max-w-[160px]">{u.name}</div>
-                      <div className="text-xs text-slate-400 truncate max-w-[160px]">{u.email}</div>
+                      <div className="font-medium text-slate-700 truncate max-w-40">{u.name}</div>
+                      <div className="text-xs text-slate-400 truncate max-w-40">{u.email}</div>
                     </td>
                     <td className="py-2 pr-3">
                       <Badge color={u.role === "admin" ? "rose" : "slate"}>{u.role}</Badge>
@@ -314,8 +314,8 @@ export default function AdminDashboard() {
                 {trips.recent.map(t => (
                   <tr key={t._id} className="hover:bg-slate-50">
                     <td className="py-2 pr-3">
-                      <div className="font-medium text-slate-700 truncate max-w-[160px]">{t.destination || "–"}</div>
-                      <div className="text-xs text-slate-400 truncate max-w-[160px]">{t.userId?.name || "–"}</div>
+                      <div className="font-medium text-slate-700 truncate max-w-40">{t.destination || "–"}</div>
+                      <div className="text-xs text-slate-400 truncate max-w-40">{t.userId?.name || "–"}</div>
                     </td>
                     <td className="py-2 pr-3">
                       <Badge color={BUDGET_COLOR[t.preferences?.budget] ?? "slate"}>
