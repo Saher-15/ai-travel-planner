@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 
 function cx(...classes) {
@@ -43,8 +44,26 @@ export default function CityAutoComplete({
   const [fetchError, setFetchError] = useState("");
 
   const wrapperRef = useRef(null);
+  const inputRef = useRef(null);
   const debounceRef = useRef(null);
   const requestIdRef = useRef(0);
+  const [dropdownRect, setDropdownRect] = useState(null);
+
+  // Recalculate position whenever the dropdown opens or the window scrolls/resizes
+  useEffect(() => {
+    if (!open || !inputRef.current) { setDropdownRect(null); return; }
+    function update() {
+      const r = inputRef.current?.getBoundingClientRect();
+      if (r) setDropdownRect({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: r.width });
+    }
+    update();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [open]);
 
   useEffect(() => {
     setQuery(value || "");
@@ -264,6 +283,7 @@ export default function CityAutoComplete({
 
       <div className="relative">
         <input
+          ref={inputRef}
           type="text"
           value={query}
           disabled={disabled}
@@ -305,55 +325,57 @@ export default function CityAutoComplete({
         <div className="mt-2 text-xs text-red-500">{fetchError}</div>
       ) : null}
 
-      {open && results.length > 0 ? (
-        <div className="absolute z-50 mt-2 max-h-80 w-full overflow-y-auto rounded-[1.25rem] border border-slate-200 bg-white p-2 shadow-xl">
-          {results.map((item, index) => {
-            const active = index === highlightedIndex;
-
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onMouseEnter={() => setHighlightedIndex(index)}
-                onMouseDown={(e) => { e.preventDefault(); handleSelect(item); }}
-                className={cx(
-                  "flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition",
-                  active ? "bg-sky-50" : "hover:bg-sky-50"
-                )}
-              >
-                <div className="mt-0.5 text-lg">{item.flag}</div>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-semibold text-slate-900">
-                      {item.name}
-                    </span>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                      {item.type}
-                    </span>
-                  </div>
-
-                  <div className="mt-1 truncate text-xs text-slate-500">
-                    {item.placeName}
-                  </div>
-
-                  {(item.region || item.country) && (
-                    <div className="mt-1 text-[11px] text-slate-400">
-                      {[item.region, item.country].filter(Boolean).join(", ")}
+      {open && results.length > 0 && dropdownRect
+        ? createPortal(
+            <div
+              style={{ position: "absolute", top: dropdownRect.top + 8, left: dropdownRect.left, width: dropdownRect.width, zIndex: 9999 }}
+              className="max-h-80 overflow-y-auto rounded-[1.25rem] border border-slate-200 bg-white p-2 shadow-xl"
+            >
+              {results.map((item, index) => {
+                const active = index === highlightedIndex;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onMouseEnter={() => setHighlightedIndex(index)}
+                    onMouseDown={(e) => { e.preventDefault(); handleSelect(item); }}
+                    className={cx(
+                      "flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition",
+                      active ? "bg-sky-50" : "hover:bg-sky-50"
+                    )}
+                  >
+                    <div className="mt-0.5 text-lg">{item.flag}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-sm font-semibold text-slate-900">{item.name}</span>
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">{item.type}</span>
+                      </div>
+                      <div className="mt-1 truncate text-xs text-slate-500">{item.placeName}</div>
+                      {(item.region || item.country) && (
+                        <div className="mt-1 text-[11px] text-slate-400">
+                          {[item.region, item.country].filter(Boolean).join(", ")}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
+                  </button>
+                );
+              })}
+            </div>,
+            document.body
+          )
+        : null}
 
-      {showEmpty ? (
-        <div className="absolute z-50 mt-2 w-full rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 shadow-xl">
-          {i18n.language?.startsWith("he") ? "לא נמצאו ערים תואמות." : "No matching cities found."}
-        </div>
-      ) : null}
+      {showEmpty && dropdownRect
+        ? createPortal(
+            <div
+              style={{ position: "absolute", top: dropdownRect.top + 8, left: dropdownRect.left, width: dropdownRect.width, zIndex: 9999 }}
+              className="rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 shadow-xl"
+            >
+              {i18n.language?.startsWith("he") ? "לא נמצאו ערים תואמות." : "No matching cities found."}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }
