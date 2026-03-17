@@ -306,7 +306,7 @@ export default function CityAutoComplete({
       ) : null}
 
       {open && results.length > 0 ? (
-        <div className="absolute z-30 mt-2 max-h-80 w-full overflow-y-auto rounded-[1.25rem] border border-slate-200 bg-white p-2 shadow-xl">
+        <div className="absolute z-50 mt-2 max-h-80 w-full overflow-y-auto rounded-[1.25rem] border border-slate-200 bg-white p-2 shadow-xl">
           {results.map((item, index) => {
             const active = index === highlightedIndex;
 
@@ -350,7 +350,7 @@ export default function CityAutoComplete({
       ) : null}
 
       {showEmpty ? (
-        <div className="absolute z-30 mt-2 w-full rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 shadow-xl">
+        <div className="absolute z-50 mt-2 w-full rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 shadow-xl">
           {i18n.language?.startsWith("he") ? "לא נמצאו ערים תואמות." : "No matching cities found."}
         </div>
       ) : null}

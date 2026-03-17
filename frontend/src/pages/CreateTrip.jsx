@@ -685,7 +685,7 @@ export default function CreateTrip() {
 
       <div className="grid gap-6 xl:grid-cols-12">
         <div className="space-y-6 xl:col-span-5">
-          <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
+          <Card className="border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
             <CardHeader
               title={t("createTrip.destination.title")}
               subtitle={t("createTrip.destination.subtitle")}
