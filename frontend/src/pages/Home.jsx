@@ -1,736 +1,404 @@
-import { useMemo, useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ArrowRight,
-  Calendar,
-  Compass,
-  FolderKanban,
-  Globe2,
-  MapPinned,
-  PlaneTakeoff,
-  Search,
-  Sparkles,
-  Wand2,
+  ArrowRight, Calendar, Compass, FolderKanban,
+  MapPin, PlaneTakeoff, Search, Sparkles, Wand2,
 } from "lucide-react";
-import { Button, Card, CardBody, Badge } from "../components/UI.jsx";
 import { useTranslation } from "react-i18next";
 import CityAutoComplete from "../components/CityAutoComplete.jsx";
 
 const cx = (...c) => c.filter(Boolean).join(" ");
 
-const STOCK = {
-  hero: [
-    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1526779259212-939e64788e3c?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80",
-  ],
-  visual:
-    "https://images.unsplash.com/photo-1526772662000-3f88f10405ff?auto=format&fit=crop&w=1600&q=80",
-};
+// ─── Static data ─────────────────────────────────────────────────────────────
 
-export default function Home() {
-  const { t } = useTranslation();
+const HERO_BG =
+  "https://images.unsplash.com/photo-1503220317375-aaad61436b1b?auto=format&fit=crop&w=1920&q=80";
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    document.title = t("home.pageTitle");
-  }, [t]);
-
-  const nav = useNavigate();
-  const [a, b, c] = useMemo(() => STOCK.hero, []);
-
-  const goToCreate = (payload = {}) => {
-    const params = new URLSearchParams();
-    if (payload.destination) params.set("destination", payload.destination);
-    if (payload.travelers) params.set("travelers", payload.travelers);
-    if (payload.tripType) params.set("tripType", payload.tripType);
-    const query = params.toString();
-    nav(query ? `/create?${query}` : "/create");
-  };
-
-  const features = [
-    { title: t("home.features.list.0.title"), text: t("home.features.list.0.text"), icon: <Wand2 size={20} /> },
-    { title: t("home.features.list.1.title"), text: t("home.features.list.1.text"), icon: <Compass size={20} /> },
-    { title: t("home.features.list.2.title"), text: t("home.features.list.2.text"), icon: <FolderKanban size={20} /> },
-    { title: t("home.features.list.3.title"), text: t("home.features.list.3.text"), icon: <MapPinned size={20} /> },
-  ];
-
-  const highlights = t("home.highlights", { returnObjects: true });
-
-  const stats = [
-    { label: t("home.stats.generationSpeed"), value: t("home.stats.fast"), sub: t("home.stats.quickItinerary"), icon: <Sparkles size={18} /> },
-    { label: t("home.stats.dailyStructure"), value: t("home.stats.threeBlocks"), sub: t("home.stats.morningAfternoonEvening"), icon: <Globe2 size={18} /> },
-    { label: t("home.stats.tripManagement"), value: t("home.stats.easy"), sub: t("home.stats.saveRevisit"), icon: <FolderKanban size={18} /> },
-    { label: t("home.stats.experience"), value: t("home.stats.premium"), sub: t("home.stats.modernDesign"), icon: <PlaneTakeoff size={18} /> },
-  ];
-
-  const steps = t("home.howItWorks.steps", { returnObjects: true });
-  const travelModes = t("home.planningStyles.modes", { returnObjects: true });
-  const destinations = t("home.destinations.list", { returnObjects: true });
-  const plannerBenefits = t("home.focusedIdentity.benefits", { returnObjects: true });
-  const featureBadges = t("home.featureBadges", { returnObjects: true });
-
-  return (
-    <div className="space-y-20">
-      <section className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_100px_-35px_rgba(15,23,42,0.35)]">
-
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.12),transparent_30%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.14),transparent_30%),linear-gradient(to_bottom_right,#f8fbff,#ffffff,#f2f8ff)]" />
-          <div className="absolute -left-10 top-0 h-72 w-72 rounded-full bg-sky-200/30 blur-3xl" />
-          <div className="absolute right-0 top-16 h-80 w-80 rounded-full bg-indigo-200/25 blur-3xl" />
-          <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-cyan-100/30 blur-3xl" />
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] bg-size-[32px_32px] opacity-40" />
-        </div>
-
-        <div className="relative grid gap-10 px-6 py-8 sm:px-8 sm:py-10 lg:grid-cols-12 lg:px-10 lg:py-14">
-          <div className="lg:col-span-7">
-            <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/90 px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_14px_rgba(16,185,129,0.9)]" />
-              {t("home.badge")}
-            </div>
-
-            <div className="mt-6 max-w-3xl">
-              <h1 className="text-4xl font-black tracking-tight text-slate-900 sm:text-5xl lg:text-6xl xl:text-7xl">
-                {t("home.hero.title1")}
-                <span className="mt-2 block bg-gradient-to-r from-sky-700 via-blue-600 to-indigo-500 bg-clip-text text-transparent">
-                  {t("home.hero.title2")}
-                </span>
-              </h1>
-
-              <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-                {t("home.hero.description")}
-              </p>
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-2.5">
-              {highlights.map((item) => (
-                <div
-                  key={item}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm"
-                >
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">✓</span>
-                  {item}
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button
-                className="inline-flex w-full items-center justify-center gap-2.5 px-7 py-4 text-base sm:w-auto"
-                onClick={() => nav("/create")}
-              >
-                <PlaneTakeoff size={18} />
-                {t("home.hero.startPlanning")}
-                <ArrowRight size={16} className="-mr-1" />
-              </Button>
-
-              <Button
-                variant="secondary"
-                className="inline-flex w-full items-center justify-center gap-2 px-6 py-4 text-base sm:w-auto"
-                onClick={() => nav("/trips")}
-              >
-                <FolderKanban size={17} />
-                {t("home.hero.exploreTrips")}
-              </Button>
-            </div>
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {stats.map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-3xl border border-slate-200/80 bg-white/90 p-4 shadow-[0_2px_12px_-3px_rgba(15,23,42,0.08)] backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_-6px_rgba(15,23,42,0.14)]"
-                >
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 text-white shadow-md shadow-sky-200/60">
-                    {item.icon}
-                  </div>
-                  <div className="mt-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
-                    {item.label}
-                  </div>
-                  <div className="mt-1.5 text-2xl font-black text-slate-900">
-                    {item.value}
-                  </div>
-                  <div className="mt-1 text-xs leading-5 text-slate-500">
-                    {item.sub}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="lg:col-span-5">
-            <div className="relative">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <PhotoCard
-                  src={a}
-                  className="min-h-60 sm:row-span-2 sm:min-h-full"
-                  badge={t("home.photoCards.topDestinations")}
-                  caption={t("home.photoCards.inspiredPlanning")}
-                />
-                <PhotoCard src={b} className="min-h-[10.625rem]" badge={t("home.photoCards.cultureFood")} caption={t("home.photoCards.inspiredPlanning")} />
-                <PhotoCard src={c} className="min-h-[10.625rem]" badge={t("home.photoCards.natureEscape")} caption={t("home.photoCards.inspiredPlanning")} />
-              </div>
-
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
-                <InfoCard
-                  title={t("home.infoCard.focusedPlanning")}
-                  subtitle={t("home.infoCard.noBookings")}
-                  badge={t("home.infoCard.clearIdentity")}
-                />
-                <div className="rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-600 to-blue-700 p-4 text-white shadow-lg">
-                  <div className="text-sm font-bold">{t("home.infoCard.premiumPlanner")}</div>
-                  <div className="mt-1 text-xs text-white/80">
-                    {t("home.infoCard.strongVisuals")}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <QuickSearch />
-
-      <section className="overflow-hidden rounded-[2rem] border border-sky-100 bg-linear-to-r from-sky-50 via-white to-blue-50 px-6 py-5 shadow-sm sm:px-8">
-        <div className="flex flex-wrap items-center justify-center gap-2.5">
-          {featureBadges.map((item) => (
-            <span
-              key={item}
-              className="rounded-full border border-sky-200/70 bg-white px-4 py-2 text-xs font-semibold text-sky-800 shadow-sm"
-            >
-              {item}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-6">
-        <div className="max-w-2xl">
-          <div className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
-            {t("home.howItWorks.badge")}
-          </div>
-          <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-900">
-            {t("home.howItWorks.title")}
-          </h2>
-          <p className="mt-2 text-sm leading-7 text-slate-600 sm:text-base">
-            {t("home.howItWorks.description")}
-          </p>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          {steps.map((step) => (
-            <Card
-              key={step.number}
-              className="group overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-28px_rgba(15,23,42,0.3)]"
-            >
-              <CardBody className="relative space-y-4">
-                <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-sky-100 blur-2xl transition duration-300 group-hover:bg-sky-200" />
-                <div className="relative">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-600 text-sm font-black text-white shadow-sm">
-                    {step.number}
-                  </div>
-                  <div className="mt-4 text-lg font-black text-slate-900">
-                    {step.title}
-                  </div>
-                  <div className="mt-2 text-sm leading-6 text-slate-600">
-                    {step.text}
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-6">
-        <div className="max-w-2xl">
-          <div className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
-            {t("home.planningStyles.badge")}
-          </div>
-          <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-900">
-            {t("home.planningStyles.title")}
-          </h2>
-          <p className="mt-2 text-sm leading-7 text-slate-600 sm:text-base">
-            {t("home.planningStyles.description")}
-          </p>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          {travelModes.map((mode) => (
-            <Card
-              key={mode.title}
-              className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-28px_rgba(15,23,42,0.3)]"
-            >
-              <CardBody className="space-y-4">
-                <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50 text-2xl shadow-sm">
-                  {mode.icon}
-                </div>
-                <div className="text-lg font-black text-slate-900">{mode.title}</div>
-                <div className="text-sm leading-6 text-slate-600">{mode.text}</div>
-              </CardBody>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-6">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="max-w-2xl">
-            <div className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
-              {t("home.destinations.badge")}
-            </div>
-            <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-900">
-              {t("home.destinations.title")}
-            </h2>
-            <p className="mt-2 text-sm leading-7 text-slate-600 sm:text-base">
-              {t("home.destinations.description")}
-            </p>
-          </div>
-
-          <Button
-            variant="secondary"
-            className="inline-flex items-center gap-2 text-xs sm:text-sm"
-            onClick={() => nav("/create")}
-          >
-            <ArrowRight size={16} />
-            {t("home.destinations.startBlankTrip")}
-          </Button>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {destinations.map((d) => (
-            <Card
-              key={d.name}
-              className="group overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-28px_rgba(15,23,42,0.3)]"
-            >
-              <div className="relative h-52 overflow-hidden">
-                <img
-                  src={STOCK.hero[destinations.indexOf(d) % STOCK.hero.length] || STOCK.visual}
-                  alt={d.name}
-                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
-                <div className="absolute left-3 right-3 top-3 flex items-center justify-between">
-                  <span className="rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
-                    {d.badge}
-                  </span>
-                </div>
-                <div className="absolute bottom-3 left-3 right-3">
-                  <div className="text-lg font-black text-white">{d.name}</div>
-                  <div className="text-xs text-white/80">{d.tag}</div>
-                </div>
-              </div>
-
-              <CardBody className="space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-slate-500">
-                    {t("home.destinations.inspirationReady")}
-                  </span>
-                  <Badge>{d.badge}</Badge>
-                </div>
-
-                <Button
-                  className="inline-flex w-full items-center justify-center gap-2"
-                  onClick={() =>
-                    goToCreate({
-                      destination: d.name,
-                      travelers: "2",
-                      tripType: "round",
-                    })
-                  }
-                >
-                  <MapPinned size={16} />
-                  {t("home.destinations.planDestination")}
-                </Button>
-              </CardBody>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-6">
-        <div className="max-w-2xl">
-          <div className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
-            {t("home.features.badge")}
-          </div>
-          <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-900">
-            {t("home.features.title")}
-          </h2>
-          <p className="mt-2 text-sm leading-7 text-slate-600 sm:text-base">
-            {t("home.features.description")}
-          </p>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {features.map((f) => (
-            <Card
-              key={f.title}
-              className="group overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-28px_rgba(15,23,42,0.3)]"
-            >
-              <CardBody className="relative">
-                <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-sky-100 blur-2xl transition duration-300 group-hover:bg-sky-200" />
-                <div className="relative">
-                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-600 text-white shadow-sm">
-                    {f.icon}
-                  </div>
-                  <div className="text-lg font-black text-slate-900">{f.title}</div>
-                  <div className="mt-2 text-sm leading-6 text-slate-600">{f.text}</div>
-                </div>
-              </CardBody>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-12">
-        <div className="lg:col-span-5">
-          <Card className="h-full overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
-            <CardBody className="flex h-full flex-col justify-between space-y-6">
-              <div>
-                <div className="inline-flex rounded-full border border-slate-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
-                  {t("home.focusedIdentity.badge")}
-                </div>
-
-                <h3 className="mt-4 text-2xl font-black tracking-tight text-slate-900">
-                  {t("home.focusedIdentity.title")}
-                </h3>
-
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {t("home.focusedIdentity.description")}
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {plannerBenefits.map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
-                  >
-                    <span className="mt-0.5 text-emerald-600">●</span>
-                    <span className="text-sm text-slate-700">{item}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div>
-                <Button
-                  variant="secondary"
-                  className="inline-flex items-center gap-2"
-                  onClick={() => nav("/create")}
-                >
-                  <PlaneTakeoff size={16} />
-                  {t("home.focusedIdentity.buildTrip")}
-                </Button>
-              </div>
-            </CardBody>
-          </Card>
-        </div>
-
-        <div className="lg:col-span-7">
-          <div className="group relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_18px_60px_-30px_rgba(15,23,42,0.35)]">
-            <img
-              src={STOCK.visual}
-              alt="Travel inspiration"
-              className="h-[27.5rem] w-full object-cover transition duration-700 group-hover:scale-105"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/20 to-transparent" />
-
-            <div className="absolute left-5 right-5 top-5 flex flex-wrap gap-3">
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
-                {t("home.visual.inspirationFirst")}
-              </span>
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
-                {t("home.visual.aiPlanning")}
-              </span>
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
-                {t("home.visual.premiumUX")}
-              </span>
-            </div>
-
-            <div className="absolute bottom-5 left-5 right-5">
-              <div className="max-w-xl rounded-3xl border border-white/15 bg-white/10 p-5 text-white backdrop-blur-md">
-                <div className="text-sm font-semibold uppercase tracking-wide text-white/80">
-                  {t("home.visual.visualExperience")}
-                </div>
-                <div className="mt-2 text-2xl font-black">
-                  {t("home.visual.title")}
-                </div>
-                <div className="mt-2 text-sm leading-6 text-white/85">
-                  {t("home.visual.description")}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-gradient-to-br from-sky-700 via-blue-700 to-indigo-800 p-8 text-white shadow-[0_20px_80px_-30px_rgba(15,23,42,0.5)] sm:p-10">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -left-16 top-0 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
-          <div className="absolute -bottom-10 -right-5 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl" />
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.12)_1px,transparent_1px)] bg-size-[30px_30px] opacity-20" />
-        </div>
-
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-2xl">
-            <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur">
-              {t("home.cta.badge")}
-            </div>
-            <h3 className="mt-4 text-3xl font-black tracking-tight">
-              {t("home.cta.title")}
-            </h3>
-            <p className="mt-2 text-sm leading-7 text-white/80 sm:text-base">
-              {t("home.cta.description")}
-            </p>
-          </div>
-
-          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-            <Button
-              className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
-              onClick={() => nav("/create")}
-            >
-              <PlaneTakeoff size={16} />
-              {t("home.cta.createTrip")}
-            </Button>
-
-            <Button
-              variant="secondary"
-              className="w-full border-white/20 bg-white/10 text-white hover:bg-white/15 sm:w-auto"
-              onClick={() => nav("/trips")}
-            >
-              {t("home.cta.myTrips")}
-            </Button>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
+const DESTINATIONS = [
+  { city: "Barcelona", country: "Spain",   emoji: "🇪🇸", photo: "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=600&q=80" },
+  { city: "Paris",     country: "France",  emoji: "🇫🇷", photo: "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=600&q=80" },
+  { city: "Tokyo",     country: "Japan",   emoji: "🇯🇵", photo: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80" },
+  { city: "New York",  country: "USA",     emoji: "🇺🇸", photo: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=600&q=80" },
+  { city: "Dubai",     country: "UAE",     emoji: "🇦🇪", photo: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&q=80" },
+  { city: "Rome",      country: "Italy",   emoji: "🇮🇹", photo: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&q=80" },
+  { city: "Bali",      country: "Indonesia",emoji:"🇮🇩", photo: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80" },
+  { city: "London",    country: "UK",      emoji: "🇬🇧", photo: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&q=80" },
+];
 
 const INPUT_CLS =
-  "w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-9 pr-4 text-sm text-slate-800 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100";
+  "w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:shadow-[0_0_0_3px_rgba(14,165,233,0.12)]";
+
+// ─── QuickSearch ──────────────────────────────────────────────────────────────
 
 function QuickSearch() {
   const { t } = useTranslation();
   const nav = useNavigate();
   const [tab, setTab] = useState("hotels");
 
-  const today = new Date().toISOString().split("T")[0];
+  const today    = new Date().toISOString().split("T")[0];
   const nextWeek = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().split("T")[0]; })();
 
-  const [hotelDest, setHotelDest] = useState("");
-  const [checkIn, setCheckIn] = useState(today);
-  const [checkOut, setCheckOut] = useState(nextWeek);
+  const [hotelDest,   setHotelDest]   = useState("");
+  const [checkIn,     setCheckIn]     = useState(today);
+  const [checkOut,    setCheckOut]    = useState(nextWeek);
   const [hotelGuests, setHotelGuests] = useState(1);
-
-  const [flightFrom, setFlightFrom] = useState("");
-  const [flightTo, setFlightTo] = useState("");
-  const [flightDate, setFlightDate] = useState(nextWeek);
-
-  const [attrDest, setAttrDest] = useState("");
-  const [aiDest, setAiDest] = useState("");
+  const [flightFrom,  setFlightFrom]  = useState("");
+  const [flightTo,    setFlightTo]    = useState("");
+  const [flightDate,  setFlightDate]  = useState(nextWeek);
+  const [attrDest,    setAttrDest]    = useState("");
+  const [carDest,     setCarDest]     = useState("");
+  const [aiDest,      setAiDest]      = useState("");
 
   const TABS = [
-    { id: "hotels",      emoji: "🏨", label: t("nav.hotels") },
-    { id: "flights",     emoji: "✈️", label: t("nav.flights") },
-    { id: "attractions", emoji: "🎯", label: t("nav.attractions") },
-    { id: "cars",        emoji: "🚗", label: t("nav.cars") },
-    { id: "plan",        emoji: "🤖", label: t("nav.createTrip") },
+    { id: "hotels",      emoji: "🏨", label: t("nav.hotels"),     color: "sky" },
+    { id: "flights",     emoji: "✈️", label: t("nav.flights"),    color: "indigo" },
+    { id: "attractions", emoji: "🎯", label: t("nav.attractions"), color: "emerald" },
+    { id: "cars",        emoji: "🚗", label: t("nav.cars"),        color: "amber" },
+    { id: "plan",        emoji: "🤖", label: t("nav.createTrip"),  color: "violet" },
   ];
 
+  const TAB_BTN_COLOR = {
+    sky:     "data-[active=true]:border-sky-500    data-[active=true]:text-sky-600",
+    indigo:  "data-[active=true]:border-indigo-500  data-[active=true]:text-indigo-600",
+    emerald: "data-[active=true]:border-emerald-500 data-[active=true]:text-emerald-600",
+    amber:   "data-[active=true]:border-amber-500   data-[active=true]:text-amber-600",
+    violet:  "data-[active=true]:border-violet-500  data-[active=true]:text-violet-600",
+  };
+
+  const SEARCH_BTN_COLOR = {
+    sky:     "bg-sky-600 hover:bg-sky-500",
+    indigo:  "bg-indigo-600 hover:bg-indigo-500",
+    emerald: "bg-emerald-600 hover:bg-emerald-500",
+    amber:   "bg-amber-500 hover:bg-amber-400",
+    violet:  "bg-violet-600 hover:bg-violet-500",
+  };
+
+  const active = TABS.find(t => t.id === tab);
+
   function go(path, params = {}) {
-    const p = new URLSearchParams(params);
-    const q = p.toString();
+    const q = new URLSearchParams(params).toString();
     nav(q ? `${path}?${q}` : path);
   }
 
+  const dateField = (label, value, onChange, min) => (
+    <div>
+      <label className="mb-1.5 block text-xs font-semibold text-slate-500">{label}</label>
+      <div className="relative">
+        <Calendar size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input type="date" value={value} min={min} onChange={e => onChange(e.target.value)} required
+          className={cx(INPUT_CLS, "w-40")} />
+      </div>
+    </div>
+  );
+
   return (
-    <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_60px_-24px_rgba(15,23,42,0.18)]">
+    <div className="overflow-hidden rounded-2xl bg-white shadow-[0_4px_32px_-8px_rgba(15,23,42,0.18)]">
       {/* Tab bar */}
-      <div className="flex gap-0.5 overflow-x-auto border-b border-slate-100 px-4 pt-1 sm:px-6">
+      <div className="flex overflow-x-auto border-b border-slate-100 bg-slate-50/60 px-3 pt-1">
         {TABS.map((item) => (
           <button
             key={item.id}
             type="button"
+            data-active={tab === item.id}
             onClick={() => setTab(item.id)}
             className={cx(
-              "flex shrink-0 items-center gap-2 border-b-2 px-4 py-3.5 text-sm font-bold transition",
-              tab === item.id
-                ? "border-sky-600 text-sky-700"
-                : "border-transparent text-slate-500 hover:text-slate-700"
+              "flex shrink-0 items-center gap-1.5 border-b-2 px-4 py-3 text-sm font-semibold transition",
+              "border-transparent text-slate-500 hover:text-slate-700",
+              TAB_BTN_COLOR[item.color]
             )}
           >
-            <span className="text-base">{item.emoji}</span>
+            <span>{item.emoji}</span>
             <span className="hidden sm:inline">{item.label}</span>
           </button>
         ))}
       </div>
 
-      <div className="p-5 sm:p-6">
+      {/* Forms */}
+      <div className="p-4 sm:p-5">
         {tab === "hotels" && (
-          <form
-            onSubmit={(e) => { e.preventDefault(); go("/hotels", { destination: hotelDest, checkin: checkIn, checkout: checkOut, adults: hotelGuests }); }}
-            className="flex flex-wrap items-end gap-3"
-          >
+          <form onSubmit={e => { e.preventDefault(); go("/hotels", { destination: hotelDest, checkin: checkIn, checkout: checkOut, adults: hotelGuests }); }}
+            className="flex flex-wrap items-end gap-3">
             <div className="min-w-44 flex-1">
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("hotels.destination")}</label>
-              <CityAutoComplete label="" value={hotelDest} onChange={setHotelDest} onSelect={(item) => setHotelDest(item.placeName)} placeholder={t("hotels.destinationPlaceholder")} />
+              <label className="mb-1.5 block text-xs font-semibold text-slate-500">{t("hotels.destination")}</label>
+              <CityAutoComplete label="" value={hotelDest} onChange={setHotelDest} onSelect={i => setHotelDest(i.placeName)} placeholder={t("hotels.destinationPlaceholder")} />
             </div>
+            {dateField(t("hotels.checkIn"),  checkIn,  setCheckIn,  today)}
+            {dateField(t("hotels.checkOut"), checkOut, setCheckOut, checkIn)}
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("hotels.checkIn")}</label>
-              <div className="relative">
-                <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="date" value={checkIn} min={today} onChange={(e) => setCheckIn(e.target.value)} required className={cx(INPUT_CLS, "w-40")} />
-              </div>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("hotels.checkOut")}</label>
-              <div className="relative">
-                <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="date" value={checkOut} min={checkIn} onChange={(e) => setCheckOut(e.target.value)} required className={cx(INPUT_CLS, "w-40")} />
-              </div>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("hotels.guests")}</label>
-              <select value={hotelGuests} onChange={(e) => setHotelGuests(Number(e.target.value))} className={cx(INPUT_CLS, "w-28 pl-4")}>
-                {[1,2,3,4,5,6].map((n) => <option key={n} value={n}>{n} {n === 1 ? t("hotels.adult") : t("hotels.adults")}</option>)}
+              <label className="mb-1.5 block text-xs font-semibold text-slate-500">{t("hotels.guests")}</label>
+              <select value={hotelGuests} onChange={e => setHotelGuests(Number(e.target.value))} className={cx(INPUT_CLS, "w-28 pl-3")}>
+                {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} {n === 1 ? t("hotels.adult") : t("hotels.adults")}</option>)}
               </select>
             </div>
-            <button type="submit" className="inline-flex items-center gap-2 rounded-2xl bg-sky-600 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-sky-500">
-              <Search size={15} />{t("hotels.searchButton")}
-            </button>
+            <SearchBtn color={active.color}>{t("hotels.searchButton")}</SearchBtn>
           </form>
         )}
 
         {tab === "flights" && (
-          <form
-            onSubmit={(e) => { e.preventDefault(); go("/flights", { from: flightFrom, destination: flightTo, depart: flightDate }); }}
-            className="flex flex-wrap items-end gap-3"
-          >
+          <form onSubmit={e => { e.preventDefault(); go("/flights", { from: flightFrom, destination: flightTo, depart: flightDate }); }}
+            className="flex flex-wrap items-end gap-3">
             <div className="min-w-40 flex-1">
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("flights.from")}</label>
-              <CityAutoComplete label="" value={flightFrom} onChange={setFlightFrom} onSelect={(item) => setFlightFrom(item.placeName)} placeholder={t("flights.fromPlaceholder")} />
+              <label className="mb-1.5 block text-xs font-semibold text-slate-500">{t("flights.from")}</label>
+              <CityAutoComplete label="" value={flightFrom} onChange={setFlightFrom} onSelect={i => setFlightFrom(i.placeName)} placeholder={t("flights.fromPlaceholder")} />
             </div>
             <div className="min-w-40 flex-1">
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("flights.to")}</label>
-              <CityAutoComplete label="" value={flightTo} onChange={setFlightTo} onSelect={(item) => setFlightTo(item.placeName)} placeholder={t("flights.toPlaceholder")} />
+              <label className="mb-1.5 block text-xs font-semibold text-slate-500">{t("flights.to")}</label>
+              <CityAutoComplete label="" value={flightTo} onChange={setFlightTo} onSelect={i => setFlightTo(i.placeName)} placeholder={t("flights.toPlaceholder")} />
             </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("flights.departure")}</label>
-              <div className="relative">
-                <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="date" value={flightDate} min={today} onChange={(e) => setFlightDate(e.target.value)} required className={cx(INPUT_CLS, "w-40")} />
-              </div>
-            </div>
-            <button type="submit" className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-indigo-500">
-              <Search size={15} />{t("flights.searchButton")}
-            </button>
+            {dateField(t("flights.departure"), flightDate, setFlightDate, today)}
+            <SearchBtn color={active.color}>{t("flights.searchButton")}</SearchBtn>
           </form>
         )}
 
         {tab === "attractions" && (
-          <form
-            onSubmit={(e) => { e.preventDefault(); go("/attractions", { destination: attrDest }); }}
-            className="flex flex-wrap items-end gap-3"
-          >
+          <form onSubmit={e => { e.preventDefault(); go("/attractions", { destination: attrDest }); }}
+            className="flex flex-wrap items-end gap-3">
             <div className="min-w-60 flex-1">
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("attractions.destination")}</label>
-              <CityAutoComplete label="" value={attrDest} onChange={setAttrDest} onSelect={(item) => setAttrDest(item.placeName)} placeholder={t("attractions.destinationPlaceholder")} />
+              <label className="mb-1.5 block text-xs font-semibold text-slate-500">{t("attractions.destination")}</label>
+              <CityAutoComplete label="" value={attrDest} onChange={setAttrDest} onSelect={i => setAttrDest(i.placeName)} placeholder={t("attractions.destinationPlaceholder")} />
             </div>
-            <button type="submit" className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-emerald-500">
-              <Search size={15} />{t("attractions.searchButton")}
-            </button>
+            <SearchBtn color={active.color}>{t("attractions.searchButton")}</SearchBtn>
           </form>
         )}
 
         {tab === "cars" && (
-          <form
-            onSubmit={(e) => { e.preventDefault(); go("/cars", { destination: aiDest, checkin: checkIn, checkout: checkOut }); }}
-            className="flex flex-wrap items-end gap-3"
-          >
-            <div className="min-w-60 flex-1">
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("cars.pickupLocation")}</label>
-              <CityAutoComplete label="" value={aiDest} onChange={setAiDest} onSelect={(item) => setAiDest(item.placeName)} placeholder={t("cars.locationPlaceholder")} />
+          <form onSubmit={e => { e.preventDefault(); go("/cars", { destination: carDest, checkin: checkIn, checkout: checkOut }); }}
+            className="flex flex-wrap items-end gap-3">
+            <div className="min-w-44 flex-1">
+              <label className="mb-1.5 block text-xs font-semibold text-slate-500">{t("cars.pickupLocation")}</label>
+              <CityAutoComplete label="" value={carDest} onChange={setCarDest} onSelect={i => setCarDest(i.placeName)} placeholder={t("cars.locationPlaceholder")} />
             </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("cars.pickupDate")}</label>
-              <div className="relative">
-                <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="date" value={checkIn} min={today} onChange={(e) => setCheckIn(e.target.value)} required className={cx(INPUT_CLS, "w-40")} />
-              </div>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("cars.dropoffDate")}</label>
-              <div className="relative">
-                <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="date" value={checkOut} min={checkIn} onChange={(e) => setCheckOut(e.target.value)} required className={cx(INPUT_CLS, "w-40")} />
-              </div>
-            </div>
-            <button type="submit" className="inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-amber-400">
-              <Search size={15} />{t("cars.searchButton")}
-            </button>
+            {dateField(t("cars.pickupDate"),  checkIn,  setCheckIn,  today)}
+            {dateField(t("cars.dropoffDate"), checkOut, setCheckOut, checkIn)}
+            <SearchBtn color={active.color}>{t("cars.searchButton")}</SearchBtn>
           </form>
         )}
 
         {tab === "plan" && (
-          <form
-            onSubmit={(e) => { e.preventDefault(); nav(aiDest ? `/create?destination=${encodeURIComponent(aiDest)}` : "/create"); }}
-            className="flex flex-wrap items-end gap-3"
-          >
+          <form onSubmit={e => { e.preventDefault(); nav(aiDest ? `/create?destination=${encodeURIComponent(aiDest)}` : "/create"); }}
+            className="flex flex-wrap items-end gap-3">
             <div className="min-w-60 flex-1">
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-400">{t("home.quickSearch.destination")}</label>
-              <CityAutoComplete label="" value={aiDest} onChange={setAiDest} onSelect={(item) => setAiDest(item.placeName)} placeholder={t("home.quickSearch.destinationPlaceholder")} />
+              <label className="mb-1.5 block text-xs font-semibold text-slate-500">{t("home.quickSearch.destination")}</label>
+              <CityAutoComplete label="" value={aiDest} onChange={setAiDest} onSelect={i => setAiDest(i.placeName)} placeholder={t("home.quickSearch.destinationPlaceholder")} />
             </div>
-            <button type="submit" className="inline-flex items-center gap-2 rounded-2xl bg-sky-600 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-sky-500">
-              <Search size={15} />{t("home.quickSearch.planButton")}
-            </button>
+            <SearchBtn color={active.color}>{t("home.quickSearch.planButton")}</SearchBtn>
           </form>
         )}
       </div>
-    </section>
-  );
-}
-
-function PhotoCard({ src, badge, caption, className = "" }) {
-  return (
-    <div
-      className={cx(
-        "group relative overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm",
-        className
-      )}
-    >
-      <img
-        src={src}
-        alt={badge}
-        className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-        loading="lazy"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
-      <div className="absolute left-3 right-3 top-3 flex justify-between">
-        <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
-          {badge}
-        </span>
-      </div>
-      <div className="absolute bottom-3 left-3 right-3">
-        <div className="rounded-2xl border border-white/15 bg-white/10 px-3 py-2 text-xs font-medium text-white/95 backdrop-blur">
-          {caption}
-        </div>
-      </div>
     </div>
   );
+
+  function SearchBtn({ color, children }) {
+    return (
+      <button type="submit"
+        className={cx(
+          "inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg",
+          SEARCH_BTN_COLOR[color]
+        )}>
+        <Search size={15} />{children}
+      </button>
+    );
+  }
 }
 
-function InfoCard({ title, subtitle, badge }) {
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function Home() {
+  const { t } = useTranslation();
+  const nav = useNavigate();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.title = t("home.pageTitle");
+  }, [t]);
+
+  const goToCreate = (destination) => nav(`/create?destination=${encodeURIComponent(destination)}`);
+
+  const FEATURES = [
+    { icon: <Wand2 size={22} />,       title: t("home.features.list.0.title"), text: t("home.features.list.0.text"), bg: "bg-sky-500" },
+    { icon: <Compass size={22} />,     title: t("home.features.list.1.title"), text: t("home.features.list.1.text"), bg: "bg-indigo-500" },
+    { icon: <FolderKanban size={22} />,title: t("home.features.list.2.title"), text: t("home.features.list.2.text"), bg: "bg-emerald-500" },
+    { icon: <MapPin size={22} />,      title: t("home.features.list.3.title"), text: t("home.features.list.3.text"), bg: "bg-violet-500" },
+  ];
+
+  const STEPS = t("home.howItWorks.steps", { returnObjects: true });
+
+  const TRUST = [
+    { icon: <Sparkles size={18} />,      value: "AI-Powered",   label: "Smart itinerary generation" },
+    { icon: <PlaneTakeoff size={18} />,  value: "100+ Cities",  label: "Destinations worldwide" },
+    { icon: <FolderKanban size={18} />,  value: "Free to Use",  label: "No credit card needed" },
+    { icon: <Compass size={18} />,       value: "Instant",      label: "Trip ready in seconds" },
+  ];
+
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-sm font-bold text-slate-900">{title}</div>
-          <div className="mt-1 text-xs text-slate-500">{subtitle}</div>
+    <div>
+
+      {/* ── Hero ── */}
+      <section className="relative -mx-4 -mt-8 overflow-hidden md:-mx-6">
+        {/* Background */}
+        <img src={HERO_BG} alt="Travel" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-linear-to-b from-slate-900/70 via-slate-900/55 to-slate-900/80" />
+
+        <div className="relative px-4 pb-0 pt-16 sm:px-6 sm:pt-20 md:pt-24">
+          {/* Headline */}
+          <div className="mx-auto max-w-3xl text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold text-white/90 backdrop-blur">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
+              {t("home.badge")}
+            </div>
+
+            <h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
+              {t("home.hero.title1")}
+              <span className="mt-1 block bg-linear-to-r from-sky-300 via-blue-300 to-indigo-300 bg-clip-text text-transparent">
+                {t("home.hero.title2")}
+              </span>
+            </h1>
+
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/80 sm:text-lg">
+              {t("home.hero.description")}
+            </p>
+          </div>
+
+          {/* Search card — overlaps the hero bottom */}
+          <div className="mx-auto mt-10 max-w-5xl">
+            <QuickSearch />
+          </div>
         </div>
-        <Badge>{badge}</Badge>
-      </div>
+
+        {/* Bottom fade into page background */}
+        <div className="h-16 bg-linear-to-b from-transparent to-slate-50" />
+      </section>
+
+      {/* ── Trust strip ── */}
+      <section className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {TRUST.map((item) => (
+          <div key={item.value} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+              {item.icon}
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-black text-slate-900">{item.value}</div>
+              <div className="truncate text-xs text-slate-500">{item.label}</div>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      {/* ── Popular Destinations ── */}
+      <section className="mt-14">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600">{t("home.destinations.badge")}</p>
+            <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+              {t("home.destinations.title")}
+            </h2>
+          </div>
+          <button onClick={() => nav("/create")}
+            className="flex items-center gap-1.5 text-sm font-semibold text-sky-600 hover:text-sky-700">
+            {t("home.destinations.startBlankTrip")} <ArrowRight size={15} />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
+          {DESTINATIONS.map((d) => (
+            <button
+              key={d.city}
+              onClick={() => goToCreate(d.city)}
+              className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+            >
+              <div className="aspect-3/4 overflow-hidden">
+                <img src={d.photo} alt={d.city}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  loading="lazy" />
+              </div>
+              <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
+              {/* Hover overlay CTA */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                <span className="rounded-xl bg-white/95 px-3 py-1.5 text-xs font-bold text-slate-800 shadow">
+                  Plan trip →
+                </span>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 p-3 text-left">
+                <div className="text-sm font-black text-white">{d.city}</div>
+                <div className="text-xs text-white/75">{d.emoji} {d.country}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Why use us ── */}
+      <section className="mt-16">
+        <div className="mb-6 text-center">
+          <p className="text-xs font-bold uppercase tracking-widest text-sky-600">{t("home.features.badge")}</p>
+          <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+            {t("home.features.title")}
+          </h2>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {FEATURES.map((f) => (
+            <div key={f.title}
+              className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+              <div className={cx("inline-flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-md", f.bg)}>
+                {f.icon}
+              </div>
+              <div className="mt-4 text-base font-black text-slate-900">{f.title}</div>
+              <div className="mt-2 text-sm leading-relaxed text-slate-500">{f.text}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── How it works ── */}
+      <section className="mt-16">
+        <div className="mb-6 text-center">
+          <p className="text-xs font-bold uppercase tracking-widest text-sky-600">{t("home.howItWorks.badge")}</p>
+          <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+            {t("home.howItWorks.title")}
+          </h2>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {STEPS.map((step, i) => (
+            <div key={step.number} className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              {/* Connector line */}
+              {i < STEPS.length - 1 && (
+                <div className="absolute -right-px top-8 hidden h-0.5 w-8 bg-linear-to-r from-sky-200 to-transparent sm:block" style={{ right: "-2rem" }} />
+              )}
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-sky-500 to-blue-600 text-lg font-black text-white shadow-md shadow-sky-200/60">
+                {step.number}
+              </div>
+              <div className="mt-4 text-base font-black text-slate-900">{step.title}</div>
+              <div className="mt-2 text-sm leading-relaxed text-slate-500">{step.text}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── CTA banner ── */}
+      <section className="relative mt-16 overflow-hidden rounded-3xl bg-linear-to-br from-sky-600 via-blue-600 to-indigo-700 px-8 py-12 text-white shadow-[0_20px_60px_-20px_rgba(37,99,235,0.5)] sm:px-12">
+        <div className="absolute -left-10 -top-10 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-8 -right-8 h-56 w-56 rounded-full bg-cyan-400/15 blur-3xl" />
+        <div className="relative flex flex-col items-center gap-6 text-center sm:flex-row sm:justify-between sm:text-left">
+          <div className="max-w-xl">
+            <div className="text-xs font-bold uppercase tracking-widest text-white/70">{t("home.cta.badge")}</div>
+            <h3 className="mt-2 text-2xl font-black sm:text-3xl">{t("home.cta.title")}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-white/80">{t("home.cta.description")}</p>
+          </div>
+          <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+            <button onClick={() => nav("/create")}
+              className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3 text-sm font-bold text-sky-700 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
+              <PlaneTakeoff size={16} />
+              {t("home.cta.createTrip")}
+            </button>
+            <button onClick={() => nav("/trips")}
+              className="inline-flex items-center gap-2 rounded-2xl border border-white/25 bg-white/10 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/20">
+              {t("home.cta.myTrips")}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div className="h-8" />
     </div>
   );
 }
