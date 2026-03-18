@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ArrowRight, Calendar, Compass, FolderKanban,
-  MapPin, PlaneTakeoff, Search, Sparkles, Wand2,
+  ArrowRight, Baby, Calendar, Compass, FolderKanban,
+  MapPin, PlaneTakeoff, Search, Sparkles, Users, Wand2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import CityAutoComplete from "../components/CityAutoComplete.jsx";
@@ -25,8 +25,37 @@ const DESTINATIONS = [
   { city: "London",    country: "UK",      emoji: "🇬🇧", photo: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&q=80" },
 ];
 
-const INPUT_CLS =
-  "w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:shadow-[0_0_0_3px_rgba(14,165,233,0.12)]";
+const LABEL_CLS  = "mb-1.5 block text-xs font-semibold text-slate-500";
+const DATE_CLS   = "w-full rounded-xl border border-slate-200 bg-white py-3 pl-9 pr-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:shadow-[0_0_0_3px_rgba(14,165,233,0.12)]";
+const SELECT_CLS = "w-full rounded-xl border border-slate-200 bg-white py-3 pl-9 pr-3 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:shadow-[0_0_0_3px_rgba(14,165,233,0.12)]";
+
+const TAB_BTN_COLOR = {
+  sky:     "data-[active=true]:border-sky-500    data-[active=true]:text-sky-600",
+  indigo:  "data-[active=true]:border-indigo-500  data-[active=true]:text-indigo-600",
+  emerald: "data-[active=true]:border-emerald-500 data-[active=true]:text-emerald-600",
+  amber:   "data-[active=true]:border-amber-500   data-[active=true]:text-amber-600",
+  violet:  "data-[active=true]:border-violet-500  data-[active=true]:text-violet-600",
+};
+
+const SEARCH_BTN_COLOR = {
+  sky:     "bg-sky-600 hover:bg-sky-500",
+  indigo:  "bg-indigo-600 hover:bg-indigo-500",
+  emerald: "bg-emerald-600 hover:bg-emerald-500",
+  amber:   "bg-amber-500 hover:bg-amber-400",
+  violet:  "bg-violet-600 hover:bg-violet-500",
+};
+
+function SearchBtn({ color, children }) {
+  return (
+    <button type="submit"
+      className={cx(
+        "flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg",
+        SEARCH_BTN_COLOR[color]
+      )}>
+      <Search size={15} />{children}
+    </button>
+  );
+}
 
 // ─── QuickSearch ──────────────────────────────────────────────────────────────
 
@@ -38,63 +67,61 @@ function QuickSearch() {
   const today    = new Date().toISOString().split("T")[0];
   const nextWeek = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().split("T")[0]; })();
 
-  const [hotelDest,   setHotelDest]   = useState("");
-  const [checkIn,     setCheckIn]     = useState(today);
-  const [checkOut,    setCheckOut]    = useState(nextWeek);
-  const [hotelGuests, setHotelGuests] = useState(1);
-  const [flightFrom,  setFlightFrom]  = useState("");
-  const [flightTo,    setFlightTo]    = useState("");
-  const [flightDate,  setFlightDate]  = useState(nextWeek);
-  const [attrDest,    setAttrDest]    = useState("");
-  const [carDest,     setCarDest]     = useState("");
-  const [aiDest,      setAiDest]      = useState("");
+  // Hotels
+  const [hotelDest,     setHotelDest]     = useState("");
+  const [checkIn,       setCheckIn]       = useState(today);
+  const [checkOut,      setCheckOut]      = useState(nextWeek);
+  const [hotelAdults,   setHotelAdults]   = useState(2);
+  const [hotelChildren, setHotelChildren] = useState(0);
+
+  // Flights
+  const [flightFrom, setFlightFrom] = useState("");
+  const [flightTo,   setFlightTo]   = useState("");
+  const [flightDate, setFlightDate] = useState(nextWeek);
+  const [flightPax,  setFlightPax]  = useState(1);
+
+  // Cars — own dates so switching tabs doesn't reset hotel dates
+  const [carDest,    setCarDest]    = useState("");
+  const [carPickup,  setCarPickup]  = useState(today);
+  const [carDropoff, setCarDropoff] = useState(nextWeek);
+
+  // Attractions / Plan
+  const [attrDest, setAttrDest] = useState("");
+  const [aiDest,   setAiDest]   = useState("");
 
   const TABS = [
-    { id: "hotels",      emoji: "🏨", label: t("nav.hotels"),     color: "sky" },
-    { id: "flights",     emoji: "✈️", label: t("nav.flights"),    color: "indigo" },
+    { id: "hotels",      emoji: "🏨", label: t("nav.hotels"),      color: "sky"     },
+    { id: "flights",     emoji: "✈️", label: t("nav.flights"),     color: "indigo"  },
     { id: "attractions", emoji: "🎯", label: t("nav.attractions"), color: "emerald" },
-    { id: "cars",        emoji: "🚗", label: t("nav.cars"),        color: "amber" },
-    { id: "plan",        emoji: "🤖", label: t("nav.createTrip"),  color: "violet" },
+    { id: "cars",        emoji: "🚗", label: t("nav.cars"),        color: "amber"   },
+    { id: "plan",        emoji: "🤖", label: t("nav.createTrip"),  color: "violet"  },
   ];
 
-  const TAB_BTN_COLOR = {
-    sky:     "data-[active=true]:border-sky-500    data-[active=true]:text-sky-600",
-    indigo:  "data-[active=true]:border-indigo-500  data-[active=true]:text-indigo-600",
-    emerald: "data-[active=true]:border-emerald-500 data-[active=true]:text-emerald-600",
-    amber:   "data-[active=true]:border-amber-500   data-[active=true]:text-amber-600",
-    violet:  "data-[active=true]:border-violet-500  data-[active=true]:text-violet-600",
-  };
-
-  const SEARCH_BTN_COLOR = {
-    sky:     "bg-sky-600 hover:bg-sky-500",
-    indigo:  "bg-indigo-600 hover:bg-indigo-500",
-    emerald: "bg-emerald-600 hover:bg-emerald-500",
-    amber:   "bg-amber-500 hover:bg-amber-400",
-    violet:  "bg-violet-600 hover:bg-violet-500",
-  };
-
-  const active = TABS.find(t => t.id === tab);
+  const active = TABS.find(tb => tb.id === tab);
 
   function go(path, params = {}) {
     const q = new URLSearchParams(params).toString();
     nav(q ? `${path}?${q}` : path);
   }
 
-  const dateField = (label, value, onChange, min) => (
-    <div>
-      <label className="mb-1.5 block text-xs font-semibold text-slate-500">{label}</label>
-      <div className="relative">
-        <Calendar size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input type="date" value={value} min={min} onChange={e => onChange(e.target.value)} required
-          className={cx(INPUT_CLS, "w-40")} />
+  // Reusable date field cell
+  function DateField({ label, value, onChange, min }) {
+    return (
+      <div>
+        <label className={LABEL_CLS}>{label}</label>
+        <div className="relative">
+          <Calendar size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input type="date" value={value} min={min} onChange={e => onChange(e.target.value)} required className={DATE_CLS} />
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
     <div className="overflow-hidden rounded-2xl bg-white shadow-[0_4px_32px_-8px_rgba(15,23,42,0.18)]">
-      {/* Tab bar */}
-      <div className="flex overflow-x-auto border-b border-slate-100 bg-slate-50/60 px-3 pt-1">
+
+      {/* ── Tab bar ── */}
+      <div className="flex overflow-x-auto border-b border-slate-100 bg-slate-50/60 px-2 pt-1 sm:px-3">
         {TABS.map((item) => (
           <button
             key={item.id}
@@ -102,7 +129,7 @@ function QuickSearch() {
             data-active={tab === item.id}
             onClick={() => setTab(item.id)}
             className={cx(
-              "flex shrink-0 items-center gap-1.5 border-b-2 px-4 py-3 text-sm font-semibold transition",
+              "flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-xs font-semibold transition sm:px-4 sm:text-sm",
               "border-transparent text-slate-500 hover:text-slate-700",
               TAB_BTN_COLOR[item.color]
             )}
@@ -113,92 +140,130 @@ function QuickSearch() {
         ))}
       </div>
 
-      {/* Forms */}
+      {/* ── Forms ── */}
       <div className="p-4 sm:p-5">
+
+        {/* Hotels */}
         {tab === "hotels" && (
-          <form onSubmit={e => { e.preventDefault(); go("/hotels", { destination: hotelDest, checkin: checkIn, checkout: checkOut, adults: hotelGuests }); }}
-            className="flex flex-wrap items-end gap-3">
-            <div className="min-w-44 flex-1">
-              <label className="mb-1.5 block text-xs font-semibold text-slate-500">{t("hotels.destination")}</label>
-              <CityAutoComplete label="" value={hotelDest} onChange={setHotelDest} onSelect={i => setHotelDest(i.placeName)} placeholder={t("hotels.destinationPlaceholder")} />
-            </div>
-            {dateField(t("hotels.checkIn"),  checkIn,  setCheckIn,  today)}
-            {dateField(t("hotels.checkOut"), checkOut, setCheckOut, checkIn)}
+          <form onSubmit={e => { e.preventDefault(); go("/hotels", { destination: hotelDest, checkin: checkIn, checkout: checkOut, adults: hotelAdults, children: hotelChildren }); }}
+            className="space-y-3">
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-500">{t("hotels.guests")}</label>
-              <select value={hotelGuests} onChange={e => setHotelGuests(Number(e.target.value))} className={cx(INPUT_CLS, "w-28 pl-3")}>
-                {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} {n === 1 ? t("hotels.adult") : t("hotels.adults")}</option>)}
-              </select>
+              <label className={LABEL_CLS}>{t("hotels.destination")}</label>
+              <CityAutoComplete label="" value={hotelDest} onChange={setHotelDest}
+                onSelect={i => setHotelDest(i.placeName)} placeholder={t("hotels.destinationPlaceholder")} />
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <DateField label={t("hotels.checkIn")}  value={checkIn}  onChange={setCheckIn}  min={today} />
+              <DateField label={t("hotels.checkOut")} value={checkOut} onChange={setCheckOut} min={checkIn} />
+              {/* Adults */}
+              <div>
+                <label className={LABEL_CLS}>{t("hotels.adults")}</label>
+                <div className="relative">
+                  <Users size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <select value={hotelAdults} onChange={e => setHotelAdults(Number(e.target.value))} className={SELECT_CLS}>
+                    {[1,2,3,4,5,6].map(n => (
+                      <option key={n} value={n}>{n} {n === 1 ? t("hotels.adult") : t("hotels.adults")}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {/* Children */}
+              <div>
+                <label className={LABEL_CLS}>{t("hotels.childrenLabel")}</label>
+                <div className="relative">
+                  <Baby size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <select value={hotelChildren} onChange={e => setHotelChildren(Number(e.target.value))} className={SELECT_CLS}>
+                    {[0,1,2,3,4].map(n => (
+                      <option key={n} value={n}>{n} {n === 1 ? t("hotels.child") : t("hotels.childrenLabel")}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
             <SearchBtn color={active.color}>{t("hotels.searchButton")}</SearchBtn>
           </form>
         )}
 
+        {/* Flights */}
         {tab === "flights" && (
-          <form onSubmit={e => { e.preventDefault(); go("/flights", { from: flightFrom, destination: flightTo, depart: flightDate }); }}
-            className="flex flex-wrap items-end gap-3">
-            <div className="min-w-40 flex-1">
-              <label className="mb-1.5 block text-xs font-semibold text-slate-500">{t("flights.from")}</label>
-              <CityAutoComplete label="" value={flightFrom} onChange={setFlightFrom} onSelect={i => setFlightFrom(i.placeName)} placeholder={t("flights.fromPlaceholder")} />
+          <form onSubmit={e => { e.preventDefault(); go("/flights", { from: flightFrom, destination: flightTo, depart: flightDate, adults: flightPax }); }}
+            className="space-y-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label className={LABEL_CLS}>{t("flights.from")}</label>
+                <CityAutoComplete label="" value={flightFrom} onChange={setFlightFrom}
+                  onSelect={i => setFlightFrom(i.placeName)} placeholder={t("flights.fromPlaceholder")} />
+              </div>
+              <div>
+                <label className={LABEL_CLS}>{t("flights.to")}</label>
+                <CityAutoComplete label="" value={flightTo} onChange={setFlightTo}
+                  onSelect={i => setFlightTo(i.placeName)} placeholder={t("flights.toPlaceholder")} />
+              </div>
             </div>
-            <div className="min-w-40 flex-1">
-              <label className="mb-1.5 block text-xs font-semibold text-slate-500">{t("flights.to")}</label>
-              <CityAutoComplete label="" value={flightTo} onChange={setFlightTo} onSelect={i => setFlightTo(i.placeName)} placeholder={t("flights.toPlaceholder")} />
+            <div className="grid grid-cols-2 gap-3">
+              <DateField label={t("flights.departure")} value={flightDate} onChange={setFlightDate} min={today} />
+              <div>
+                <label className={LABEL_CLS}>{t("flights.passengers")}</label>
+                <div className="relative">
+                  <Users size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <select value={flightPax} onChange={e => setFlightPax(Number(e.target.value))} className={SELECT_CLS}>
+                    {[1,2,3,4,5,6].map(n => (
+                      <option key={n} value={n}>{n} {n === 1 ? t("flights.passenger") : t("flights.passengersLabel")}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
-            {dateField(t("flights.departure"), flightDate, setFlightDate, today)}
             <SearchBtn color={active.color}>{t("flights.searchButton")}</SearchBtn>
           </form>
         )}
 
+        {/* Attractions */}
         {tab === "attractions" && (
           <form onSubmit={e => { e.preventDefault(); go("/attractions", { destination: attrDest }); }}
-            className="flex flex-wrap items-end gap-3">
-            <div className="min-w-60 flex-1">
-              <label className="mb-1.5 block text-xs font-semibold text-slate-500">{t("attractions.destination")}</label>
-              <CityAutoComplete label="" value={attrDest} onChange={setAttrDest} onSelect={i => setAttrDest(i.placeName)} placeholder={t("attractions.destinationPlaceholder")} />
+            className="space-y-3">
+            <div>
+              <label className={LABEL_CLS}>{t("attractions.destination")}</label>
+              <CityAutoComplete label="" value={attrDest} onChange={setAttrDest}
+                onSelect={i => setAttrDest(i.placeName)} placeholder={t("attractions.destinationPlaceholder")} />
             </div>
             <SearchBtn color={active.color}>{t("attractions.searchButton")}</SearchBtn>
           </form>
         )}
 
+        {/* Cars */}
         {tab === "cars" && (
-          <form onSubmit={e => { e.preventDefault(); go("/cars", { destination: carDest, checkin: checkIn, checkout: checkOut }); }}
-            className="flex flex-wrap items-end gap-3">
-            <div className="min-w-44 flex-1">
-              <label className="mb-1.5 block text-xs font-semibold text-slate-500">{t("cars.pickupLocation")}</label>
-              <CityAutoComplete label="" value={carDest} onChange={setCarDest} onSelect={i => setCarDest(i.placeName)} placeholder={t("cars.locationPlaceholder")} />
+          <form onSubmit={e => { e.preventDefault(); go("/cars", { destination: carDest, checkin: carPickup, checkout: carDropoff }); }}
+            className="space-y-3">
+            <div>
+              <label className={LABEL_CLS}>{t("cars.pickupLocation")}</label>
+              <CityAutoComplete label="" value={carDest} onChange={setCarDest}
+                onSelect={i => setCarDest(i.placeName)} placeholder={t("cars.locationPlaceholder")} />
             </div>
-            {dateField(t("cars.pickupDate"),  checkIn,  setCheckIn,  today)}
-            {dateField(t("cars.dropoffDate"), checkOut, setCheckOut, checkIn)}
+            <div className="grid grid-cols-2 gap-3">
+              <DateField label={t("cars.pickupDate")}  value={carPickup}  onChange={setCarPickup}  min={today} />
+              <DateField label={t("cars.dropoffDate")} value={carDropoff} onChange={setCarDropoff} min={carPickup} />
+            </div>
             <SearchBtn color={active.color}>{t("cars.searchButton")}</SearchBtn>
           </form>
         )}
 
+        {/* Plan with AI */}
         {tab === "plan" && (
           <form onSubmit={e => { e.preventDefault(); nav(aiDest ? `/create?destination=${encodeURIComponent(aiDest)}` : "/create"); }}
-            className="flex flex-wrap items-end gap-3">
-            <div className="min-w-60 flex-1">
-              <label className="mb-1.5 block text-xs font-semibold text-slate-500">{t("home.quickSearch.destination")}</label>
-              <CityAutoComplete label="" value={aiDest} onChange={setAiDest} onSelect={i => setAiDest(i.placeName)} placeholder={t("home.quickSearch.destinationPlaceholder")} />
+            className="space-y-3">
+            <div>
+              <label className={LABEL_CLS}>{t("home.quickSearch.destination")}</label>
+              <CityAutoComplete label="" value={aiDest} onChange={setAiDest}
+                onSelect={i => setAiDest(i.placeName)} placeholder={t("home.quickSearch.destinationPlaceholder")} />
             </div>
             <SearchBtn color={active.color}>{t("home.quickSearch.planButton")}</SearchBtn>
           </form>
         )}
+
       </div>
     </div>
   );
-
-  function SearchBtn({ color, children }) {
-    return (
-      <button type="submit"
-        className={cx(
-          "inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg",
-          SEARCH_BTN_COLOR[color]
-        )}>
-        <Search size={15} />{children}
-      </button>
-    );
-  }
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────

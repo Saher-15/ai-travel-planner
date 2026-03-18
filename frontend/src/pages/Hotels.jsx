@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Calendar, Users, Search } from "lucide-react";
+import { Baby, Calendar, Users, Search } from "lucide-react";
 import { Card, CardBody, Badge } from "../components/UI.jsx";
 import CityAutoComplete from "../components/CityAutoComplete.jsx";
 
@@ -14,13 +14,14 @@ const POPULAR = [
   { city: "New York", country: "USA", emoji: "🗽" },
 ];
 
-function buildHotelUrl({ destination, checkIn, checkOut, adults, rooms }) {
+function buildHotelUrl({ destination, checkIn, checkOut, adults, children, rooms }) {
   const aid = import.meta.env.VITE_BOOKING_AID;
   const params = new URLSearchParams({
     ss: destination || "",
     checkin: checkIn || "",
     checkout: checkOut || "",
     group_adults: String(adults || 1),
+    group_children: String(children || 0),
     no_rooms: String(rooms || 1),
     lang: "en-gb",
   });
@@ -46,6 +47,7 @@ export default function Hotels() {
   const [checkIn, setCheckIn] = useState(searchParams.get("checkin") || todayStr());
   const [checkOut, setCheckOut] = useState(searchParams.get("checkout") || tomorrowStr());
   const [adults, setAdults] = useState(Number(searchParams.get("adults")) || 1);
+  const [children, setChildren] = useState(Number(searchParams.get("children")) || 0);
   const [rooms] = useState(1);
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export default function Hotels() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    const url = buildHotelUrl({ destination, checkIn, checkOut, adults, rooms });
+    const url = buildHotelUrl({ destination, checkIn, checkOut, adults, children, rooms });
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
@@ -85,9 +87,9 @@ export default function Hotels() {
             onSubmit={handleSearch}
             className="mx-auto mt-8 max-w-4xl rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-xl backdrop-blur sm:rounded-3xl sm:p-5"
           >
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
               {/* Destination */}
-              <div className="lg:col-span-2">
+              <div className="sm:col-span-2 lg:col-span-2">
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-500">
                   {t("hotels.destination")}
                 </label>
@@ -142,25 +144,39 @@ export default function Hotels() {
                 </div>
               </div>
 
-              {/* Guests */}
+              {/* Adults */}
               <div>
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-500">
-                  {t("hotels.guests")}
+                  {t("hotels.adults")}
                 </label>
                 <div className="relative">
-                  <Users
-                    size={15}
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
+                  <Users size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <select
                     value={adults}
                     onChange={(e) => setAdults(Number(e.target.value))}
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-9 pr-4 text-sm text-slate-800 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
                   >
                     {[1, 2, 3, 4, 5, 6].map((n) => (
-                      <option key={n} value={n}>
-                        {n} {n === 1 ? t("hotels.adult") : t("hotels.adults")}
-                      </option>
+                      <option key={n} value={n}>{n} {n === 1 ? t("hotels.adult") : t("hotels.adults")}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Children */}
+              <div>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-500">
+                  {t("hotels.childrenLabel")}
+                </label>
+                <div className="relative">
+                  <Baby size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <select
+                    value={children}
+                    onChange={(e) => setChildren(Number(e.target.value))}
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-9 pr-4 text-sm text-slate-800 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+                  >
+                    {[0, 1, 2, 3, 4].map((n) => (
+                      <option key={n} value={n}>{n} {n === 1 ? t("hotels.child") : t("hotels.childrenLabel")}</option>
                     ))}
                   </select>
                 </div>
