@@ -16,6 +16,15 @@ html {
 body {
   @apply bg-slate-50 text-slate-900;
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Prevent iOS Safari from zooming in when tapping inputs (triggered when font-size < 16px).
+   We only override on mobile — desktop keeps whatever Tailwind sets via text-sm etc. */
+@media (max-width: 767px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
 }
 
 /* Subtle focus-visible outline for keyboard users */
