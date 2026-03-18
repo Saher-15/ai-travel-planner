@@ -1304,6 +1304,7 @@
     "fromPlaceholder": "City or airport...",
     "to": "To",
     "toPlaceholder": "City or airport...",
+    "swap": "Swap",
     "departure": "Departure",
     "return": "Return",
     "passengers": "Passengers",

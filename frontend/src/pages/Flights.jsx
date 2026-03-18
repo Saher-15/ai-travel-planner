@@ -79,14 +79,14 @@ export default function Flights() {
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6 sm:space-y-10">
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-4xl border border-slate-200 bg-white shadow-[0_30px_100px_-35px_rgba(15,23,42,0.35)]">
+      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg sm:rounded-4xl sm:shadow-[0_30px_100px_-35px_rgba(15,23,42,0.35)]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.10),transparent_30%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.12),transparent_30%),linear-gradient(to_bottom_right,#f8f9ff,#ffffff,#f2f8ff)]" />
-        <div className="absolute -left-10 top-0 h-72 w-72 rounded-full bg-indigo-200/25 blur-3xl" />
-        <div className="absolute right-0 top-16 h-80 w-80 rounded-full bg-sky-200/20 blur-3xl" />
+        <div className="absolute -left-10 top-0 hidden h-72 w-72 rounded-full bg-indigo-200/25 blur-3xl sm:block" />
+        <div className="absolute right-0 top-16 hidden h-80 w-80 rounded-full bg-sky-200/20 blur-3xl sm:block" />
 
-        <div className="relative px-6 py-10 sm:px-10 sm:py-14">
+        <div className="relative px-4 py-8 sm:px-10 sm:py-14">
           <div className="mx-auto max-w-2xl text-center">
             <Badge className="bg-indigo-50 text-indigo-700">✈️ {t("flights.badge")}</Badge>
             <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
@@ -98,7 +98,7 @@ export default function Flights() {
           {/* Search form */}
           <form
             onSubmit={handleSearch}
-            className="mx-auto mt-8 max-w-4xl rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-xl backdrop-blur"
+            className="mx-auto mt-8 max-w-4xl rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-xl backdrop-blur sm:rounded-3xl sm:p-5"
           >
             {/* Trip type toggle */}
             <div className="mb-4 flex gap-2">
@@ -124,25 +124,26 @@ export default function Flights() {
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-500">
                   {t("flights.from")}
                 </label>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1">
-                    <CityAutoComplete
-                      label=""
-                      value={origin}
-                      onChange={setOrigin}
-                      onSelect={(item) => setOrigin(item.placeName)}
-                      placeholder={t("flights.fromPlaceholder")}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={swapCities}
-                    title="Swap"
-                    className="shrink-0 rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 transition hover:bg-slate-50 hover:text-indigo-600"
-                  >
-                    <ArrowLeftRight size={14} />
-                  </button>
-                </div>
+                <CityAutoComplete
+                  label=""
+                  value={origin}
+                  onChange={setOrigin}
+                  onSelect={(item) => setOrigin(item.placeName)}
+                  placeholder={t("flights.fromPlaceholder")}
+                />
+              </div>
+
+              {/* Swap — centered row on mobile, hidden on sm+ */}
+              <div className="flex justify-center sm:hidden">
+                <button
+                  type="button"
+                  onClick={swapCities}
+                  title="Swap"
+                  className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-indigo-600"
+                >
+                  <ArrowLeftRight size={14} />
+                  {t("flights.swap") || "Swap"}
+                </button>
               </div>
 
               {/* To */}
@@ -150,13 +151,26 @@ export default function Flights() {
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-500">
                   {t("flights.to")}
                 </label>
-                <CityAutoComplete
-                  label=""
-                  value={destination}
-                  onChange={setDestination}
-                  onSelect={(item) => setDestination(item.placeName)}
-                  placeholder={t("flights.toPlaceholder")}
-                />
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <CityAutoComplete
+                      label=""
+                      value={destination}
+                      onChange={setDestination}
+                      onSelect={(item) => setDestination(item.placeName)}
+                      placeholder={t("flights.toPlaceholder")}
+                    />
+                  </div>
+                  {/* Swap — inline on sm+ */}
+                  <button
+                    type="button"
+                    onClick={swapCities}
+                    title="Swap"
+                    className="hidden shrink-0 rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 transition hover:bg-slate-50 hover:text-indigo-600 sm:flex"
+                  >
+                    <ArrowLeftRight size={14} />
+                  </button>
+                </div>
               </div>
 
               {/* Passengers */}
@@ -229,11 +243,11 @@ export default function Flights() {
               )}
             </div>
 
-            <div className="mt-4 flex items-center justify-between gap-4">
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-slate-400">{t("flights.affiliateNote")}</p>
               <button
                 type="submit"
-                className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-indigo-500 hover:shadow-lg"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-indigo-500 hover:shadow-lg sm:w-auto"
               >
                 <Search size={15} />
                 {t("flights.searchButton")}

@@ -57,14 +57,14 @@ export default function Cars() {
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6 sm:space-y-10">
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-4xl border border-slate-200 bg-white shadow-[0_30px_100px_-35px_rgba(15,23,42,0.35)]">
+      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg sm:rounded-4xl sm:shadow-[0_30px_100px_-35px_rgba(15,23,42,0.35)]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(234,179,8,0.08),transparent_30%),radial-gradient(circle_at_top_right,rgba(249,115,22,0.08),transparent_30%),linear-gradient(to_bottom_right,#fffdf5,#ffffff,#fffbeb)]" />
-        <div className="absolute -left-10 top-0 h-72 w-72 rounded-full bg-amber-200/20 blur-3xl" />
-        <div className="absolute right-0 top-16 h-80 w-80 rounded-full bg-orange-200/15 blur-3xl" />
+        <div className="absolute -left-10 top-0 hidden h-72 w-72 rounded-full bg-amber-200/20 blur-3xl sm:block" />
+        <div className="absolute right-0 top-16 hidden h-80 w-80 rounded-full bg-orange-200/15 blur-3xl sm:block" />
 
-        <div className="relative px-6 py-10 sm:px-10 sm:py-14">
+        <div className="relative px-4 py-8 sm:px-10 sm:py-14">
           <div className="mx-auto max-w-2xl text-center">
             <Badge className="bg-amber-50 text-amber-700">🚗 {t("cars.badge")}</Badge>
             <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
@@ -76,9 +76,9 @@ export default function Cars() {
           {/* Search form */}
           <form
             onSubmit={handleSearch}
-            className="mx-auto mt-8 max-w-3xl rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-xl backdrop-blur"
+            className="mx-auto mt-8 max-w-3xl rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-xl backdrop-blur sm:rounded-3xl sm:p-5"
           >
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {/* Pick-up location */}
               <div>
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.15em] text-slate-500">
@@ -130,11 +130,11 @@ export default function Cars() {
               </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-between gap-4">
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-slate-400">{t("cars.affiliateNote")}</p>
               <button
                 type="submit"
-                className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-amber-500 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-amber-400 hover:shadow-lg"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-amber-400 hover:shadow-lg sm:w-auto"
               >
                 <Search size={15} />
                 {t("cars.searchButton")}
