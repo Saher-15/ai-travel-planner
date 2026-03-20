@@ -3,7 +3,7 @@ import authMiddleware from "../middleware/authMiddleware.js";
 import { Trip } from "../models/Trip.js";
 import { generateItinerary } from "../services/openaiService.js";
 import { fetchDestinationEvents } from "../services/eventsService.js";
-import aiLimiter from "../middleware/aiLimiter.js";
+import { aiLimiter } from "../middleware/limiters.js";
 import PDFDocument from "pdfkit";
 
 const router = express.Router();

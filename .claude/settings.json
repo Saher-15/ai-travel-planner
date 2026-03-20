@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /Users/sahersaadi/ai-travel-planner/frontend/src/pages/*.jsx)",
+      "Bash(wc -l /Users/sahersaadi/ai-travel-planner/backend/src/routes/*.js)"
+    ]
+  }
+}
