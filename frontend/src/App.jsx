@@ -1,5 +1,11 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect, lazy, Suspense } from "react";
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
 import Layout from "./components/Layout.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 
@@ -52,6 +58,7 @@ function AppRoutes() {
 
   return (
     <Layout>
+      <ScrollToTop />
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/"                      element={<Home />} />

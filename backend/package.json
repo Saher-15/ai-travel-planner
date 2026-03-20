@@ -13,10 +13,8 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@mapbox/search-js-react": "^1.5.1",
     "@maptiler/client": "^2.7.0",
     "axios": "^1.13.6",
-    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "bottleneck": "^2.19.5",
     "compression": "^1.8.1",
@@ -31,10 +29,8 @@
     "mongoose": "^9.2.4",
     "node-fetch": "^3.3.2",
     "node-mailjet": "^6.0.11",
-    "nodemailer": "^8.0.1",
     "openai": "^6.25.0",
-    "pdfkit": "^0.17.2",
-    "resend": "^6.9.3"
+    "pdfkit": "^0.17.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
