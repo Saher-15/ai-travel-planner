@@ -189,7 +189,7 @@ export default function ViewTrip() {
   const summary = trip?.itinerary?.tripSummary || {};
   const tripMode = normalizeTripMode(trip?.tripMode);
   const destinations = getTripDestinations(trip);
-  const primaryDestination = trip?.destination || destinations[0] || "";
+
 
   const rawRecommendedPlaces = useMemo(() => getRecommendedPlaces(trip), [trip]);
 
@@ -201,11 +201,6 @@ export default function ViewTrip() {
     () => extractUniqueLocations(trip?.itinerary, t("viewTrip.place")),
     [trip, t]
   );
-
-  // No photo fetching at all — avoids API requests on page load.
-  // DayCards and gallery still render; photo slots show gradient placeholders.
-  const photoMap = useMemo(() => new Map(), []);
-  const placesWithPhotos = locations;
 
   const recommendedPlaces = useMemo(
     () =>
@@ -340,8 +335,6 @@ export default function ViewTrip() {
               day={d}
               isOpen={Boolean(openDays[d.day])}
               onToggle={() => toggleDay(d.day)}
-              destination={primaryDestination}
-              photoMap={photoMap}
             />
           ))}
         </div>
@@ -369,8 +362,6 @@ export default function ViewTrip() {
             </CardBody>
           </Card>
         )}
-
-        <PlacesGallery points={placesWithPhotos} />
 
         <RecommendedPlacesSection places={recommendedPlaces} />
       </div>
@@ -645,9 +636,9 @@ function CityPlanSection({ summary, tripMode, destinations }) {
   );
 }
 
-function RecommendedPlacesSection({ places, onJump, loading }) {
+function RecommendedPlacesSection({ places, onJump }) {
   const { t } = useTranslation();
-  if (!places?.length && !loading) return null;
+  if (!places?.length) return null;
 
   return (
     <Card className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur">
@@ -655,16 +646,11 @@ function RecommendedPlacesSection({ places, onJump, loading }) {
         title={t("viewTrip.recommendedPlaces")}
         subtitle={t("viewTrip.recommendedPlacesSubtitle")}
         right={
-          !loading ? (
-            <Badge className="bg-sky-50 text-sky-700">{t("viewTrip.placesCount", { count: places.length })}</Badge>
-          ) : null
+          <Badge className="bg-sky-50 text-sky-700">{t("viewTrip.placesCount", { count: places.length })}</Badge>
         }
       />
       <CardBody>
-        {loading && !places?.length ? (
-          <SoftMessage>{t("viewTrip.loadingPlacePhotos")}</SoftMessage>
-        ) : (
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {places.map((place, i) => {
               const title =
                 place?.title ||
@@ -672,13 +658,6 @@ function RecommendedPlacesSection({ places, onJump, loading }) {
                 place?.placeName ||
                 place?.location ||
                 t("viewTrip.recommendedPlace");
-
-              const image =
-                place?.photoUrl ||
-                place?.image ||
-                place?.imageUrl ||
-                place?.photo ||
-                null;
 
               const description =
                 place?.description ||
@@ -696,29 +675,6 @@ function RecommendedPlacesSection({ places, onJump, loading }) {
                   key={place?._id || place?.id || `${title}-${i}`}
                   className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl"
                 >
-                  <div className="relative h-56 overflow-hidden bg-slate-100">
-                    {image ? (
-                      <img
-                        src={image}
-                        alt={title}
-                        className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center bg-linear-to-br from-slate-100 to-slate-200 text-sm font-medium text-slate-500">
-                        {t("viewTrip.noPhotoAvailable")}
-                      </div>
-                    )}
-
-                    <div className="absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-black/55 to-transparent" />
-
-                    {dayNumber ? (
-                      <div className="absolute left-3 top-3 rounded-full bg-black/45 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur">
-                        {t("viewTrip.dayLabel", { number: dayNumber })}
-                      </div>
-                    ) : null}
-                  </div>
-
                   <div className="space-y-4 p-5">
                     <div>
                       <div className="text-lg font-extrabold tracking-tight text-slate-900">
@@ -777,7 +733,6 @@ function RecommendedPlacesSection({ places, onJump, loading }) {
               );
             })}
           </div>
-        )}
       </CardBody>
     </Card>
   );
@@ -879,107 +834,6 @@ function EventsSection({ events }) {
   );
 }
 
-function PlacesGallery({ points, loading }) {
-  const { t } = useTranslation();
-  if (!points?.length && !loading) return null;
-
-  return (
-    <Card className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur">
-      <CardHeader
-        title={t("viewTrip.placesGallery")}
-        subtitle={t("viewTrip.placesGallerySubtitle")}
-        right={
-          !loading ? (
-            <Badge className="bg-sky-50 text-sky-700">{t("viewTrip.placesCount", { count: points.length })}</Badge>
-          ) : null
-        }
-      />
-      <CardBody>
-        {loading && !points?.length ? (
-          <SoftMessage>{t("viewTrip.loadingPlacePhotosGallery")}</SoftMessage>
-        ) : (
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {points.map((place, i) => {
-
-              return (
-                <div
-                  key={`${place.address || place.location || place.title}-${i}`}
-                  className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl"
-                >
-                  <div className="relative h-56 overflow-hidden bg-slate-100">
-                    {place.photoUrl ? (
-                      <img
-                        src={place.photoUrl}
-                        alt={place.title || place.location}
-                        className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center bg-linear-to-br from-slate-100 to-slate-200 text-sm font-medium text-slate-500">
-                        {t("viewTrip.noPhotoAvailable")}
-                      </div>
-                    )}
-
-                    <div className="absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-black/55 to-transparent" />
-
-                    <div className="absolute left-3 top-3 rounded-full bg-black/45 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur">
-                      {t("viewTrip.dayTimeBlock", { day: place.day, timeBlock: place.timeBlock })}
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 p-5">
-                    <div>
-                      <div className="text-lg font-extrabold tracking-tight text-slate-900">
-                        {place.title || t("viewTrip.place")}
-                      </div>
-
-                      {place?.location ? (
-                        <div className="mt-2 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-600">
-                          📍 {place.location}
-                        </div>
-                      ) : place?.address ? (
-                        <div className="mt-2 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-600">
-                          📍 {place.address}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {place.durationHours ? (
-                        <Tag color="indigo">{formatHours(Number(place.durationHours))}</Tag>
-                      ) : null}
-                      {place.category ? <Tag color="slate">{place.category}</Tag> : null}
-                      {place.type ? <Tag color="sky">{place.type}</Tag> : null}
-                    </div>
-
-                    {place.notes ? (
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-600">
-                        {place.notes}
-                      </div>
-                    ) : null}
-
-                    {place.address ? (
-                      <div className="text-xs leading-5 text-slate-500">
-                        {place.address}
-                      </div>
-                    ) : null}
-
-                    <div className="flex items-center justify-between gap-3">
-                      <GoogleMapsButton
-                        place={place}
-                        className="text-xs font-bold text-sky-700 transition hover:text-sky-800"
-                      />
-                    </div>  
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </CardBody>
-    </Card>
-  );
-}
 
 const DAY_GRADIENTS = [
   "from-slate-900 via-slate-800 to-indigo-950",
@@ -994,7 +848,7 @@ function getDayGradient(dayNumber) {
   return DAY_GRADIENTS[(Number(dayNumber) - 1) % DAY_GRADIENTS.length];
 }
 
-function DayCard({ day, isOpen, onToggle, photoMap = new Map() }) {
+function DayCard({ day, isOpen, onToggle }) {
   const { t } = useTranslation();
   const activityCount = countDayActivities(day);
   const totalHours = getDayEstimatedHours(day);
@@ -1038,9 +892,9 @@ function DayCard({ day, isOpen, onToggle, photoMap = new Map() }) {
 
       {isOpen ? (
         <CardBody className="space-y-1">
-          <MiniSection title={t("viewTrip.morning")} items={day.morning} icon="☀️" photoMap={photoMap} />
-          <MiniSection title={t("viewTrip.afternoon")} items={day.afternoon} icon="🌤️" photoMap={photoMap} />
-          <MiniSection title={t("viewTrip.evening")} items={day.evening} icon="🌙" photoMap={photoMap} />
+          <MiniSection title={t("viewTrip.morning")} items={day.morning} icon="☀️" />
+          <MiniSection title={t("viewTrip.afternoon")} items={day.afternoon} icon="🌤️" />
+          <MiniSection title={t("viewTrip.evening")} items={day.evening} icon="🌙" />
 
           {(day.foodSuggestion || day.backupPlan) && (
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -1184,7 +1038,7 @@ function FancyInfoTile({ label, value, icon }) {
   );
 }
 
-function MiniSection({ title, items, icon, photoMap = new Map() }) {
+function MiniSection({ title, items, icon }) {
   const { t } = useTranslation();
   if (!items?.length) return null;
 
@@ -1201,26 +1055,11 @@ function MiniSection({ title, items, icon, photoMap = new Map() }) {
       </div>
 
       <ul className="mt-3 space-y-3 text-sm text-slate-800">
-        {items.map((x, i) => {
-          const photoKey = normalizeText(x.address || x.location || x.title);
-          const photoUrl = x.photoUrl || x.image || photoMap.get(photoKey) || null;
-
-          return (
+        {items.map((x, i) => (
             <li
               key={x.id ?? `${x.title}-${x.address || x.location}-${i}`}
               className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-sky-200"
             >
-              {photoUrl && (
-                <div className="relative h-28 sm:h-36 w-full overflow-hidden">
-                  <img
-                    src={photoUrl}
-                    alt={x.title || x.location}
-                    className="h-full w-full object-cover transition duration-700 hover:scale-105"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-black/50 to-transparent" />
-                </div>
-              )}
               <div className="px-4 py-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
                   <div className="min-w-0 flex-1">
@@ -1266,8 +1105,7 @@ function MiniSection({ title, items, icon, photoMap = new Map() }) {
                 </div>
               </div>
             </li>
-          );
-        })}
+          ))}
       </ul>
     </div>
   );
