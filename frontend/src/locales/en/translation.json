@@ -1165,6 +1165,36 @@
     "unknownDate": "Unknown date",
     "placesCount": "{{count}} places",
     "travelers": "Travelers",
+    "shareTrip": {
+      "share": "Share",
+      "shared": "Shared",
+      "copyLink": "Copy Link",
+      "copied": "Copied!",
+      "remove": "Remove Link",
+      "publicNote": "Anyone with this link can view this trip (read-only).",
+      "viewOnly": "Shared read-only trip"
+    },
+    "tripStatus": {
+      "label": "Status",
+      "planning": "Planning",
+      "upcoming": "Upcoming",
+      "completed": "Completed"
+    },
+    "packingList": {
+      "title": "Packing List",
+      "subtitle": "AI-generated checklist — check items as you pack",
+      "generate": "Generate Packing List",
+      "regenerate": "Regenerate",
+      "generating": "Generating…",
+      "empty": "No packing list yet. Generate one with AI based on your trip details.",
+      "packed": "{{checked}}/{{total}} packed",
+      "saving": "Saving…"
+    },
+    "dayNotes": {
+      "label": "My Notes",
+      "placeholder": "Add your personal notes for this day…",
+      "saved": "Saved ✓"
+    },
     "hotels": {
       "title": "Where to Stay in {{destination}}",
       "subtitle": "Search and book the best hotels for your trip",

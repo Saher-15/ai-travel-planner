@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client.js";
@@ -196,6 +196,54 @@ export default function ViewTrip() {
   const pdfRef = useRef(null);
   const [openDays, setOpenDays] = useState({ 1: true });
   const [downloadError, setDownloadError] = useState("");
+  const [shareToken, setShareToken] = useState(null);
+  const [tripStatus, setTripStatus] = useState("planning");
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareBusy, setShareBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [statusBusy, setStatusBusy] = useState(false);
+
+  useEffect(() => {
+    if (trip) {
+      setShareToken(trip.shareToken || null);
+      setTripStatus(trip.status || "planning");
+    }
+  }, [trip]);
+
+  const handleShare = useCallback(async () => {
+    setShareBusy(true);
+    try {
+      const { data } = await api.post(`/trips/${id}/share`);
+      setShareToken(data.shareToken);
+      setShareOpen(true);
+    } catch { /* silent */ }
+    finally { setShareBusy(false); }
+  }, [id]);
+
+  const handleUnshare = useCallback(async () => {
+    try {
+      await api.delete(`/trips/${id}/share`);
+      setShareToken(null);
+      setShareOpen(false);
+    } catch { /* silent */ }
+  }, [id]);
+
+  const handleCopy = useCallback(() => {
+    const url = `${window.location.origin}/shared/${shareToken}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [shareToken]);
+
+  const handleStatusChange = useCallback(async (newStatus) => {
+    setStatusBusy(true);
+    try {
+      await api.patch(`/trips/${id}/status`, { status: newStatus });
+      setTripStatus(newStatus);
+    } catch { /* silent */ }
+    finally { setStatusBusy(false); }
+  }, [id]);
 
   const locations = useMemo(
     () => extractUniqueLocations(trip?.itinerary, t("viewTrip.place")),
@@ -306,6 +354,17 @@ export default function ViewTrip() {
           onNew={() => nav("/create")}
           onEdit={() => nav(`/trip/${id}/edit`)}
           onDownload={downloadPDF}
+          shareToken={shareToken}
+          shareOpen={shareOpen}
+          setShareOpen={setShareOpen}
+          shareBusy={shareBusy}
+          copied={copied}
+          onShare={handleShare}
+          onUnshare={handleUnshare}
+          onCopy={handleCopy}
+          tripStatus={tripStatus}
+          statusBusy={statusBusy}
+          onStatusChange={handleStatusChange}
         />
 
         <TripOverview
@@ -329,10 +388,12 @@ export default function ViewTrip() {
         <EventsSection events={trip?.events || []} />
 
         <div className="grid gap-6 lg:grid-cols-2">
-          {trip?.itinerary?.days?.map((d) => (
+          {trip?.itinerary?.days?.map((d, idx) => (
             <DayCard
               key={d.day}
               day={d}
+              tripId={id}
+              dayIndex={idx}
               isOpen={Boolean(openDays[d.day])}
               onToggle={() => toggleDay(d.day)}
             />
@@ -364,10 +425,19 @@ export default function ViewTrip() {
         )}
 
         <RecommendedPlacesSection places={recommendedPlaces} />
+
+        <PackingListSection tripId={id} />
       </div>
     </div>
   );
 }
+
+const STATUS_STYLES = {
+  planning: "border-amber-300 bg-amber-100 text-amber-800",
+  upcoming: "border-sky-300 bg-sky-100 text-sky-800",
+  completed: "border-emerald-300 bg-emerald-100 text-emerald-800",
+};
+const STATUS_LABELS = { planning: "📋 Planning", upcoming: "✈️ Upcoming", completed: "✅ Completed" };
 
 function Header({
   trip,
@@ -378,8 +448,21 @@ function Header({
   onNew,
   onEdit,
   onDownload,
+  shareToken,
+  shareOpen,
+  setShareOpen,
+  shareBusy,
+  copied,
+  onShare,
+  onUnshare,
+  onCopy,
+  tripStatus,
+  statusBusy,
+  onStatusChange,
 }) {
   const { t } = useTranslation();
+  const shareUrl = shareToken ? `${window.location.origin}/shared/${shareToken}` : "";
+
   return (
     <Card className="relative overflow-hidden border-0 shadow-[0_24px_80px_-28px_rgba(37,99,235,0.55)]">
       <div className="relative text-white">
@@ -445,7 +528,7 @@ function Header({
           </div>
         </div>
 
-        <div className="relative z-10 flex flex-wrap gap-3 px-6 pb-7 sm:px-8">
+        <div className="relative z-10 flex flex-wrap gap-3 px-6 pb-4 sm:px-8">
           <Button type="button" onClick={onBack} variant="secondary">
             {t("viewTrip.back")}
           </Button>
@@ -470,16 +553,66 @@ function Header({
 
           <Button
             type="button"
-            className=" text-sky-800 shadow-lg hover:bg-sky-50"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDownload?.();
-            }}
+            className="text-sky-800 shadow-lg hover:bg-sky-50"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload?.(); }}
           >
             {t("viewTrip.downloadPDF")}
           </Button>
+
+          <Button
+            type="button"
+            disabled={shareBusy}
+            onClick={shareToken ? () => setShareOpen((o) => !o) : onShare}
+            className="bg-white/15 text-white backdrop-blur hover:bg-white/20"
+          >
+            {shareBusy ? "..." : shareToken ? "🔗 Shared" : "🔗 Share"}
+          </Button>
         </div>
+
+        {/* Status selector */}
+        <div className="relative z-10 flex flex-wrap items-center gap-2 px-6 pb-6 sm:px-8">
+          <span className="text-xs font-semibold text-white/60 uppercase tracking-wider">Status:</span>
+          {["planning", "upcoming", "completed"].map((s) => (
+            <button
+              key={s}
+              type="button"
+              disabled={statusBusy}
+              onClick={() => onStatusChange(s)}
+              className={`rounded-full px-3 py-1 text-xs font-bold border transition ${
+                tripStatus === s
+                  ? STATUS_STYLES[s]
+                  : "border-white/20 bg-white/10 text-white/70 hover:bg-white/20"
+              }`}
+            >
+              {STATUS_LABELS[s]}
+            </button>
+          ))}
+        </div>
+
+        {/* Share panel */}
+        {shareOpen && shareToken && (
+          <div className="relative z-10 mx-6 mb-6 rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur sm:mx-8">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold text-white/80">Public link — anyone with this can view the trip:</p>
+              <button type="button" onClick={() => setShareOpen(false)} className="text-white/60 hover:text-white text-lg leading-none">×</button>
+            </div>
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <input
+                readOnly
+                value={shareUrl}
+                className="flex-1 rounded-xl bg-white/20 px-3 py-2 text-xs text-white placeholder-white/40 outline-none"
+              />
+              <div className="flex gap-2">
+                <Button type="button" onClick={onCopy} className="text-sky-800 text-xs px-3 py-2">
+                  {copied ? "✓ Copied!" : "Copy Link"}
+                </Button>
+                <Button type="button" onClick={onUnshare} variant="danger" className="text-xs px-3 py-2">
+                  Remove
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Card>
   );
@@ -848,10 +981,26 @@ function getDayGradient(dayNumber) {
   return DAY_GRADIENTS[(Number(dayNumber) - 1) % DAY_GRADIENTS.length];
 }
 
-function DayCard({ day, isOpen, onToggle }) {
+function DayCard({ day, tripId, dayIndex, isOpen, onToggle }) {
   const { t } = useTranslation();
   const activityCount = countDayActivities(day);
   const totalHours = getDayEstimatedHours(day);
+  const [note, setNote] = useState(day.userNote || "");
+  const [noteSaved, setNoteSaved] = useState(false);
+  const noteTimer = useRef(null);
+
+  const saveNote = useCallback((val) => {
+    clearTimeout(noteTimer.current);
+    noteTimer.current = setTimeout(async () => {
+      try {
+        await api.patch(`/trips/${tripId}/days/${dayIndex}/note`, { note: val });
+        setNoteSaved(true);
+        setTimeout(() => setNoteSaved(false), 2000);
+      } catch { /* silent */ }
+    }, 800);
+  }, [tripId, dayIndex]);
+
+  useEffect(() => () => clearTimeout(noteTimer.current), []);
 
   return (
     <Card
@@ -914,6 +1063,22 @@ function DayCard({ day, isOpen, onToggle }) {
               ) : null}
             </div>
           )}
+
+          {/* Personal day note */}
+          <div className="mt-5">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+              📝 My Notes
+              {noteSaved && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Saved ✓</span>}
+            </div>
+            <textarea
+              className="mt-2 w-full resize-none rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-700 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+              rows={3}
+              maxLength={2000}
+              placeholder="Add your personal notes for this day..."
+              value={note}
+              onChange={(e) => { setNote(e.target.value); saveNote(e.target.value); }}
+            />
+          </div>
         </CardBody>
       ) : null}
     </Card>
@@ -1108,6 +1273,112 @@ function MiniSection({ title, items, icon }) {
           ))}
       </ul>
     </div>
+  );
+}
+
+function PackingListSection({ tripId }) {
+  const [list, setList] = useState(null); // null = not loaded yet
+  const [generating, setGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const saveTimer = useRef(null);
+
+  useEffect(() => {
+    api.get(`/trips/${tripId}/packing`)
+      .then(({ data }) => setList(data.packingList || []))
+      .catch(() => setList([]));
+    return () => clearTimeout(saveTimer.current);
+  }, [tripId]);
+
+  const persistList = useCallback((updated) => {
+    clearTimeout(saveTimer.current);
+    setSaving(true);
+    saveTimer.current = setTimeout(async () => {
+      try {
+        await api.put(`/trips/${tripId}/packing`, { packingList: updated });
+      } catch { /* silent */ }
+      finally { setSaving(false); }
+    }, 600);
+  }, [tripId]);
+
+  const toggle = (i) => {
+    const updated = list.map((item, idx) => idx === i ? { ...item, checked: !item.checked } : item);
+    setList(updated);
+    persistList(updated);
+  };
+
+  const generate = async () => {
+    setGenerating(true);
+    try {
+      const { data } = await api.post(`/trips/${tripId}/packing/generate`);
+      setList(data.packingList || []);
+    } catch { /* silent */ }
+    finally { setGenerating(false); }
+  };
+
+  if (list === null) return null; // still loading
+
+  const checked = list.filter((x) => x.checked).length;
+
+  return (
+    <Card className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur">
+      <CardHeader
+        title="🎒 Packing List"
+        subtitle="AI-generated checklist — check items as you pack"
+        right={
+          <div className="flex items-center gap-2">
+            {saving && <span className="text-[11px] text-slate-400">Saving…</span>}
+            {list.length > 0 && (
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-500">
+                {checked}/{list.length} packed
+              </span>
+            )}
+          </div>
+        }
+      />
+      <CardBody>
+        {list.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+            <p className="text-sm text-slate-500">No packing list yet. Generate one with AI based on your trip details.</p>
+            <Button
+              type="button"
+              className="mt-4"
+              onClick={generate}
+              disabled={generating}
+            >
+              {generating ? "Generating…" : "✨ Generate Packing List"}
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {list.map((item, i) => (
+                <label
+                  key={i}
+                  className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition select-none ${
+                    item.checked
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-800 line-through opacity-70"
+                      : "border-slate-200 bg-white text-slate-800 hover:border-sky-200 hover:bg-sky-50"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={item.checked}
+                    onChange={() => toggle(i)}
+                    className="h-4 w-4 rounded accent-sky-600"
+                  />
+                  {item.label}
+                </label>
+              ))}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Button type="button" variant="secondary" onClick={generate} disabled={generating} className="text-xs">
+                {generating ? "Generating…" : "↻ Regenerate"}
+              </Button>
+            </div>
+          </>
+        )}
+      </CardBody>
+    </Card>
   );
 }
 

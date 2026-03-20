@@ -1165,6 +1165,36 @@
     "unknownDate": "תאריך לא ידוע",
     "placesCount": "{{count}} מקומות",
     "travelers": "נוסעים",
+    "shareTrip": {
+      "share": "שתף",
+      "shared": "משותף",
+      "copyLink": "העתק קישור",
+      "copied": "הועתק!",
+      "remove": "הסר קישור",
+      "publicNote": "כל מי שיש לו את הקישור יכול לצפות בטיול זה (לקריאה בלבד).",
+      "viewOnly": "טיול משותף לצפייה בלבד"
+    },
+    "tripStatus": {
+      "label": "סטטוס",
+      "planning": "בתכנון",
+      "upcoming": "קרוב",
+      "completed": "הושלם"
+    },
+    "packingList": {
+      "title": "רשימת אריזה",
+      "subtitle": "רשימת תיוג שנוצרה על ידי בינה מלאכותית",
+      "generate": "צור רשימת אריזה",
+      "regenerate": "צור מחדש",
+      "generating": "מייצר…",
+      "empty": "אין רשימת אריזה עדיין. צור אחת עם בינה מלאכותית.",
+      "packed": "{{checked}}/{{total}} ארוז",
+      "saving": "שומר…"
+    },
+    "dayNotes": {
+      "label": "הערות שלי",
+      "placeholder": "הוסף הערות אישיות ליום זה…",
+      "saved": "נשמר ✓"
+    },
     "hotels": {
       "title": "היכן לישון ב{{destination}}",
       "subtitle": "חפש והזמן את המלונות הטובים ביותר לטיול שלך",

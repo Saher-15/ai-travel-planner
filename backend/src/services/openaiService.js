@@ -750,6 +750,39 @@ Return only JSON.
 `.trim();
 }
 
+export async function generatePackingList({ destination, startDate, endDate, preferences = {} }) {
+  const { travelers = 1, budget = "mid", interests = [] } = preferences;
+  const days = getDayCount(startDate, endDate);
+  const interestStr = interests.length ? interests.join(", ") : "general sightseeing";
+
+  const prompt = `Generate a practical packing list for a ${days}-day trip to ${destination} (${startDate} to ${endDate}).
+Travelers: ${travelers}. Budget: ${budget}. Interests: ${interestStr}.
+Return ONLY a JSON array of 20-30 short label strings (no explanations, no objects):
+["Passport", "Phone charger", "Sunscreen", ...]`.trim();
+
+  const response = await openai.responses.create({
+    model: "gpt-4.1-mini",
+    input: prompt,
+  });
+
+  const text = response.output_text?.trim() || "[]";
+  let items;
+  try {
+    items = JSON.parse(text);
+  } catch {
+    const first = text.indexOf("[");
+    const last = text.lastIndexOf("]");
+    items = first !== -1 && last !== -1 ? JSON.parse(text.slice(first, last + 1)) : [];
+  }
+
+  if (!Array.isArray(items)) items = [];
+  return items
+    .map((x) => String(x || "").trim())
+    .filter(Boolean)
+    .slice(0, 50)
+    .map((label) => ({ label, checked: false }));
+}
+
 export async function generateItinerary(payload) {
   const prompt = buildItineraryPrompt({ ...payload, language: payload.language || "en" });
 

@@ -32,6 +32,7 @@ const Hotels          = lazy(() => import("./pages/Hotels.jsx"));
 const Flights         = lazy(() => import("./pages/Flights.jsx"));
 const Attractions     = lazy(() => import("./pages/Attractions.jsx"));
 const Cars            = lazy(() => import("./pages/Cars.jsx"));
+const SharedTrip      = lazy(() => import("./pages/SharedTrip.jsx"));
 const NotFound        = lazy(() => import("./pages/NotFound.jsx"));
 
 const P = ({ children }) => <ProtectedRoute>{children}</ProtectedRoute>;
@@ -86,6 +87,7 @@ function AppRoutes() {
           <Route path="/admin/contacts"        element={<P><AdminContacts /></P>} />
           <Route path="/admin/dashboard"       element={<P><AdminDashboard /></P>} />
 
+          <Route path="/shared/:token"       element={<SharedTrip />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

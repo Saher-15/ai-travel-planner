@@ -32,6 +32,9 @@ router.get("/stats", authMiddleware, adminMiddleware, async (_req, res) => {
       tripTrends,
       budgetBreakdown,
       paceBreakdown,
+      statusBreakdown,
+      sharedTrips,
+      packingListsGenerated,
     ] = await Promise.all([
       User.countDocuments(),
       User.countDocuments({ createdAt: { $gte: today } }),
@@ -89,6 +92,18 @@ router.get("/stats", authMiddleware, adminMiddleware, async (_req, res) => {
         { $group: { _id: "$preferences.pace", count: { $sum: 1 } } },
         { $sort: { count: -1 } },
       ]),
+
+      // Status breakdown
+      Trip.aggregate([
+        { $group: { _id: "$status", count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+
+      // Shared trips count
+      Trip.countDocuments({ shareToken: { $ne: null } }),
+
+      // Trips with packing lists
+      Trip.countDocuments({ "packingList.0": { $exists: true } }),
     ]);
 
     // Fill any missing days with 0 so charts have exactly 30 data points
@@ -119,6 +134,9 @@ router.get("/stats", authMiddleware, adminMiddleware, async (_req, res) => {
         topDestinations,
         budgetBreakdown,
         paceBreakdown,
+        statusBreakdown,
+        sharedTrips,
+        packingListsGenerated,
         recent: recentTrips,
       },
       messages: {

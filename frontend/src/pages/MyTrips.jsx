@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Compass, Eye, MapPinned, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Compass, Copy, Eye, MapPinned, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { api } from "../api/client.js";
 import { Alert, Badge, Button, Card, CardBody, CardHeader, Input } from "../components/UI.jsx";
 import { useTranslation } from "react-i18next";
+
+const STATUS_BADGE = {
+  planning: "border-amber-200 bg-amber-50 text-amber-700",
+  upcoming: "border-sky-200 bg-sky-50 text-sky-700",
+  completed: "border-emerald-200 bg-emerald-50 text-emerald-700",
+};
+const STATUS_LABEL = { planning: "📋 Planning", upcoming: "✈️ Upcoming", completed: "✅ Completed" };
 
 function fmtRange(start, end, fallback) {
   return start && end ? `${start} → ${end}` : fallback;
@@ -26,6 +33,7 @@ export default function MyTrips() {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [coverPhotos, setCoverPhotos] = useState({});
 
   async function load() {
@@ -80,19 +88,36 @@ export default function MyTrips() {
     }
   }
 
+  async function duplicate(id) {
+    try {
+      const { data } = await api.post(`/trips/${id}/duplicate`);
+      setTrips((prev) => [data, ...prev]);
+    } catch (e2) {
+      setErr(e2?.response?.data?.message || "Failed to duplicate trip.");
+    }
+  }
+
+  async function changeStatus(id, status) {
+    try {
+      await api.patch(`/trips/${id}/status`, { status });
+      setTrips((prev) => prev.map((t) => t._id === id ? { ...t, status } : t));
+    } catch { /* silent */ }
+  }
+
   useEffect(() => { load(); }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return trips;
     return trips.filter((trip) => {
+      if (statusFilter !== "all" && trip.status !== statusFilter) return false;
+      if (!q) return true;
       const destination = String(trip?.destination || "").toLowerCase();
       const budget = String(trip?.preferences?.budget || "").toLowerCase();
       const pace = String(trip?.preferences?.pace || "").toLowerCase();
       const interests = getInterests(trip).join(" ").toLowerCase();
       return destination.includes(q) || budget.includes(q) || pace.includes(q) || interests.includes(q);
     });
-  }, [trips, query]);
+  }, [trips, query, statusFilter]);
 
   const totalTrips = trips.length;
   const filteredTrips = filtered.length;
@@ -169,6 +194,24 @@ export default function MyTrips() {
             )}
           </div>
 
+          {/* Status filter */}
+          <div className="flex flex-wrap gap-2">
+            {["all", "planning", "upcoming", "completed"].map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setStatusFilter(s)}
+                className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                  statusFilter === s
+                    ? "border-sky-300 bg-sky-100 text-sky-800"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                }`}
+              >
+                {s === "all" ? "All Trips" : STATUS_LABEL[s]}
+              </button>
+            ))}
+          </div>
+
           {err ? <Alert type="error">{err}</Alert> : null}
         </CardBody>
       </Card>
@@ -178,7 +221,15 @@ export default function MyTrips() {
       ) : filtered.length ? (
         <div className="grid gap-6 md:grid-cols-2 2xl:grid-cols-3">
           {filtered.map((trip) => (
-            <TripCard key={trip._id} trip={trip} onView={() => nav(`/trip/${trip._id}`)} onDelete={() => del(trip._id)} coverPhoto={coverPhotos[trip._id] || null} />
+            <TripCard
+              key={trip._id}
+              trip={trip}
+              onView={() => nav(`/trip/${trip._id}`)}
+              onDelete={() => del(trip._id)}
+              onDuplicate={() => duplicate(trip._id)}
+              onStatusChange={(s) => changeStatus(trip._id, s)}
+              coverPhoto={coverPhotos[trip._id] || null}
+            />
           ))}
         </div>
       ) : (
@@ -204,7 +255,7 @@ function getDestGradient(name) {
   return DEST_GRADIENTS[keys[idx]];
 }
 
-function TripCard({ trip, onView, onDelete, coverPhoto }) {
+function TripCard({ trip, onView, onDelete, onDuplicate, onStatusChange, coverPhoto }) {
   const { t } = useTranslation();
   const destination = trip.destination || t("common.notFound");
   const tripDays = getTripDays(trip);
@@ -212,6 +263,7 @@ function TripCard({ trip, onView, onDelete, coverPhoto }) {
   const pace = trip.preferences?.pace;
   const interests = getInterests(trip);
   const gradient = getDestGradient(destination);
+  const status = trip.status || "planning";
 
   return (
     <Card className="group overflow-hidden border border-slate-200/80 transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-24px_rgba(15,23,42,0.30)]">
@@ -242,6 +294,7 @@ function TripCard({ trip, onView, onDelete, coverPhoto }) {
 
       <CardBody className="space-y-5 bg-linear-to-b from-white to-slate-50/50">
         <div className="flex flex-wrap gap-2">
+          <Badge className={STATUS_BADGE[status]}>{STATUS_LABEL[status]}</Badge>
           {pace ? <Badge className="border-sky-200 bg-sky-50 text-sky-700">{t("myTrips.tripCard.pace", { pace })}</Badge> : null}
           {budget ? <Badge className="border-violet-200 bg-violet-50 text-violet-700">{t("myTrips.tripCard.budget", { budget })}</Badge> : null}
           {tripDays ? <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">{t("myTrips.tripCard.days", { count: tripDays })}</Badge> : null}
@@ -258,14 +311,30 @@ function TripCard({ trip, onView, onDelete, coverPhoto }) {
           </div>
         )}
 
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-          {t("myTrips.tripCard.openItinerary")}
+        {/* Status quick-change */}
+        <div className="flex flex-wrap gap-1.5">
+          {["planning", "upcoming", "completed"].map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => onStatusChange(s)}
+              className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition ${
+                status === s ? STATUS_BADGE[s] : "border-slate-200 bg-white text-slate-500 hover:border-slate-300"
+              }`}
+            >
+              {STATUS_LABEL[s]}
+            </button>
+          ))}
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button onClick={onView} variant="secondary" className="inline-flex w-full items-center justify-center gap-2 sm:flex-1">
             <Eye size={16} />
             {t("myTrips.tripCard.viewTrip")}
+          </Button>
+          <Button onClick={onDuplicate} variant="secondary" className="inline-flex w-full items-center justify-center gap-2 sm:flex-1">
+            <Copy size={16} />
+            Duplicate
           </Button>
           <Button onClick={onDelete} variant="danger" className="inline-flex w-full items-center justify-center gap-2 sm:flex-1">
             <Trash2 size={16} />

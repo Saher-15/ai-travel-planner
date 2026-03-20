@@ -54,6 +54,7 @@ const DayPlanSchema = new mongoose.Schema(
     evening: { type: [ActivitySchema], default: [] },
     foodSuggestion: { type: String, default: "", trim: true },
     backupPlan: { type: String, default: "", trim: true },
+    userNote: { type: String, default: "", trim: true },
   },
   { _id: false }
 );
@@ -118,11 +119,25 @@ const TripSchema = new mongoose.Schema(
     },
 
     events: { type: [EventSchema], default: [] },
+
+    status: {
+      type: String,
+      enum: ["planning", "upcoming", "completed"],
+      default: "planning",
+    },
+
+    shareToken: { type: String, default: null },
+
+    packingList: {
+      type: [{ label: { type: String, required: true, trim: true }, checked: { type: Boolean, default: false }, _id: false }],
+      default: [],
+    },
   },
   { timestamps: true }
 );
 
 // Compound index: user's trips sorted by newest first
 TripSchema.index({ userId: 1, createdAt: -1 });
+TripSchema.index({ shareToken: 1 }, { sparse: true });
 
 export const Trip = mongoose.model("Trip", TripSchema);

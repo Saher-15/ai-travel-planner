@@ -1,7 +1,8 @@
+import crypto from "crypto";
 import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
 import { Trip } from "../models/Trip.js";
-import { generateItinerary } from "../services/openaiService.js";
+import { generateItinerary, generatePackingList } from "../services/openaiService.js";
 import { fetchDestinationEvents } from "../services/eventsService.js";
 import { aiLimiter } from "../middleware/limiters.js";
 import PDFDocument from "pdfkit";
@@ -880,17 +881,200 @@ router.post("/", authMiddleware, async (req, res) => {
 });
 
 /**
+ * GET /trips/shared/:token  — public, no auth
+ */
+router.get("/shared/:token", async (req, res) => {
+  try {
+    const trip = await Trip.findOne({ shareToken: req.params.token })
+      .select("destination destinations tripMode startDate endDate preferences itinerary events placeMeta multiCityMeta status")
+      .lean();
+    if (!trip) return res.status(404).json({ message: "Shared trip not found or link expired." });
+    return res.json(trip);
+  } catch {
+    return res.status(500).json({ message: "Failed to load shared trip." });
+  }
+});
+
+/**
  * GET /trips
  */
 router.get("/", authMiddleware, async (req, res) => {
   try {
     const trips = await Trip.find({ userId: req.user.id })
-      .select("destination destinations tripMode startDate endDate preferences itinerary.tripSummary createdAt")
+      .select("destination destinations tripMode startDate endDate preferences itinerary.tripSummary status shareToken createdAt")
       .sort({ createdAt: -1 })
       .lean();
     return res.json(trips);
   } catch {
     return res.status(500).json({ message: "Failed to fetch trips" });
+  }
+});
+
+/**
+ * POST /trips/:id/share  — generate public share link
+ */
+router.post("/:id/share", authMiddleware, async (req, res) => {
+  try {
+    const trip = await Trip.findOne({ _id: req.params.id, userId: req.user.id });
+    if (!trip) return res.status(404).json({ message: "Trip not found" });
+    if (!trip.shareToken) {
+      trip.shareToken = crypto.randomBytes(24).toString("hex");
+      await trip.save();
+    }
+    return res.json({ shareToken: trip.shareToken });
+  } catch {
+    return res.status(500).json({ message: "Failed to create share link." });
+  }
+});
+
+/**
+ * DELETE /trips/:id/share  — revoke public share link
+ */
+router.delete("/:id/share", authMiddleware, async (req, res) => {
+  try {
+    const trip = await Trip.findOne({ _id: req.params.id, userId: req.user.id });
+    if (!trip) return res.status(404).json({ message: "Trip not found" });
+    trip.shareToken = null;
+    await trip.save();
+    return res.json({ message: "Share link removed." });
+  } catch {
+    return res.status(500).json({ message: "Failed to remove share link." });
+  }
+});
+
+/**
+ * PATCH /trips/:id/status  — update trip status
+ */
+router.patch("/:id/status", authMiddleware, async (req, res) => {
+  const ALLOWED = ["planning", "upcoming", "completed"];
+  const { status } = req.body;
+  if (!ALLOWED.includes(status)) {
+    return res.status(400).json({ message: `status must be one of: ${ALLOWED.join(", ")}` });
+  }
+  try {
+    const trip = await Trip.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id },
+      { status },
+      { new: true, select: "status" }
+    );
+    if (!trip) return res.status(404).json({ message: "Trip not found" });
+    return res.json({ status: trip.status });
+  } catch {
+    return res.status(500).json({ message: "Failed to update status." });
+  }
+});
+
+/**
+ * POST /trips/:id/duplicate  — clone a trip
+ */
+router.post("/:id/duplicate", authMiddleware, async (req, res) => {
+  try {
+    const source = await Trip.findOne({ _id: req.params.id, userId: req.user.id }).lean();
+    if (!source) return res.status(404).json({ message: "Trip not found" });
+    const { _id, __v, createdAt, updatedAt, shareToken, ...rest } = source;
+    const clone = await Trip.create({
+      ...rest,
+      userId: req.user.id,
+      status: "planning",
+      shareToken: null,
+      destination: `${rest.destination} (Copy)`,
+      packingList: [],
+      itinerary: {
+        ...rest.itinerary,
+        days: (rest.itinerary?.days || []).map((d) => ({ ...d, userNote: "" })),
+      },
+    });
+    return res.status(201).json(clone);
+  } catch {
+    return res.status(500).json({ message: "Failed to duplicate trip." });
+  }
+});
+
+/**
+ * GET /trips/:id/packing  — get packing list
+ */
+router.get("/:id/packing", authMiddleware, async (req, res) => {
+  try {
+    const trip = await Trip.findOne({ _id: req.params.id, userId: req.user.id })
+      .select("packingList")
+      .lean();
+    if (!trip) return res.status(404).json({ message: "Trip not found" });
+    return res.json({ packingList: trip.packingList || [] });
+  } catch {
+    return res.status(500).json({ message: "Failed to fetch packing list." });
+  }
+});
+
+/**
+ * POST /trips/:id/packing/generate  — AI-generate packing list
+ */
+router.post("/:id/packing/generate", authMiddleware, aiLimiter, async (req, res) => {
+  try {
+    const trip = await Trip.findOne({ _id: req.params.id, userId: req.user.id });
+    if (!trip) return res.status(404).json({ message: "Trip not found" });
+    const items = await generatePackingList({
+      destination: trip.destination,
+      startDate: trip.startDate,
+      endDate: trip.endDate,
+      preferences: trip.preferences,
+    });
+    trip.packingList = items;
+    await trip.save();
+    return res.json({ packingList: trip.packingList });
+  } catch (err) {
+    console.error("Packing list generation error:", err);
+    return res.status(500).json({ message: "Failed to generate packing list." });
+  }
+});
+
+/**
+ * PUT /trips/:id/packing  — save packing list (checked state)
+ */
+router.put("/:id/packing", authMiddleware, async (req, res) => {
+  const { packingList } = req.body;
+  if (!Array.isArray(packingList)) {
+    return res.status(400).json({ message: "packingList must be an array." });
+  }
+  if (packingList.length > 100) {
+    return res.status(400).json({ message: "Packing list cannot exceed 100 items." });
+  }
+  const cleaned = packingList
+    .filter((x) => x && typeof x.label === "string" && x.label.trim())
+    .map((x) => ({ label: String(x.label).trim().slice(0, 200), checked: Boolean(x.checked) }));
+  try {
+    const trip = await Trip.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id },
+      { packingList: cleaned },
+      { new: true, select: "packingList" }
+    );
+    if (!trip) return res.status(404).json({ message: "Trip not found" });
+    return res.json({ packingList: trip.packingList });
+  } catch {
+    return res.status(500).json({ message: "Failed to save packing list." });
+  }
+});
+
+/**
+ * PATCH /trips/:id/days/:dayIndex/note  — save personal day note
+ */
+router.patch("/:id/days/:dayIndex/note", authMiddleware, async (req, res) => {
+  const dayIndex = parseInt(req.params.dayIndex, 10);
+  if (!Number.isFinite(dayIndex) || dayIndex < 0) {
+    return res.status(400).json({ message: "Invalid dayIndex." });
+  }
+  const note = String(req.body.note || "").trim().slice(0, 2000);
+  try {
+    const trip = await Trip.findOne({ _id: req.params.id, userId: req.user.id });
+    if (!trip) return res.status(404).json({ message: "Trip not found" });
+    if (!trip.itinerary?.days?.[dayIndex]) {
+      return res.status(400).json({ message: "Day not found." });
+    }
+    trip.itinerary.days[dayIndex].userNote = note;
+    trip.markModified("itinerary");
+    await trip.save();
+    return res.json({ dayIndex, userNote: note });
+  } catch {
+    return res.status(500).json({ message: "Failed to save note." });
   }
 });
 
