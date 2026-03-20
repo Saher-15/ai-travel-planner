@@ -47,21 +47,7 @@ function getRecommendedPlaces(trip) {
   return [];
 }
 
-function buildPhotoQuery(item = {}, destination = "") {
-  return [
-    item?.title,
-    item?.name,
-    item?.placeName,
-    item?.location,
-    item?.address,
-    destination,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
-}
-
-function extractUniqueLocations(itinerary, destination = "", placeFallback = "Place") {
+function extractUniqueLocations(itinerary, placeFallback = "Place") {
   const rows =
     itinerary?.days?.flatMap((d) =>
       BLOCKS.flatMap((block) =>
@@ -77,8 +63,6 @@ function extractUniqueLocations(itinerary, destination = "", placeFallback = "Pl
             durationHours: a?.durationHours ?? null,
             type: a?.type || "",
             category: a?.category || "",
-            image: a?.image || a?.imageUrl || a?.photo || a?.photoUrl || null,
-            photoQuery: buildPhotoQuery(a, destination),
           }))
           .filter((x) => x.location || x.address || x.title)
       )
@@ -160,46 +144,6 @@ function useAsync(fn, deps) {
   return state;
 }
 
-function usePlacePhotos(places, destination = "") {
-  const stablePlaces = useMemo(
-    () => (Array.isArray(places) ? places.filter(Boolean) : []),
-    [places]
-  );
-
-  return useAsync(async () => {
-    if (!stablePlaces.length) return [];
-
-    const payload = stablePlaces.map((item) => ({
-      query:
-        item.photoQuery ||
-        buildPhotoQuery(item, destination) ||
-        item.title ||
-        item.name ||
-        item.placeName ||
-        item.location ||
-        item.address ||
-        "",
-      title: item.title || item.name || item.placeName || "",
-      location: item.location || "",
-      address: item.address || "",
-      destination,
-    }));
-
-    const { data } = await api.post("/places/photos", { places: payload });
-    const results = Array.isArray(data?.results) ? data.results : [];
-
-    // Promise.all preserves order so results[i] matches stablePlaces[i]
-    return stablePlaces.map((item, idx) => {
-      const result = results[idx];
-      return {
-        ...item,
-        photoUrl: item.photoUrl || item.image || item.imageUrl || item.photo || result?.photoUrl || null,
-        photoAttribution: item.photoAttribution || result?.photoAttribution || null,
-      };
-    });
-  }, [stablePlaces, destination]);
-}
-
 
 function buildGoogleMapsUrl(place) {
   const query =
@@ -254,19 +198,11 @@ export default function ViewTrip() {
   const [downloadError, setDownloadError] = useState("");
 
   const locations = useMemo(
-    () => extractUniqueLocations(trip?.itinerary, primaryDestination, t("viewTrip.place")),
-    [trip, primaryDestination, t]
+    () => extractUniqueLocations(trip?.itinerary, t("viewTrip.place")),
+    [trip, t]
   );
 
-  const coverPhotoState = usePlacePhotos(
-    primaryDestination
-      ? [{ title: primaryDestination, location: primaryDestination, photoQuery: primaryDestination }]
-      : [],
-    primaryDestination
-  );
-  const coverPhoto = coverPhotoState.data?.[0]?.photoUrl || null;
-
-  // No per-place photo fetching — avoids dozens of API requests on page load.
+  // No photo fetching at all — avoids API requests on page load.
   // DayCards and gallery still render; photo slots show gradient placeholders.
   const photoMap = useMemo(() => new Map(), []);
   const placesWithPhotos = locations;
@@ -371,7 +307,6 @@ export default function ViewTrip() {
           summary={summary}
           tripMode={tripMode}
           destinations={destinations}
-          coverPhoto={coverPhoto}
           onBack={() => nav("/trips")}
           onNew={() => nav("/create")}
           onEdit={() => nav(`/trip/${id}/edit`)}
@@ -448,7 +383,6 @@ function Header({
   summary,
   tripMode,
   destinations,
-  coverPhoto,
   onBack,
   onNew,
   onEdit,
@@ -458,15 +392,7 @@ function Header({
   return (
     <Card className="relative overflow-hidden border-0 shadow-[0_24px_80px_-28px_rgba(37,99,235,0.55)]">
       <div className="relative text-white">
-        {/* Background: city photo or fallback gradient */}
-        {coverPhoto ? (
-          <img
-            src={coverPhoto}
-            alt={trip?.destination || ""}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        ) : null}
-        <div className={`absolute inset-0 ${coverPhoto ? "bg-linear-to-br from-slate-900/80 via-blue-900/70 to-indigo-950/80" : "bg-linear-to-br from-sky-700 via-blue-700 to-indigo-900"}`} />
+        <div className="absolute inset-0 bg-linear-to-br from-sky-700 via-blue-700 to-indigo-900" />
         <div className="relative z-10 flex flex-col gap-6 px-6 py-7 sm:px-8 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
             <div className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.25em] text-white/85">
