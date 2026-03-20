@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client.js";
+import { useAuth } from "../auth/AuthProvider.jsx";
 import {
   Alert,
   Badge,
@@ -199,11 +200,6 @@ function usePlacePhotos(places, destination = "") {
   }, [stablePlaces, destination]);
 }
 
-function scrollToDay(dayNumber) {
-  const el = document.getElementById(`day-${dayNumber}`);
-  if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "start" });
-}
 
 function buildGoogleMapsUrl(place) {
   const query =
@@ -270,34 +266,20 @@ export default function ViewTrip() {
   );
   const coverPhoto = coverPhotoState.data?.[0]?.photoUrl || null;
 
-  const itineraryPhotosState = usePlacePhotos(locations, primaryDestination);
-  const placesWithPhotos = itineraryPhotosState.data || locations;
+  // No per-place photo fetching — avoids dozens of API requests on page load.
+  // DayCards and gallery still render; photo slots show gradient placeholders.
+  const photoMap = useMemo(() => new Map(), []);
+  const placesWithPhotos = locations;
 
-  const photoMap = useMemo(() => {
-    const map = new Map();
-    placesWithPhotos.forEach((p) => {
-      const key = normalizeText(p.address || p.location || p.title);
-      if (key && p.photoUrl) map.set(key, p.photoUrl);
-    });
-    return map;
-  }, [placesWithPhotos]);
-
-  const recommendedBase = useMemo(
+  const recommendedPlaces = useMemo(
     () =>
       rawRecommendedPlaces.map((place) => ({
         ...place,
         title: place?.title || place?.name || t("viewTrip.recommendedPlace"),
         notes: place?.notes || place?.reason || "",
-        photoQuery: buildPhotoQuery(place, primaryDestination),
       })),
-    [rawRecommendedPlaces, primaryDestination, t]
+    [rawRecommendedPlaces, t]
   );
-
-  const recommendedPhotosState = usePlacePhotos(
-    recommendedBase,
-    primaryDestination
-  );
-  const recommendedPlaces = recommendedPhotosState.data || recommendedBase;
 
   const totalActivities = useMemo(() => {
     return (trip?.itinerary?.days || []).reduce(
@@ -314,14 +296,6 @@ export default function ViewTrip() {
   }, [trip]);
 
   const placeCount = useMemo(() => locations.length || 0, [locations]);
-
-  const tripMapPlaces = useMemo(() => {
-    return locations.map((item) => ({
-      title: item.title,
-      location: item.location,
-      address: item.address,
-    }));
-  }, [locations]);
 
   const toggleDay = (dayNumber) => {
     setOpenDays((prev) => ({
@@ -387,12 +361,6 @@ export default function ViewTrip() {
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8">
       {downloadError ? <Alert type="error">{downloadError}</Alert> : null}
-      {itineraryPhotosState.error ? (
-        <Alert type="error">{itineraryPhotosState.error}</Alert>
-      ) : null}
-      {recommendedPhotosState.error ? (
-        <Alert type="error">{recommendedPhotosState.error}</Alert>
-      ) : null}
 
       <div
         ref={pdfRef}
@@ -467,16 +435,9 @@ export default function ViewTrip() {
           </Card>
         )}
 
-        <PlacesGallery
-          points={placesWithPhotos}
-          loading={itineraryPhotosState.loading}
-        />
+        <PlacesGallery points={placesWithPhotos} />
 
-        <RecommendedPlacesSection
-          places={recommendedPlaces}
-          // onJump={handleJumpToDay}
-          loading={recommendedPhotosState.loading}
-        />
+        <RecommendedPlacesSection places={recommendedPlaces} />
       </div>
     </div>
   );
@@ -1418,6 +1379,8 @@ function buildHotellookUrl({ destination, startDate, endDate, travelers }) {
 
 function HotelsSection({ trip }) {
   const { t } = useTranslation();
+  const { isLoggedIn } = useAuth();
+  const nav = useNavigate();
   const destination = trip?.destination || "";
   const startDate = trip?.startDate || "";
   const endDate = trip?.endDate || "";
@@ -1444,14 +1407,24 @@ function HotelsSection({ trip }) {
             </div>
           </div>
 
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer sponsored"
-            className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-blue-700 shadow-lg transition hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-xl"
-          >
-            {t("viewTrip.hotels.searchButton")} →
-          </a>
+          {isLoggedIn ? (
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+              className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-blue-700 shadow-lg transition hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-xl"
+            >
+              {t("viewTrip.hotels.searchButton")} →
+            </a>
+          ) : (
+            <button
+              type="button"
+              onClick={() => nav("/login")}
+              className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-white/40 bg-white/15 px-5 py-3 text-sm font-bold text-white backdrop-blur transition hover:bg-white/25"
+            >
+              🔒 {t("viewTrip.loginToBook")}
+            </button>
+          )}
         </div>
       </div>
 
