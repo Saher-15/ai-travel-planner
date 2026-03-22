@@ -114,6 +114,80 @@ function formatCost(usd) {
   return `~$${usd}`;
 }
 
+const ICS_BLOCK_HOUR = { morning: 9, afternoon: 13, evening: 19 };
+
+function escICS(s) {
+  return (s || "").replace(/\\/g, "\\\\").replace(/[,;]/g, (c) => `\\${c}`).replace(/\n/g, "\\n");
+}
+
+function fmtICSDateTime(dateStr, hour, durH = 1) {
+  const d = new Date(`${dateStr}T00:00:00`);
+  const pad = (n) => String(Math.floor(n)).padStart(2, "0");
+  const fmtTime = (h) => `${pad(h)}${pad((h % 1) * 60)}00`;
+  const prefix = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+  return { start: `${prefix}T${fmtTime(hour)}`, end: `${prefix}T${fmtTime(Math.min(hour + durH, 23.99))}` };
+}
+
+function generateICS(trip) {
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//AI Travel Planner//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    `X-WR-CALNAME:${escICS(trip.destination)} Trip`,
+  ];
+
+  let uid = 0;
+  (trip?.itinerary?.days || []).forEach((day) => {
+    const offsets = { morning: 0, afternoon: 0, evening: 0 };
+    BLOCKS.forEach((block) => {
+      (day[block] || []).forEach((act) => {
+        const dur = Number(act.durationHours) || 1;
+        const { start, end } = fmtICSDateTime(day.date, ICS_BLOCK_HOUR[block] + offsets[block], dur);
+        offsets[block] += dur;
+        const desc = [act.notes, act.category ? `Category: ${act.category}` : ""].filter(Boolean).join("\\n");
+        lines.push(
+          "BEGIN:VEVENT",
+          `UID:trip-${trip._id || uid}-${day.day}-${block}-${uid++}@travelplanner`,
+          `DTSTART:${start}`,
+          `DTEND:${end}`,
+          `SUMMARY:${escICS(act.title)}`,
+          desc ? `DESCRIPTION:${desc}` : "",
+          `LOCATION:${escICS(act.address || act.location)}`,
+          "END:VEVENT"
+        );
+      });
+    });
+    if (day.foodSuggestion) {
+      const { start, end } = fmtICSDateTime(day.date, 20, 1.5);
+      lines.push(
+        "BEGIN:VEVENT",
+        `UID:food-${trip._id || uid}-${day.day}@travelplanner`,
+        `DTSTART:${start}`,
+        `DTEND:${end}`,
+        `SUMMARY:🍽️ ${escICS(day.foodSuggestion.slice(0, 80))}`,
+        "CATEGORIES:FOOD",
+        "END:VEVENT"
+      );
+    }
+  });
+  lines.push("END:VCALENDAR");
+  return lines.filter(Boolean).join("\r\n");
+}
+
+function downloadICS(trip) {
+  const blob = new Blob([generateICS(trip)], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `trip-${(trip.destination || "planner").replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "-")}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 function dateAddDays(dateStr, n) {
   const d = new Date(dateStr);
   d.setDate(d.getDate() + n);
@@ -402,6 +476,10 @@ export default function ViewTrip() {
     }));
   };
 
+  const exportCalendar = useCallback(() => {
+    if (trip) downloadICS(trip);
+  }, [trip]);
+
   const downloadPDF = async () => {
     setDownloadError("");
 
@@ -473,6 +551,7 @@ export default function ViewTrip() {
           onNew={() => nav("/create")}
           onEdit={() => nav(`/trip/${id}/edit`)}
           onDownload={downloadPDF}
+          onExportCalendar={exportCalendar}
           shareToken={shareToken}
           shareOpen={shareOpen}
           setShareOpen={setShareOpen}
@@ -550,6 +629,8 @@ export default function ViewTrip() {
 
         <BudgetSummaryPanel days={trip?.itinerary?.days || []} budget={trip?.preferences?.budget} />
 
+        <ExpenseTrackerSection tripId={id} aiEstimate={totalEstimatedCost} />
+
         <RecommendedPlacesSection places={recommendedPlaces} />
 
         <PackingListSection tripId={id} />
@@ -574,6 +655,7 @@ function Header({
   onNew,
   onEdit,
   onDownload,
+  onExportCalendar,
   shareToken,
   shareOpen,
   setShareOpen,
@@ -683,6 +765,14 @@ function Header({
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload?.(); }}
           >
             {t("viewTrip.downloadPDF")}
+          </Button>
+
+          <Button
+            type="button"
+            className="bg-white/15 text-white backdrop-blur hover:bg-white/20"
+            onClick={onExportCalendar}
+          >
+            📅 Calendar
           </Button>
 
           <Button
@@ -1540,6 +1630,208 @@ function BudgetSummaryPanel({ days, budget }) {
           ⚠️ These are AI-generated estimates per person in USD. Actual costs vary by season, group size, and booking method.
         </div>
       </CardBody>
+    </Card>
+  );
+}
+
+const EXPENSE_CATS = [
+  { key: "food",          label: "Food & Drink",   icon: "🍽️" },
+  { key: "transport",     label: "Transport",      icon: "🚌" },
+  { key: "activities",    label: "Activities",     icon: "🎫" },
+  { key: "accommodation", label: "Accommodation",  icon: "🏨" },
+  { key: "shopping",      label: "Shopping",       icon: "🛍️" },
+  { key: "other",         label: "Other",          icon: "🔧" },
+];
+
+function useExpenses(tripId) {
+  const key = `trip_expenses_${tripId}`;
+  const [expenses, setExpenses] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(key) || "[]"); }
+    catch { return []; }
+  });
+
+  const add = useCallback((exp) => {
+    setExpenses((prev) => {
+      const next = [...prev, { ...exp, id: `${Date.now()}_${Math.random().toString(36).slice(2)}` }];
+      try { localStorage.setItem(key, JSON.stringify(next)); } catch { /* noop */ }
+      return next;
+    });
+  }, [key]);
+
+  const remove = useCallback((id) => {
+    setExpenses((prev) => {
+      const next = prev.filter((e) => e.id !== id);
+      try { localStorage.setItem(key, JSON.stringify(next)); } catch { /* noop */ }
+      return next;
+    });
+  }, [key]);
+
+  return [expenses, add, remove];
+}
+
+function ExpenseTrackerSection({ tripId, aiEstimate }) {
+  const [expenses, addExpense, removeExpense] = useExpenses(tripId);
+  const [label, setLabel] = useState("");
+  const [amount, setAmount] = useState("");
+  const [cat, setCat] = useState("food");
+  const [open, setOpen] = useState(false);
+
+  const total = expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+
+  const byCategory = EXPENSE_CATS.map(({ key, label: catLabel, icon }) => ({
+    key, label: catLabel, icon,
+    total: expenses.filter((e) => e.category === key).reduce((s, e) => s + (Number(e.amount) || 0), 0),
+  })).filter((c) => c.total > 0);
+
+  const handleAdd = (ev) => {
+    ev.preventDefault();
+    const amt = parseFloat(amount);
+    if (!label.trim() || !Number.isFinite(amt) || amt <= 0) return;
+    addExpense({ label: label.trim(), amount: amt, category: cat, date: new Date().toISOString() });
+    setLabel("");
+    setAmount("");
+  };
+
+  const diff = aiEstimate != null ? total - aiEstimate : null;
+
+  return (
+    <Card className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left transition hover:bg-slate-50/60"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <div>
+          <div className="text-base font-extrabold tracking-tight text-slate-900">💸 Expense Tracker</div>
+          <div className="mt-0.5 text-xs text-slate-500">Log your actual spending vs AI estimate</div>
+        </div>
+        <div className="flex shrink-0 items-center gap-3">
+          {total > 0 && (
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-black text-slate-700">${total.toFixed(2)}</span>
+          )}
+          <span className="text-lg text-slate-400">{open ? "▲" : "▼"}</span>
+        </div>
+      </button>
+
+      {open && (
+        <CardBody className="space-y-5 border-t border-slate-100">
+          {/* Summary row */}
+          {(total > 0 || aiEstimate != null) && (
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center">
+                <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Spent</div>
+                <div className="mt-1 text-2xl font-black text-slate-900">${total.toFixed(2)}</div>
+              </div>
+              {aiEstimate != null && (
+                <>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center">
+                    <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">AI Estimate</div>
+                    <div className="mt-1 text-2xl font-black text-slate-900">${aiEstimate}</div>
+                  </div>
+                  <div className={`rounded-2xl border p-4 text-center ${diff > 0 ? "border-rose-200 bg-rose-50" : "border-emerald-200 bg-emerald-50"}`}>
+                    <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Difference</div>
+                    <div className={`mt-1 text-2xl font-black ${diff > 0 ? "text-rose-700" : "text-emerald-700"}`}>
+                      {diff > 0 ? "+" : ""}{diff != null ? `$${diff.toFixed(2)}` : "—"}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Category breakdown */}
+          {byCategory.length > 0 && (
+            <div className="grid gap-2 sm:grid-cols-3">
+              {byCategory.map((c) => (
+                <div key={c.key} className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+                  <span className="text-lg">{c.icon}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[11px] font-semibold text-slate-500">{c.label}</div>
+                    <div className="text-sm font-bold text-slate-900">${c.total.toFixed(2)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add expense form */}
+          <form onSubmit={handleAdd} className="flex flex-wrap items-end gap-2">
+            <div className="flex-1 min-w-36">
+              <label className="block mb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Description</label>
+              <input
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                placeholder="e.g. Dinner at restaurant"
+                maxLength={80}
+                className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+              />
+            </div>
+            <div className="w-24 min-w-20">
+              <label className="block mb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Amount $</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+                className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+              />
+            </div>
+            <div className="w-36 min-w-32">
+              <label className="block mb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Category</label>
+              <select
+                value={cat}
+                onChange={(e) => setCat(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400"
+              >
+                {EXPENSE_CATS.map((c) => (
+                  <option key={c.key} value={c.key}>{c.icon} {c.label}</option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="submit"
+              className="rounded-2xl bg-sky-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-sky-700"
+            >
+              + Add
+            </button>
+          </form>
+
+          {/* Expenses list */}
+          {expenses.length > 0 && (
+            <ul className="space-y-2">
+              {[...expenses].reverse().map((e) => {
+                const catInfo = EXPENSE_CATS.find((c) => c.key === e.category) || EXPENSE_CATS[5];
+                return (
+                  <li key={e.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                    <span className="text-lg">{catInfo.icon}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold text-slate-800 truncate">{e.label}</div>
+                      <div className="text-[11px] text-slate-400">{catInfo.label}</div>
+                    </div>
+                    <div className="shrink-0 text-sm font-bold text-slate-800">${Number(e.amount).toFixed(2)}</div>
+                    <button
+                      type="button"
+                      onClick={() => removeExpense(e.id)}
+                      className="shrink-0 rounded-full p-1 text-slate-400 transition hover:bg-rose-50 hover:text-rose-500"
+                      aria-label="Remove"
+                    >
+                      ✕
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {expenses.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-slate-200 py-8 text-center text-sm text-slate-400">
+              No expenses logged yet. Add your first one above.
+            </div>
+          )}
+        </CardBody>
+      )}
     </Card>
   );
 }
