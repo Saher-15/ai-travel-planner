@@ -53,36 +53,29 @@ export default function Contact() {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-4xl border border-slate-200/70 bg-white shadow-[0_20px_60px_-25px_rgba(15,23,42,0.18)]">
-        <div className="absolute inset-0 bg-linear-to-br from-sky-50 via-white to-indigo-50" />
-        <div className="absolute right-0 top-0 h-56 w-56 rounded-full bg-sky-200/30 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-indigo-200/30 blur-3xl" />
-
-        <div className="relative grid gap-6 p-6 lg:grid-cols-12 lg:p-8">
-          <div className="lg:col-span-8">
-            <Badge className="border-sky-200 bg-sky-50 text-sky-700">{t("contact.badge")}</Badge>
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">{t("contact.title")}</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">{t("contact.description")}</p>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-3">
-              <HeroStat icon={<Sparkles size={18} />} title={t("contact.stats.tripHelp")} value={t("contact.stats.ai")} subtitle={t("contact.stats.plannerGuidance")} />
-              <HeroStat icon={<LifeBuoy size={18} />} title={t("contact.stats.support")} value={t("contact.stats.support247")} subtitle={t("contact.stats.messageAnytime")} />
-              <HeroStat icon={<MessageSquareText size={18} />} title={t("contact.stats.replies")} value={t("contact.stats.profile")} subtitle={t("contact.stats.trackResponses")} />
-            </div>
+      {/* Page header */}
+      <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-slate-900 via-slate-800 to-sky-950 px-6 py-8 text-white shadow-xl sm:px-8">
+        <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-sky-500/20 blur-3xl" />
+        <div className="absolute -bottom-8 left-10 h-40 w-40 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="relative">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> {t("contact.badge")}
           </div>
-
-          <div className="lg:col-span-4">
-            <div className="rounded-4xl border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur">
-              <div className="text-sm font-bold text-slate-900">{t("contact.whatHelp.title")}</div>
-              <div className="mt-4 grid gap-3">
-                <MiniInfo title={t("contact.whatHelp.tripPlanning")} text={t("contact.whatHelp.tripPlanningText")} />
-                <MiniInfo title={t("contact.whatHelp.accountSupport")} text={t("contact.whatHelp.accountSupportText")} />
-                <MiniInfo title={t("contact.whatHelp.featureRequests")} text={t("contact.whatHelp.featureRequestsText")} />
-              </div>
-            </div>
+          <h1 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl">{t("contact.title")}</h1>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-white/65">{t("contact.description")}</p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            {[
+              { icon: "✉️", label: "Reply in your Profile inbox" },
+              { icon: "🤖", label: "AI trip planning help" },
+              { icon: "🔒", label: "Account & security support" },
+            ].map((item) => (
+              <span key={item.label} className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-medium text-white/80">
+                {item.icon} {item.label}
+              </span>
+            ))}
           </div>
         </div>
-      </section>
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-12">
         <div className="xl:col-span-8">
@@ -150,69 +143,38 @@ export default function Contact() {
         <div className="space-y-6 xl:col-span-4">
           <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
             <CardHeader title={t("contact.howSupport.title")} subtitle={t("contact.howSupport.subtitle")} />
-            <CardBody className="bg-linear-to-b from-white to-slate-50/60">
-              <div className="space-y-4">
-                <StepCard number="1" title={t("contact.howSupport.step1Title")} text={t("contact.howSupport.step1Text")} />
-                <StepCard number="2" title={t("contact.howSupport.step2Title")} text={t("contact.howSupport.step2Text")} />
-                <StepCard number="3" title={t("contact.howSupport.step3Title")} text={t("contact.howSupport.step3Text")} />
-              </div>
+            <CardBody className="space-y-3 bg-linear-to-b from-white to-slate-50/60">
+              {[
+                { num: "1", title: t("contact.howSupport.step1Title"), text: t("contact.howSupport.step1Text") },
+                { num: "2", title: t("contact.howSupport.step2Title"), text: t("contact.howSupport.step2Text") },
+                { num: "3", title: t("contact.howSupport.step3Title"), text: t("contact.howSupport.step3Text") },
+              ].map((s) => (
+                <div key={s.num} className="flex gap-3.5 rounded-2xl border border-slate-100 bg-white p-4">
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-xl bg-linear-to-br from-sky-500 to-blue-600 text-xs font-black text-white shadow-sm">
+                    {s.num}
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">{s.title}</p>
+                    <p className="mt-0.5 text-xs leading-5 text-slate-500">{s.text}</p>
+                  </div>
+                </div>
+              ))}
             </CardBody>
           </Card>
 
           <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
             <CardHeader title={t("contact.tips.title")} subtitle={t("contact.tips.subtitle")} />
-            <CardBody className="bg-linear-to-b from-white to-slate-50/60">
-              <div className="space-y-3 text-sm text-slate-600">
-                <TipItem text={t("contact.tips.tip1")} />
-                <TipItem text={t("contact.tips.tip2")} />
-                <TipItem text={t("contact.tips.tip3")} />
-                <TipItem text={t("contact.tips.tip4")} />
-              </div>
+            <CardBody className="space-y-2 bg-linear-to-b from-white to-slate-50/60">
+              {[t("contact.tips.tip1"), t("contact.tips.tip2"), t("contact.tips.tip3"), t("contact.tips.tip4")].map((tip) => (
+                <div key={tip} className="flex items-start gap-2.5 rounded-xl px-1 py-1.5 text-sm text-slate-600">
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400" />
+                  {tip}
+                </div>
+              ))}
             </CardBody>
           </Card>
         </div>
       </div>
-    </div>
-  );
-}
-
-function HeroStat({ icon, title, value, subtitle }) {
-  return (
-    <div className="rounded-3xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur">
-      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-sky-500 via-blue-600 to-indigo-700 text-white">{icon}</div>
-      <div className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">{title}</div>
-      <div className="mt-2 text-3xl font-black tracking-tight text-slate-900">{value}</div>
-      <div className="mt-1 text-sm text-slate-500">{subtitle}</div>
-    </div>
-  );
-}
-
-function MiniInfo({ title, text }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-      <div className="text-sm font-bold text-slate-900">{title}</div>
-      <div className="mt-1 text-sm leading-6 text-slate-600">{text}</div>
-    </div>
-  );
-}
-
-function StepCard({ number, title, text }) {
-  return (
-    <div className="flex gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-linear-to-br from-sky-500 via-blue-600 to-indigo-700 text-sm font-black text-white">{number}</div>
-      <div>
-        <div className="text-sm font-bold text-slate-900">{title}</div>
-        <div className="mt-1 text-sm leading-6 text-slate-600">{text}</div>
-      </div>
-    </div>
-  );
-}
-
-function TipItem({ text }) {
-  return (
-    <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-      <div className="mt-1 h-2.5 w-2.5 rounded-full bg-sky-500" />
-      <div>{text}</div>
     </div>
   );
 }

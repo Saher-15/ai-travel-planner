@@ -384,7 +384,6 @@ export default function Layout({ children }) {
 
             {/* Desktop right side */}
             <div className="hidden items-center gap-2 lg:flex">
-              <LanguageSwitcher />
               {isLoggedIn ? (
                 <>
                   {/* User avatar pill */}
@@ -411,23 +410,24 @@ export default function Layout({ children }) {
 
             {/* Mobile right side */}
             <div className="flex items-center gap-2 lg:hidden">
-              <LanguageSwitcher />
               <HamburgerButton open={mobileOpen} onClick={() => setMobileOpen((v) => !v)} />
             </div>
           </div>
         </div>
 
         {/* Booking tab strip — desktop only */}
-        <div className="hidden border-t border-slate-100/80 bg-white/70 lg:block">
-          <div className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-4 py-1.5 sm:px-6">
-            <span className="mr-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-              {t("nav.bookTravel")}
-            </span>
-            {bookingItems.map((item) => (
-              <BookingTab key={item.to} to={item.to} icon={item.icon} label={item.label} />
-            ))}
+        {bookingItems.length > 0 && (
+          <div className="hidden border-t border-slate-100/80 bg-white/70 lg:block">
+            <div className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-4 py-1.5 sm:px-6">
+              <span className="mr-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                {t("nav.bookTravel")}
+              </span>
+              {bookingItems.map((item) => (
+                <BookingTab key={item.to} to={item.to} icon={item.icon} label={item.label} />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Mobile menu drawer */}
         <div
@@ -462,18 +462,20 @@ export default function Layout({ children }) {
             )}
 
             {/* Booking grid */}
-            <div className="overflow-hidden rounded-3xl border border-slate-100 bg-slate-50/80">
-              <div className="px-4 pb-3 pt-3.5">
-                <div className="mb-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                  {t("nav.bookTravel")}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {bookingItems.map((item) => (
-                    <NavItem key={item.to} to={item.to} mobile>{item.icon} {item.label}</NavItem>
-                  ))}
+            {bookingItems.length > 0 && (
+              <div className="overflow-hidden rounded-3xl border border-slate-100 bg-slate-50/80">
+                <div className="px-4 pb-3 pt-3.5">
+                  <div className="mb-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                    {t("nav.bookTravel")}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {bookingItems.map((item) => (
+                      <NavItem key={item.to} to={item.to} mobile>{item.icon} {item.label}</NavItem>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Main nav */}
             <nav className="grid gap-1.5">

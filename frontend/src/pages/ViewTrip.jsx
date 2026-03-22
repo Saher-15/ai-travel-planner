@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client.js";
@@ -14,6 +14,7 @@ import {
 
 const BLOCKS = ["morning", "afternoon", "evening"];
 const BLOCK_ORDER = { morning: 1, afternoon: 2, evening: 3 };
+const EMPTY_SET = new Set();
 
 const fmtRange = (s, e) => (s && e ? `${s} → ${e}` : "");
 
@@ -229,6 +230,12 @@ function useWeather(lat, lng, startDate, endDate) {
       timezone: "auto",
     });
 
+    const cacheKey = `w_${lat}_${lng}_${startDate}_${endDate}`;
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) { setWeather(JSON.parse(cached)); return; }
+    } catch { /* noop */ }
+
     fetch(`${base}?${params}`)
       .then((r) => r.json())
       .then((d) => {
@@ -242,6 +249,7 @@ function useWeather(lat, lng, startDate, endDate) {
           };
         });
         setWeather(map);
+        try { sessionStorage.setItem(cacheKey, JSON.stringify(map)); } catch { /* noop */ }
       })
       .catch(() => {});
   }, [lat, lng, startDate, endDate]);
@@ -358,7 +366,7 @@ export default function ViewTrip() {
   const rawRecommendedPlaces = useMemo(() => getRecommendedPlaces(trip), [trip]);
 
   const pdfRef = useRef(null);
-  const [openDays, setOpenDays] = useState({ 1: true });
+  const [openDays, setOpenDays] = useState({});
   const [downloadError, setDownloadError] = useState("");
   const [shareToken, setShareToken] = useState(null);
   const [tripStatus, setTripStatus] = useState("planning");
@@ -459,15 +467,32 @@ export default function ViewTrip() {
     (trip?.itinerary?.days || []).forEach((day) => {
       BLOCKS.forEach((block) => {
         (day[block] || []).forEach((act) => {
-          if (typeof act?.estimatedCostUSD === "number") {
+          if (typeof act?.estimatedCostUSD === "number" && Number.isFinite(act.estimatedCostUSD)) {
             sum += act.estimatedCostUSD;
             hasCost = true;
           }
         });
       });
     });
-    return hasCost ? sum : null;
+    if (hasCost) return sum;
+    // Fallback: rough estimate from budget level × days
+    const days = trip?.itinerary?.tripSummary?.days || trip?.itinerary?.days?.length || 0;
+    const budget = trip?.preferences?.budget || trip?.itinerary?.tripSummary?.budget || "";
+    const ratePerDay = budget === "low" ? 45 : budget === "high" ? 250 : 100;
+    return days > 0 ? days * ratePerDay : null;
   }, [trip]);
+
+  // Per-day done sets — DayCards only re-render when their own activities change
+  const perDayDone = useMemo(() => {
+    const map = new Map();
+    doneActivities.forEach((key) => {
+      const idx = parseInt(key.split("_")[0], 10);
+      if (!Number.isFinite(idx)) return;
+      if (!map.has(idx)) map.set(idx, new Set());
+      map.get(idx).add(key);
+    });
+    return map;
+  }, [doneActivities]);
 
   const toggleDay = (dayNumber) => {
     setOpenDays((prev) => ({
@@ -597,7 +622,7 @@ export default function ViewTrip() {
               isOpen={Boolean(openDays[d.day])}
               onToggle={() => toggleDay(d.day)}
               weatherDay={weather[d.date] ?? null}
-              doneActivities={doneActivities}
+              dayDone={perDayDone.get(idx) ?? EMPTY_SET}
               onToggleDone={toggleDone}
             />
           ))}
@@ -722,7 +747,7 @@ function Header({
               </Badge>
             ) : null}
 
-            {summary.budget ? (
+            {summary.budget && summary.budget.toLowerCase() !== "null" ? (
               <Badge className="border-white/20 bg-white/10 text-white shadow-sm">
                 {t("viewTrip.budget", { budget: summary.budget })}
               </Badge>
@@ -880,7 +905,7 @@ function TripOverview({
           />
           <FancyInfoTile
             label={t("viewTrip.budget_label")}
-            value={summary?.budget || preferences?.budget || "—"}
+            value={[summary?.budget, preferences?.budget].find((v) => v && v.toLowerCase() !== "null") || "—"}
             icon="💳"
           />
         </div>
@@ -895,7 +920,7 @@ function TripOverview({
           <FancyInfoTile label={t("viewTrip.events_label")} value={trip?.events?.length || "0"} icon="🎟️" />
           <FancyInfoTile
             label="Est. Budget"
-            value={totalEstimatedCost != null ? `~$${totalEstimatedCost}` : "—"}
+            value={totalEstimatedCost != null && Number.isFinite(totalEstimatedCost) ? `~$${totalEstimatedCost}` : "—"}
             icon="💰"
           />
         </div>
@@ -1223,7 +1248,7 @@ function getDayGradient(dayNumber) {
   return DAY_GRADIENTS[(Number(dayNumber) - 1) % DAY_GRADIENTS.length];
 }
 
-function DayCard({ day, tripId, dayIndex, isOpen, onToggle, weatherDay, doneActivities, onToggleDone }) {
+const DayCard = memo(function DayCard({ day, tripId, dayIndex, isOpen, onToggle, weatherDay, dayDone, onToggleDone }) {
   const { t } = useTranslation();
   const activityCount = countDayActivities(day);
   const totalHours = getDayEstimatedHours(day);
@@ -1231,8 +1256,7 @@ function DayCard({ day, tripId, dayIndex, isOpen, onToggle, weatherDay, doneActi
   const [noteSaved, setNoteSaved] = useState(false);
   const noteTimer = useRef(null);
 
-  const doneDayCount = BLOCKS.reduce((sum, block) =>
-    sum + (day[block] || []).filter((_, i) => doneActivities?.has(`${dayIndex}_${block}_${i}`)).length, 0);
+  const doneDayCount = dayDone.size;
 
   const saveNote = useCallback((val) => {
     clearTimeout(noteTimer.current);
@@ -1301,9 +1325,9 @@ function DayCard({ day, tripId, dayIndex, isOpen, onToggle, weatherDay, doneActi
 
       {isOpen ? (
         <CardBody className="space-y-1">
-          <MiniSection title={t("viewTrip.morning")} items={day.morning} icon="☀️" dayIdx={dayIndex} block="morning" doneSet={doneActivities} onToggle={onToggleDone} />
-          <MiniSection title={t("viewTrip.afternoon")} items={day.afternoon} icon="🌤️" dayIdx={dayIndex} block="afternoon" doneSet={doneActivities} onToggle={onToggleDone} />
-          <MiniSection title={t("viewTrip.evening")} items={day.evening} icon="🌙" dayIdx={dayIndex} block="evening" doneSet={doneActivities} onToggle={onToggleDone} />
+          <MiniSection title={t("viewTrip.morning")} items={day.morning} icon="☀️" dayIdx={dayIndex} block="morning" doneSet={dayDone} onToggle={onToggleDone} />
+          <MiniSection title={t("viewTrip.afternoon")} items={day.afternoon} icon="🌤️" dayIdx={dayIndex} block="afternoon" doneSet={dayDone} onToggle={onToggleDone} />
+          <MiniSection title={t("viewTrip.evening")} items={day.evening} icon="🌙" dayIdx={dayIndex} block="evening" doneSet={dayDone} onToggle={onToggleDone} />
 
           {(day.foodSuggestion || day.backupPlan) && (
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -1343,7 +1367,7 @@ function DayCard({ day, tripId, dayIndex, isOpen, onToggle, weatherDay, doneActi
       ) : null}
     </Card>
   );
-}
+});
 
 function TripSkeleton() {
   return (
@@ -1841,12 +1865,23 @@ function PackingListSection({ tripId }) {
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const saveTimer = useRef(null);
+  const sectionRef = useRef(null);
 
   useEffect(() => {
-    api.get(`/trips/${tripId}/packing`)
-      .then(({ data }) => setList(data.packingList || []))
-      .catch(() => setList([]));
-    return () => clearTimeout(saveTimer.current);
+    const el = sectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        observer.disconnect();
+        api.get(`/trips/${tripId}/packing`)
+          .then(({ data }) => setList(data.packingList || []))
+          .catch(() => setList([]));
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => { observer.disconnect(); clearTimeout(saveTimer.current); };
   }, [tripId]);
 
   const persistList = useCallback((updated) => {
@@ -1875,7 +1910,7 @@ function PackingListSection({ tripId }) {
     finally { setGenerating(false); }
   };
 
-  if (list === null) return null; // still loading
+  if (list === null) return <div ref={sectionRef} className="h-4" />;
 
   const checked = list.filter((x) => x.checked).length;
 

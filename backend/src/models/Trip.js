@@ -92,7 +92,7 @@ const TripSchema = new mongoose.Schema(
     endDate: { type: String, required: true },
 
     preferences: {
-      travelers: { type: Number, default: 1 },
+      travelers: { type: Number, default: 2 },
       budget: {
         type: String,
         enum: ["low", "mid", "high"],

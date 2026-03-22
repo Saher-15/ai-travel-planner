@@ -34,8 +34,11 @@ function PasswordField({ label, value, onChange, show, onToggle, placeholder, au
 
 function Requirement({ ok, text }) {
   return (
-    <div className={`rounded-2xl border px-3 py-2 text-sm transition ${ok ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-white text-slate-600"}`}>
-      {text}
+    <div className={`flex items-center gap-2 text-xs transition-colors duration-200 ${ok ? "text-emerald-600" : "text-slate-400"}`}>
+      <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-black transition-all duration-200 ${
+        ok ? "bg-emerald-500 text-white shadow-sm shadow-emerald-200" : "bg-slate-200 text-slate-200"
+      }`}>✓</span>
+      <span>{text}</span>
     </div>
   );
 }
@@ -210,44 +213,35 @@ export default function Profile() {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-4xl border border-slate-200/70 bg-white shadow-[0_20px_60px_-25px_rgba(15,23,42,0.18)]">
-        <div className="absolute inset-0 bg-linear-to-br from-sky-50 via-white to-indigo-50" />
-        <div className="absolute right-0 top-0 h-56 w-56 rounded-full bg-sky-200/30 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-indigo-200/30 blur-3xl" />
-
-        <div className="relative grid gap-6 p-6 lg:grid-cols-12 lg:p-8">
-          <div className="lg:col-span-8">
-            <Badge className="border-sky-200 bg-sky-50 text-sky-700">{t("profile.badge")}</Badge>
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">{t("profile.title")}</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">{t("profile.description")}</p>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-3">
-              <HeroStat icon={<MessageSquareText size={18} />} title={t("profile.stats.supportMessages")} value={supportItems.length} subtitle={t("profile.stats.totalConversations")} />
-              <HeroStat icon={<MailCheck size={18} />} title={t("profile.stats.repliesReceived")} value={repliedCount} subtitle={t("profile.stats.adminResponses")} />
-              <HeroStat icon={<AlertTriangle size={18} />} title={t("profile.stats.pending")} value={pendingCount} subtitle={t("profile.stats.waitingReply")} />
+      {/* Page header */}
+      <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-slate-900 via-slate-800 to-indigo-950 px-6 py-8 text-white shadow-xl sm:px-8">
+        <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-sky-500/20 blur-3xl" />
+        <div className="absolute -bottom-8 left-10 h-40 w-40 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-linear-to-br from-sky-400 to-blue-600 text-2xl font-black text-white shadow-lg shadow-sky-900/40">
+              {(user?.name || "T").trim().charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h1 className="text-xl font-black tracking-tight sm:text-2xl">{user?.name || "Traveler"}</h1>
+              <p className="mt-0.5 text-sm text-white/60">{user?.email}</p>
             </div>
           </div>
-
-          <div className="lg:col-span-4">
-            <div className="rounded-[1.75rem] border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur">
-              <div className="flex items-center gap-4">
-                <div className="grid h-14 w-14 place-items-center rounded-2xl bg-linear-to-br from-sky-500 via-blue-600 to-indigo-700 text-lg font-black text-white shadow-lg">
-                  {(user?.name || "T").trim().charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate text-lg font-bold text-slate-900">{user?.name || "Traveler"}</div>
-                  <div className="truncate text-sm text-slate-500">{user?.email || t("profile.userCard.noEmail")}</div>
-                </div>
-              </div>
-              <div className="mt-5 grid gap-3">
-                <MiniInfo label={t("profile.userCard.accountStatus")} value={user?.verified ? t("profile.userCard.verified") : t("profile.userCard.notVerified")} tone={user?.verified ? "success" : "warning"} />
-                <MiniInfo label={t("profile.userCard.security")} value={t("profile.userCard.passwordProtected")} tone="default" />
-                <MiniInfo label={t("profile.userCard.supportInbox")} value={supportItems.length ? t("profile.userCard.active") : t("profile.userCard.noMessages")} tone="default" />
-              </div>
-            </div>
+          <div className="flex flex-wrap gap-2">
+            <span className={`rounded-full border px-3 py-1.5 text-xs font-bold ${user?.verified ? "border-emerald-400/30 bg-emerald-500/20 text-emerald-300" : "border-amber-400/30 bg-amber-500/20 text-amber-300"}`}>
+              {user?.verified ? "✓ Verified" : "⚠ Unverified"}
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/80">
+              {supportItems.length} messages
+            </span>
+            {repliedCount > 0 && (
+              <span className="rounded-full border border-sky-400/30 bg-sky-500/20 px-3 py-1.5 text-xs font-bold text-sky-300">
+                {repliedCount} replied
+              </span>
+            )}
           </div>
         </div>
-      </section>
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-12">
         <div className="space-y-6 xl:col-span-7">
@@ -295,17 +289,19 @@ export default function Profile() {
                 <PasswordField label={t("profile.changePassword.confirmNewPassword")} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} show={showConfirmPassword} onToggle={() => setShowConfirmPassword((p) => !p)} placeholder={t("profile.changePassword.confirmNewPasswordPlaceholder")} autoComplete="new-password" />
               </div>
 
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-sm font-bold text-slate-800">{t("passwordRequirements.title")}</div>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  <Requirement ok={passwordChecks.minLength} text={t("passwordRequirements.minLength")} />
-                  <Requirement ok={passwordChecks.upper} text={t("passwordRequirements.uppercase")} />
-                  <Requirement ok={passwordChecks.lower} text={t("passwordRequirements.lowercase")} />
-                  <Requirement ok={passwordChecks.number} text={t("passwordRequirements.number")} />
-                  <Requirement ok={passwordChecks.special} text={t("passwordRequirements.special")} />
-                  <Requirement ok={passwordChecks.matches} text={t("passwordRequirements.match")} />
+              {(newPassword.length > 0 || confirmPassword.length > 0) && (
+                <div className="rounded-2xl bg-slate-50 px-4 py-3.5">
+                  <p className="mb-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">{t("passwordRequirements.title")}</p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                    <Requirement ok={passwordChecks.minLength} text={t("passwordRequirements.minLength")} />
+                    <Requirement ok={passwordChecks.upper}     text={t("passwordRequirements.uppercase")} />
+                    <Requirement ok={passwordChecks.lower}     text={t("passwordRequirements.lowercase")} />
+                    <Requirement ok={passwordChecks.number}    text={t("passwordRequirements.number")} />
+                    <Requirement ok={passwordChecks.special}   text={t("passwordRequirements.special")} />
+                    <Requirement ok={passwordChecks.matches}   text={t("passwordRequirements.match")} />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-sm text-slate-500">{t("profile.changePassword.updateNote")}</div>

@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Compass, Copy, Eye, MapPinned, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Compass, Copy, Eye, MapPinned, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { api } from "../api/client.js";
-import { Alert, Badge, Button, Card, CardBody, CardHeader, Input } from "../components/UI.jsx";
+import { Alert, Button, Card, CardBody } from "../components/UI.jsx";
 import { useTranslation } from "react-i18next";
 
 const STATUS_BADGE = {
-  planning: "border-amber-200 bg-amber-50 text-amber-700",
-  upcoming: "border-sky-200 bg-sky-50 text-sky-700",
+  planning:  "border-amber-200 bg-amber-50 text-amber-700",
+  upcoming:  "border-sky-200 bg-sky-50 text-sky-700",
   completed: "border-emerald-200 bg-emerald-50 text-emerald-700",
 };
 const STATUS_LABEL = { planning: "📋 Planning", upcoming: "✈️ Upcoming", completed: "✅ Completed" };
@@ -24,52 +24,90 @@ function getInterests(trip) {
   return Array.isArray(trip?.preferences?.interests) ? trip.preferences.interests : [];
 }
 
+const DEST_GRADIENTS = {
+  a: "from-sky-600 via-sky-500 to-cyan-400",
+  b: "from-indigo-600 via-indigo-500 to-blue-400",
+  c: "from-emerald-600 via-emerald-500 to-teal-400",
+  d: "from-rose-600 via-rose-500 to-pink-400",
+  e: "from-violet-600 via-violet-500 to-purple-400",
+  f: "from-amber-600 via-amber-500 to-yellow-400",
+};
+
+function getDestGradient(name) {
+  const char = (name || "").trim().toLowerCase()[0] || "a";
+  const keys = Object.keys(DEST_GRADIENTS);
+  return DEST_GRADIENTS[keys[char.charCodeAt(0) % keys.length]];
+}
+
+function getTripCountdown(startDate, endDate) {
+  if (!startDate || !endDate) return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const start = new Date(startDate); start.setHours(0, 0, 0, 0);
+  const end   = new Date(endDate);   end.setHours(0, 0, 0, 0);
+  const diffStart = Math.round((start - today) / 86400000);
+  const diffEnd   = Math.round((end   - today) / 86400000);
+  if (diffStart > 0 && diffStart <= 90) return { label: `${diffStart}d to go`, type: "upcoming" };
+  if (diffStart === 0) return { label: "Today!", type: "today" };
+  if (diffStart < 0 && diffEnd >= 0)   return { label: "Ongoing ✈️", type: "ongoing" };
+  return null;
+}
+
 export default function MyTrips() {
   const { t } = useTranslation();
   useEffect(() => { window.scrollTo(0, 0); document.title = t("myTrips.pageTitle"); }, [t]);
 
   const nav = useNavigate();
-  const [trips, setTrips] = useState([]);
-  const [err, setErr] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
+  const [trips, setTrips]           = useState([]);
+  const [err, setErr]               = useState("");
+  const [loading, setLoading]       = useState(true);
+  const [query, setQuery]           = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [coverPhotos, setCoverPhotos] = useState({});
+  const [coverPhotos, setCoverPhotos]   = useState({});
 
   async function load() {
-    setErr("");
-    setLoading(true);
+    setErr(""); setLoading(true);
     try {
       const { data } = await api.get("/trips");
       const loaded = Array.isArray(data) ? data : [];
       setTrips(loaded);
-
-      // Fetch cover photos for all trips in one batch.
-      // Use the stored English place name (placeMeta.name) so Hebrew destination
-      // names don't break the photo search.
       if (loaded.length) {
         try {
-          const places = loaded.map((trip) => {
-            const englishName =
+          // Build one place entry per city across all trips (multi-city = multiple entries)
+          const requests = [];
+          loaded.forEach((trip) => {
+            // Multi-city: gather all city names from every available source
+            if (trip.tripMode === "multi") {
+              const cities =
+                (trip.multiCityMeta?.length
+                  ? trip.multiCityMeta.map((m) => m.name || m.label || "")
+                  : trip.destinations?.length
+                  ? trip.destinations
+                  : (trip.destination || "").split(/\s*→\s*/)
+                ).map((s) => String(s).trim()).filter(Boolean);
+              if (cities.length > 1) {
+                cities.forEach((city) => requests.push({ tripId: trip._id, name: city }));
+                return;
+              }
+            }
+            // Single city (or multi fallback)
+            const name =
               trip.placeMeta?.name ||
               trip.placeMeta?.label ||
-              (trip.tripMode === "multi"
-                ? trip.multiCityMeta?.[0]?.name || trip.multiCityMeta?.[0]?.label
-                : null) ||
-              trip.destination ||
-              "";
-            return { query: englishName, title: englishName, destination: englishName };
+              (trip.destination || "").split(/\s*→\s*/)[0].trim();
+            requests.push({ tripId: trip._id, name });
           });
+          const places = requests.map(({ name }) => ({ query: name, title: name, destination: name }));
           const { data: photoData } = await api.post("/places/photos", { places });
           const results = Array.isArray(photoData?.results) ? photoData.results : [];
           const photoMap = {};
-          loaded.forEach((trip, i) => {
-            if (results[i]?.photoUrl) photoMap[trip._id] = results[i].photoUrl;
+          requests.forEach(({ tripId }, i) => {
+            const url = results[i]?.photoUrl;
+            if (!url) return;
+            if (!photoMap[tripId]) photoMap[tripId] = [];
+            photoMap[tripId].push(url);
           });
           setCoverPhotos(photoMap);
-        } catch {
-          // photos are optional — silently ignore
-        }
+        } catch { /* photos optional */ }
       }
     } catch (e2) {
       setErr(e2?.response?.data?.message || t("myTrips.errors.loadFailed"));
@@ -100,7 +138,7 @@ export default function MyTrips() {
   async function changeStatus(id, status) {
     try {
       await api.patch(`/trips/${id}/status`, { status });
-      setTrips((prev) => prev.map((t) => t._id === id ? { ...t, status } : t));
+      setTrips((prev) => prev.map((tr) => tr._id === id ? { ...tr, status } : tr));
     } catch { /* silent */ }
   }
 
@@ -111,115 +149,83 @@ export default function MyTrips() {
     return trips.filter((trip) => {
       if (statusFilter !== "all" && trip.status !== statusFilter) return false;
       if (!q) return true;
-      const destination = String(trip?.destination || "").toLowerCase();
-      const budget = String(trip?.preferences?.budget || "").toLowerCase();
-      const pace = String(trip?.preferences?.pace || "").toLowerCase();
-      const interests = getInterests(trip).join(" ").toLowerCase();
-      return destination.includes(q) || budget.includes(q) || pace.includes(q) || interests.includes(q);
+      return [trip?.destination, trip?.preferences?.budget, trip?.preferences?.pace, ...getInterests(trip)]
+        .join(" ").toLowerCase().includes(q);
     });
   }, [trips, query, statusFilter]);
 
-  const totalTrips = trips.length;
-  const filteredTrips = filtered.length;
   const totalDays = trips.reduce((sum, trip) => sum + getTripDays(trip), 0);
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-4xl shadow-[0_20px_60px_-25px_rgba(15,23,42,0.28)]">
-        {/* Full-width hero photo */}
-        <img
-          src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600&q=80"
-          alt="Travel"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-linear-to-b from-slate-900/70 to-slate-900/60" />
 
-        <div className="relative grid gap-6 p-6 lg:grid-cols-12 lg:p-8">
-          <div className="lg:col-span-8">
-            <Badge className="border-white/30 bg-white/15 text-white backdrop-blur">{t("myTrips.badge")}</Badge>
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl">{t("myTrips.title")}</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/80 sm:text-base">{t("myTrips.description")}</p>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-3">
-              <HeroStat icon={<Compass size={18} />} title={t("myTrips.stats.savedTrips")} value={totalTrips} subtitle={t("myTrips.stats.storedInAccount")} />
-              <HeroStat icon={<Search size={18} />} title={t("myTrips.stats.searchResults")} value={filteredTrips} subtitle={t("myTrips.stats.matchingFilter")} />
-              <HeroStat icon={<MapPinned size={18} />} title={t("myTrips.stats.plannedDays")} value={totalDays} subtitle={t("myTrips.stats.acrossItineraries")} />
+      {/* ── Page header ── */}
+      <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-slate-900 via-slate-800 to-indigo-950 px-6 py-8 text-white shadow-xl sm:px-8">
+        <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-sky-500/20 blur-3xl" />
+        <div className="absolute -bottom-8 left-10 h-40 w-40 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">
+              <MapPinned size={11} /> {t("myTrips.badge")}
             </div>
+            <h1 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl">{t("myTrips.title")}</h1>
+            <p className="mt-1.5 text-sm text-white/60">{t("myTrips.description")}</p>
           </div>
-
-          <div className="lg:col-span-4">
-            <div className="rounded-4xl border border-white/20 bg-white/10 p-5 shadow-sm backdrop-blur">
-              <div className="text-sm font-bold text-white">{t("myTrips.manage.title")}</div>
-              <div className="mt-4 grid gap-3">
-                <MiniInfo title={t("myTrips.manage.viewItineraries")} text={t("myTrips.manage.viewItinerariesText")} />
-                <MiniInfo title={t("myTrips.manage.searchQuickly")} text={t("myTrips.manage.searchQuicklyText")} />
-                <MiniInfo title={t("myTrips.manage.stayOrganized")} text={t("myTrips.manage.stayOrganizedText")} />
-              </div>
-            </div>
+          <div className="flex flex-wrap gap-2 sm:shrink-0">
+            <span className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-white/10 px-4 py-2 text-sm font-bold">
+              <Compass size={14} className="text-sky-300" /> {trips.length} trips
+            </span>
+            <span className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-white/10 px-4 py-2 text-sm font-bold">
+              <MapPinned size={14} className="text-indigo-300" /> {totalDays} days
+            </span>
           </div>
         </div>
-      </section>
+      </div>
 
-      <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
-        <CardHeader title={t("myTrips.library.title")} subtitle={t("myTrips.library.subtitle")} />
-        <CardBody className="space-y-5 bg-linear-to-b from-white to-slate-50/60">
-          <div className="grid gap-4 lg:grid-cols-12 lg:items-end">
-            <div className="lg:col-span-5">
-              <Input label={t("myTrips.library.searchLabel")} placeholder={t("myTrips.library.searchPlaceholder")} value={query} onChange={(e) => setQuery(e.target.value)} />
-            </div>
-            <div className="lg:col-span-7">
-              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-                <Button onClick={() => nav("/create")} className="inline-flex items-center gap-2">
-                  <Plus size={16} />
-                  {t("myTrips.library.createTrip")}
-                </Button>
-                <Button onClick={load} variant="secondary" className="inline-flex items-center gap-2">
-                  <RefreshCw size={16} />
-                  {t("common.refresh")}
-                </Button>
-              </div>
-            </div>
+      {/* ── Toolbar ── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap gap-2">
+          {["all", "planning", "upcoming", "completed"].map((s) => (
+            <button key={s} type="button" onClick={() => setStatusFilter(s)}
+              className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ${
+                statusFilter === s
+                  ? "border-sky-400 bg-sky-600 text-white shadow-sm"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+              }`}>
+              {s === "all" ? "All Trips" : STATUS_LABEL[s]}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <div className="relative">
+            <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" strokeLinecap="round" />
+            </svg>
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search trips…"
+              className="rounded-2xl border border-slate-200 bg-white py-2 pl-8 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+            />
           </div>
+          <Button onClick={() => nav("/create")} className="inline-flex items-center gap-1.5 whitespace-nowrap">
+            <Plus size={15} /> {t("myTrips.library.createTrip")}
+          </Button>
+          <button onClick={load} type="button"
+            className="rounded-2xl border border-slate-200 bg-white p-2.5 text-slate-500 transition hover:bg-slate-50 hover:text-sky-600">
+            <RefreshCw size={16} />
+          </button>
+        </div>
+      </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Badge className="border-slate-200 bg-white text-slate-700">
-              {filteredTrips} {filteredTrips !== 1 ? t("common.trips") : t("common.trip")}
-            </Badge>
-            <Badge className="border-slate-200 bg-white text-slate-700">{t("myTrips.library.savedInAccount")}</Badge>
-            {!!query.trim() && (
-              <Badge className="border-sky-200 bg-sky-50 text-sky-700">
-                {t("myTrips.library.filter", { query: query.trim() })}
-              </Badge>
-            )}
-          </div>
+      {err ? <Alert type="error">{err}</Alert> : null}
 
-          {/* Status filter */}
-          <div className="flex flex-wrap gap-2">
-            {["all", "planning", "upcoming", "completed"].map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setStatusFilter(s)}
-                className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
-                  statusFilter === s
-                    ? "border-sky-300 bg-sky-100 text-sky-800"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                }`}
-              >
-                {s === "all" ? "All Trips" : STATUS_LABEL[s]}
-              </button>
-            ))}
-          </div>
-
-          {err ? <Alert type="error">{err}</Alert> : null}
-        </CardBody>
-      </Card>
-
+      {/* ── Grid ── */}
       {loading ? (
         <TripsSkeleton />
       ) : filtered.length ? (
-        <div className="grid gap-6 md:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
           {filtered.map((trip) => (
             <TripCard
               key={trip._id}
@@ -228,7 +234,7 @@ export default function MyTrips() {
               onDelete={() => del(trip._id)}
               onDuplicate={() => duplicate(trip._id)}
               onStatusChange={(s) => changeStatus(trip._id, s)}
-              coverPhoto={coverPhotos[trip._id] || null}
+              coverPhotos={coverPhotos[trip._id] || null}
             />
           ))}
         </div>
@@ -239,224 +245,204 @@ export default function MyTrips() {
   );
 }
 
-const DEST_GRADIENTS = {
-  a: "from-sky-600 via-sky-500 to-cyan-400",
-  b: "from-indigo-600 via-indigo-500 to-blue-400",
-  c: "from-emerald-600 via-emerald-500 to-teal-400",
-  d: "from-rose-600 via-rose-500 to-pink-400",
-  e: "from-violet-600 via-violet-500 to-purple-400",
-  f: "from-amber-600 via-amber-500 to-yellow-400",
-};
-
-function getDestGradient(name) {
-  const char = (name || "").trim().toLowerCase()[0] || "a";
-  const keys = Object.keys(DEST_GRADIENTS);
-  const idx = char.charCodeAt(0) % keys.length;
-  return DEST_GRADIENTS[keys[idx]];
-}
-
-function getTripCountdown(startDate, endDate) {
-  if (!startDate || !endDate) return null;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  start.setHours(0, 0, 0, 0);
-  end.setHours(0, 0, 0, 0);
-  const diffStart = Math.round((start - today) / 86400000);
-  const diffEnd = Math.round((end - today) / 86400000);
-  if (diffStart > 0 && diffStart <= 90) return { label: `${diffStart}d to go`, type: "upcoming" };
-  if (diffStart === 0) return { label: "Today!", type: "today" };
-  if (diffStart < 0 && diffEnd >= 0) return { label: "Ongoing ✈️", type: "ongoing" };
-  return null;
-}
-
-function TripCard({ trip, onView, onDelete, onDuplicate, onStatusChange, coverPhoto }) {
+function TripCard({ trip, onView, onDelete, onDuplicate, onStatusChange, coverPhotos }) {
   const { t } = useTranslation();
   const destination = trip.destination || t("common.notFound");
-  const tripDays = getTripDays(trip);
-  const budget = trip.preferences?.budget;
-  const pace = trip.preferences?.pace;
-  const interests = getInterests(trip);
-  const gradient = getDestGradient(destination);
-  const status = trip.status || "planning";
-  const countdown = getTripCountdown(trip.startDate, trip.endDate);
+  const tripDays    = getTripDays(trip);
+  const budget      = trip.preferences?.budget;
+  const pace        = trip.preferences?.pace;
+  const interests   = getInterests(trip);
+  const gradient    = getDestGradient(destination);
+  const status      = trip.status || "planning";
+  const countdown   = getTripCountdown(trip.startDate, trip.endDate);
+
+  const photos = Array.isArray(coverPhotos) ? coverPhotos : (coverPhotos ? [coverPhotos] : []);
+  const cityNames = trip.tripMode === "multi"
+    ? (trip.multiCityMeta?.length
+        ? trip.multiCityMeta.map((m) => m.name || m.label || "")
+        : trip.destinations?.length
+        ? trip.destinations
+        : (trip.destination || "").split(/\s*→\s*/)
+      ).map((s) => String(s).trim()).filter(Boolean)
+    : [];
+  const [photoIdx, setPhotoIdx] = useState(0);
+  const timerRef = useRef(null);
+
+  function startTimer(len) {
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setPhotoIdx((i) => (i + 1) % len);
+    }, 3000);
+  }
+
+  useEffect(() => {
+    if (photos.length <= 1) return;
+    startTimer(photos.length);
+    return () => clearInterval(timerRef.current);
+  }, [photos.length]);
+
+  const activePhoto = photos[photoIdx] || null;
+  const activeCity  = cityNames[photoIdx] || null;
 
   return (
-    <Card className="group overflow-hidden border border-slate-200/80 transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-24px_rgba(15,23,42,0.30)]">
-      <div className={`relative overflow-hidden bg-linear-to-br ${gradient} p-6 pb-8 text-white min-h-52`}>
-        {/* City photo as background */}
-        {coverPhoto && (
-          <img
-            src={coverPhoto}
-            alt={destination}
-            className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
-          />
-        )}
-        {/* Gradient overlay for text readability */}
-        <div className={`absolute inset-0 ${coverPhoto ? "bg-linear-to-t from-black/75 via-black/30 to-black/10" : "bg-linear-to-t from-black/60 via-black/20 to-transparent"}`} />
-        {/* Decorative blobs (only without photo) */}
-        {!coverPhoto && (
+    <div className="group overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_50px_-18px_rgba(15,23,42,0.22)]">
+
+      {/* Cover */}
+      <div className={`relative min-h-44 overflow-hidden bg-linear-to-br ${gradient}`}>
+        {photos.map((src, i) => (
+          <img key={src} src={src} alt={destination}
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${i === photoIdx ? "opacity-100" : "opacity-0"} ${photos.length === 1 ? "group-hover:scale-105 transition-transform duration-500" : ""}`} />
+        ))}
+        <div className={`absolute inset-0 ${activePhoto ? "bg-linear-to-t from-black/80 via-black/25 to-black/5" : "bg-linear-to-t from-black/55 via-black/10 to-transparent"}`} />
+        {!activePhoto && (
           <>
             <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
             <div className="absolute bottom-0 left-0 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
           </>
         )}
-        <div className="relative">
-          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/75">{t("myTrips.tripCard.destination")}</div>
-          <div className="mt-2 line-clamp-2 text-3xl font-black tracking-tight drop-shadow-md">{destination}</div>
-          <div className="mt-3 text-sm text-white/90 drop-shadow-sm">{fmtRange(trip.startDate, trip.endDate, t("common.datesNotSet"))}</div>
-          {countdown && (
-            <div className={`mt-2 inline-flex items-center rounded-full px-3 py-1 text-xs font-bold shadow-md backdrop-blur ${
-              countdown.type === "today"   ? "bg-yellow-400/90 text-yellow-900" :
-              countdown.type === "ongoing" ? "bg-emerald-400/90 text-emerald-900" :
-                                             "bg-white/20 text-white border border-white/30"
-            }`}>
-              {countdown.type === "upcoming" ? "✈️ " : ""}{countdown.label}
-            </div>
-          )}
+        <div className="relative flex h-full flex-col justify-between p-5">
+          <div className="flex items-start justify-between gap-3">
+            <span className={`rounded-full border px-2.5 py-1 text-[11px] font-bold backdrop-blur-sm ${STATUS_BADGE[status]}`}>
+              {STATUS_LABEL[status]}
+            </span>
+            {countdown && (
+              <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm backdrop-blur-sm ${
+                countdown.type === "today"   ? "bg-yellow-400/90 text-yellow-900" :
+                countdown.type === "ongoing" ? "bg-emerald-400/90 text-emerald-900" :
+                                               "border border-white/30 bg-white/20 text-white"
+              }`}>
+                {countdown.label}
+              </span>
+            )}
+          </div>
+          <div className="mt-8">
+            <div className="line-clamp-1 text-2xl font-black tracking-tight text-white drop-shadow">{destination}</div>
+            {activeCity && (
+              <div className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-white/90">
+                <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+                {activeCity}
+              </div>
+            )}
+            <div className="mt-1 text-sm text-white/70">{fmtRange(trip.startDate, trip.endDate, t("common.datesNotSet"))}</div>
+          </div>
         </div>
+        {photos.length > 1 && (
+          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+            {photos.map((_, i) => (
+              <button key={i} type="button" onClick={() => { setPhotoIdx(i); startTimer(photos.length); }}
+                className={`h-1.5 rounded-full transition-all duration-300 ${i === photoIdx ? "w-5 bg-white" : "w-1.5 bg-white/50"}`} />
+            ))}
+          </div>
+        )}
       </div>
 
-      <CardBody className="space-y-5 bg-linear-to-b from-white to-slate-50/50">
-        <div className="flex flex-wrap gap-2">
-          <Badge className={STATUS_BADGE[status]}>{STATUS_LABEL[status]}</Badge>
-          {pace ? <Badge className="border-sky-200 bg-sky-50 text-sky-700">{t("myTrips.tripCard.pace", { pace })}</Badge> : null}
-          {budget ? <Badge className="border-violet-200 bg-violet-50 text-violet-700">{t("myTrips.tripCard.budget", { budget })}</Badge> : null}
-          {tripDays ? <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">{t("myTrips.tripCard.days", { count: tripDays })}</Badge> : null}
+      {/* Body */}
+      <div className="p-5 space-y-4">
+
+        {/* Stats row */}
+        <div className="flex flex-wrap gap-1.5">
+          {pace   && <span className="rounded-full border border-sky-100 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-700">{pace}</span>}
+          {budget && <span className="rounded-full border border-violet-100 bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-700">{budget}</span>}
+          {tripDays ? <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">{tripDays}d</span> : null}
         </div>
 
-        {!!interests.length && (
-          <div>
-            <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">{t("myTrips.tripCard.interests")}</div>
-            <div className="flex flex-wrap gap-2">
-              {interests.slice(0, 5).map((item) => (
-                <span key={item} className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 shadow-sm">{item}</span>
-              ))}
-            </div>
+        {/* Interests */}
+        {interests.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {interests.slice(0, 4).map((item) => (
+              <span key={item} className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600 capitalize">{item}</span>
+            ))}
+            {interests.length > 4 && (
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-400">+{interests.length - 4}</span>
+            )}
           </div>
         )}
 
         {/* Status quick-change */}
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex gap-1.5">
           {["planning", "upcoming", "completed"].map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => onStatusChange(s)}
-              className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition ${
-                status === s ? STATUS_BADGE[s] : "border-slate-200 bg-white text-slate-500 hover:border-slate-300"
-              }`}
-            >
-              {STATUS_LABEL[s]}
+            <button key={s} type="button" onClick={() => onStatusChange(s)}
+              className={`flex-1 rounded-xl border py-1.5 text-[11px] font-semibold transition ${
+                status === s ? STATUS_BADGE[s] : "border-slate-200 bg-white text-slate-400 hover:text-slate-600"
+              }`}>
+              {s === "planning" ? "📋" : s === "upcoming" ? "✈️" : "✅"} {s.charAt(0).toUpperCase() + s.slice(1)}
             </button>
           ))}
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button onClick={onView} variant="secondary" className="inline-flex w-full items-center justify-center gap-2 sm:flex-1">
-            <Eye size={16} />
-            {t("myTrips.tripCard.viewTrip")}
-          </Button>
-          <Button onClick={onDuplicate} variant="secondary" className="inline-flex w-full items-center justify-center gap-2 sm:flex-1">
-            <Copy size={16} />
-            Duplicate
-          </Button>
-          <Button onClick={onDelete} variant="danger" className="inline-flex w-full items-center justify-center gap-2 sm:flex-1">
-            <Trash2 size={16} />
-            {t("myTrips.tripCard.delete")}
-          </Button>
+        {/* Actions */}
+        <div className="grid grid-cols-3 gap-2">
+          <button onClick={onView} type="button"
+            className="flex items-center justify-center gap-1.5 rounded-2xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700">
+            <Eye size={14} /> View
+          </button>
+          <button onClick={onDuplicate} type="button"
+            className="flex items-center justify-center gap-1.5 rounded-2xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700">
+            <Copy size={14} /> Copy
+          </button>
+          <button onClick={onDelete} type="button"
+            className="flex items-center justify-center gap-1.5 rounded-2xl border border-red-100 bg-red-50 py-2.5 text-xs font-bold text-red-600 transition hover:border-red-300 hover:bg-red-100">
+            <Trash2 size={14} /> Delete
+          </button>
         </div>
-      </CardBody>
-    </Card>
+      </div>
+    </div>
   );
 }
 
 function EmptyTrips({ onCreate, onClear, hasSearch }) {
   const { t } = useTranslation();
   return (
-    <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
-      <CardBody className="bg-linear-to-b from-white to-slate-50/60">
-        <div className="rounded-4xl border border-dashed border-slate-300 bg-white p-8 text-center sm:p-10">
-          <div className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-linear-to-br from-sky-500 via-blue-600 to-indigo-700 text-xl font-black text-white shadow-lg">✈</div>
-          <div className="mt-5 text-2xl font-black tracking-tight text-slate-900">
-            {hasSearch ? t("myTrips.empty.noTripsFound") : t("myTrips.empty.noTrips")}
-          </div>
-          <div className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-600">
-            {hasSearch ? t("myTrips.empty.noTripsFoundText") : t("myTrips.empty.noTripsText")}
-          </div>
-          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            {hasSearch ? (
-              <Button variant="secondary" onClick={onClear}>{t("myTrips.empty.clearSearch")}</Button>
-            ) : null}
-            <Button onClick={onCreate} className="inline-flex items-center gap-2">
-              <Plus size={16} />
-              {t("myTrips.empty.createTrip")}
-            </Button>
-          </div>
-        </div>
-      </CardBody>
-    </Card>
+    <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center shadow-sm">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-sky-500 to-blue-600 text-2xl shadow-lg shadow-sky-200">
+        ✈️
+      </div>
+      <h3 className="mt-5 text-xl font-black tracking-tight text-slate-900">
+        {hasSearch ? t("myTrips.empty.noTripsFound") : t("myTrips.empty.noTrips")}
+      </h3>
+      <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
+        {hasSearch ? t("myTrips.empty.noTripsFoundText") : t("myTrips.empty.noTripsText")}
+      </p>
+      <div className="mt-6 flex flex-wrap justify-center gap-3">
+        {hasSearch && (
+          <button onClick={onClear} type="button"
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
+            {t("myTrips.empty.clearSearch")}
+          </button>
+        )}
+        <button onClick={onCreate} type="button"
+          className="inline-flex items-center gap-2 rounded-2xl bg-linear-to-r from-sky-500 to-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-sky-200/50 transition hover:-translate-y-0.5 hover:shadow-lg">
+          <Plus size={15} /> {t("myTrips.empty.createTrip")}
+        </button>
+      </div>
+    </div>
   );
 }
 
 function TripsSkeleton() {
   return (
-    <div className="grid gap-6 md:grid-cols-2 2xl:grid-cols-3">
+    <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <Card key={i} className="overflow-hidden border border-slate-200/80">
-          {/* Dark gradient header matching TripCard */}
-          <div className="bg-linear-to-br from-slate-900 via-slate-800 to-slate-700 p-5 space-y-3">
-            <div className="h-3 w-20 animate-pulse rounded-full bg-white/20" />
-            <div className="h-7 w-3/4 animate-pulse rounded-lg bg-white/20" />
-            <div className="h-4 w-1/2 animate-pulse rounded-full bg-white/15" />
+        <div key={i} className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div className="h-44 animate-pulse bg-linear-to-br from-slate-200 to-slate-300" />
+          <div className="space-y-3 p-5">
+            <div className="flex gap-2">
+              <div className="h-5 w-16 animate-pulse rounded-full bg-slate-100" />
+              <div className="h-5 w-14 animate-pulse rounded-full bg-slate-100" />
+              <div className="h-5 w-10 animate-pulse rounded-full bg-slate-100" />
+            </div>
+            <div className="flex gap-1.5">
+              <div className="h-5 w-16 animate-pulse rounded-full bg-slate-100" />
+              <div className="h-5 w-14 animate-pulse rounded-full bg-slate-100" />
+            </div>
+            <div className="flex gap-2">
+              <div className="h-9 flex-1 animate-pulse rounded-xl bg-slate-100" />
+              <div className="h-9 flex-1 animate-pulse rounded-xl bg-slate-100" />
+              <div className="h-9 flex-1 animate-pulse rounded-xl bg-red-50" />
+            </div>
           </div>
-          <CardBody className="space-y-5">
-            {/* Badges */}
-            <div className="flex flex-wrap gap-2">
-              <div className="h-6 w-20 animate-pulse rounded-full bg-sky-100" />
-              <div className="h-6 w-24 animate-pulse rounded-full bg-violet-100" />
-              <div className="h-6 w-16 animate-pulse rounded-full bg-emerald-100" />
-            </div>
-            {/* Interests */}
-            <div className="space-y-2">
-              <div className="h-3 w-16 animate-pulse rounded bg-slate-200" />
-              <div className="flex flex-wrap gap-2">
-                <div className="h-6 w-16 animate-pulse rounded-full bg-slate-100" />
-                <div className="h-6 w-20 animate-pulse rounded-full bg-slate-100" />
-                <div className="h-6 w-14 animate-pulse rounded-full bg-slate-100" />
-              </div>
-            </div>
-            {/* Itinerary hint box */}
-            <div className="h-16 animate-pulse rounded-2xl bg-slate-100" />
-            {/* Buttons */}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="h-10 animate-pulse rounded-2xl bg-slate-100" />
-              <div className="h-10 animate-pulse rounded-2xl bg-red-50" />
-            </div>
-          </CardBody>
-        </Card>
+        </div>
       ))}
-    </div>
-  );
-}
-
-function HeroStat({ icon, title, value, subtitle }) {
-  return (
-    <div className="rounded-3xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur">
-      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-sky-500 via-blue-600 to-indigo-700 text-white">{icon}</div>
-      <div className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">{title}</div>
-      <div className="mt-2 text-3xl font-black tracking-tight text-slate-900">{value}</div>
-      <div className="mt-1 text-sm text-slate-500">{subtitle}</div>
-    </div>
-  );
-}
-
-function MiniInfo({ title, text }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-      <div className="text-sm font-bold text-slate-900">{title}</div>
-      <div className="mt-1 text-sm leading-6 text-slate-600">{text}</div>
     </div>
   );
 }

@@ -102,10 +102,13 @@ function normalizeDay(day = {}, fallbackDayNumber = 1) {
 }
 
 function normalizePreferences(preferences = {}) {
-  const travelersNum = Number(preferences?.travelers);
+  const raw = preferences?.travelers;
+  const travelersNum = typeof raw === "object" && raw !== null
+    ? Number(raw.total ?? (Number(raw.adults || 0) + Number(raw.children || 0) + Number(raw.infants || 0)))
+    : Number(raw);
 
   return {
-    travelers: Number.isFinite(travelersNum) && travelersNum > 0 ? travelersNum : 1,
+    travelers: Number.isFinite(travelersNum) && travelersNum > 0 ? travelersNum : 2,
     budget: ALLOWED_BUDGETS.includes(preferences?.budget) ? preferences.budget : "mid",
     pace: ALLOWED_PACES.includes(preferences?.pace) ? preferences.pace : "moderate",
     interests: Array.isArray(preferences?.interests)
@@ -1085,6 +1088,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
   try {
     const trip = await Trip.findOne({ _id: req.params.id, userId: req.user.id }).lean();
     if (!trip) return res.status(404).json({ message: "Trip not found" });
+    res.set("Cache-Control", "private, max-age=60");
     return res.json(trip);
   } catch {
     return res.status(500).json({ message: "Failed to fetch trip" });

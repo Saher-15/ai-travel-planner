@@ -335,15 +335,15 @@ export default function Home() {
       </section>
 
       {/* ── Trust strip ── */}
-      <section className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <section className="mt-2 flex flex-wrap gap-2 sm:gap-3">
         {TRUST.map((item) => (
-          <div key={item.value} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+          <div key={item.value} className="flex items-center gap-2.5 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-sky-500 to-blue-600 text-white">
               {item.icon}
             </div>
             <div className="min-w-0">
               <div className="text-sm font-black text-slate-900">{item.value}</div>
-              <div className="truncate text-xs text-slate-500">{item.label}</div>
+              <div className="text-xs text-slate-500">{item.label}</div>
             </div>
           </div>
         ))}
@@ -364,7 +364,7 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8">
           {DESTINATIONS.map((d) => (
             <button
               key={d.city}
@@ -403,12 +403,15 @@ export default function Home() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {FEATURES.map((f) => (
             <div key={f.title}
-              className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-              <div className={cx("inline-flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-md", f.bg)}>
-                {f.icon}
+              className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+              <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-linear-to-br from-sky-50/50 to-indigo-50/50" />
+              <div className="relative">
+                <div className={cx("inline-flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-md shadow-current/20", f.bg)}>
+                  {f.icon}
+                </div>
+                <div className="mt-4 text-base font-black text-slate-900">{f.title}</div>
+                <div className="mt-2 text-sm leading-relaxed text-slate-500">{f.text}</div>
               </div>
-              <div className="mt-4 text-base font-black text-slate-900">{f.title}</div>
-              <div className="mt-2 text-sm leading-relaxed text-slate-500">{f.text}</div>
             </div>
           ))}
         </div>

@@ -458,9 +458,9 @@
       "accommodation": "Accommodation",
       "transport": "Transportation",
       "budgetOptions": {
-        "budget": "Budget",
-        "midRange": "Mid-range",
-        "luxury": "Luxury"
+        "budget": "Low",
+        "midRange": "Mid",
+        "luxury": "High"
       },
       "paceOptions": {
         "relaxed": "Relaxed",
