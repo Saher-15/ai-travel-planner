@@ -866,7 +866,6 @@ function TripOverview({
   destinations,
   totalActivities,
   totalHours,
-  placeCount,
   completedCount,
   totalEstimatedCost,
 }) {
@@ -887,7 +886,7 @@ function TripOverview({
         subtitle={t("viewTrip.tripOverviewSubtitle")}
       />
       <CardBody className="space-y-5">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <FancyInfoTile
             label={tripMode === "multi" ? t("viewTrip.tripMode") : t("viewTrip.destination")}
             value={tripMode === "multi" ? t("viewTrip.multiCity") : trip?.destination || "—"}
@@ -907,6 +906,15 @@ function TripOverview({
             label={t("viewTrip.budget_label")}
             value={[summary?.budget, preferences?.budget].find((v) => v && v.toLowerCase() !== "null") || "—"}
             icon="💳"
+          />
+          <FancyInfoTile
+            label={t("viewTrip.travelers") || "Travelers"}
+            value={(() => {
+              const n = Number(preferences?.travelers || 0);
+              if (!n) return "—";
+              return n === 1 ? "1 Traveler" : `${n} Travelers`;
+            })()}
+            icon="👥"
           />
         </div>
 
