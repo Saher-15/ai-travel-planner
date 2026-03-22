@@ -108,6 +108,96 @@ function formatHours(value) {
   return `${value.toFixed(1)}h`;
 }
 
+function formatCost(usd) {
+  if (usd === 0) return "Free";
+  if (!usd || !Number.isFinite(usd)) return null;
+  return `~$${usd}`;
+}
+
+function dateAddDays(dateStr, n) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().split("T")[0];
+}
+
+function getWeatherIcon(code) {
+  if (code === 0) return "☀️";
+  if (code === 1) return "🌤️";
+  if (code <= 3) return "⛅";
+  if (code <= 48) return "🌫️";
+  if (code <= 55) return "🌦️";
+  if (code <= 65) return "🌧️";
+  if (code <= 77) return "❄️";
+  if (code <= 82) return "🌦️";
+  if (code <= 86) return "🌨️";
+  return "⛈️";
+}
+
+function useWeather(lat, lng, startDate, endDate) {
+  const [weather, setWeather] = useState({});
+
+  useEffect(() => {
+    if (!lat || !lng || !startDate || !endDate) return;
+    const today = new Date().toISOString().split("T")[0];
+    const isPast = endDate < today;
+    const isTooFarAhead = !isPast && startDate > dateAddDays(today, 16);
+    if (isTooFarAhead) return;
+
+    const base = isPast
+      ? "https://archive-api.open-meteo.com/v1/archive"
+      : "https://api.open-meteo.com/v1/forecast";
+    const params = new URLSearchParams({
+      latitude: lat,
+      longitude: lng,
+      daily: "temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max",
+      start_date: startDate,
+      end_date: endDate,
+      timezone: "auto",
+    });
+
+    fetch(`${base}?${params}`)
+      .then((r) => r.json())
+      .then((d) => {
+        const map = {};
+        d.daily?.time?.forEach((date, i) => {
+          map[date] = {
+            code: d.daily.weathercode?.[i] ?? null,
+            maxC: d.daily.temperature_2m_max?.[i] != null ? Math.round(d.daily.temperature_2m_max[i]) : null,
+            minC: d.daily.temperature_2m_min?.[i] != null ? Math.round(d.daily.temperature_2m_min[i]) : null,
+            precip: d.daily.precipitation_probability_max?.[i] ?? null,
+          };
+        });
+        setWeather(map);
+      })
+      .catch(() => {});
+  }, [lat, lng, startDate, endDate]);
+
+  return weather;
+}
+
+function useDoneActivities(tripId) {
+  const storageKey = `trip_done_${tripId}`;
+  const [done, setDone] = useState(() => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem(storageKey) || "[]"));
+    } catch {
+      return new Set();
+    }
+  });
+
+  const toggle = useCallback((key) => {
+    setDone((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      try { localStorage.setItem(storageKey, JSON.stringify([...next])); } catch { /* noop */ }
+      return next;
+    });
+  }, [storageKey]);
+
+  return [done, toggle];
+}
+
 function useAsync(fn, deps) {
   const { t } = useTranslation();
   const [state, setState] = useState({ data: null, loading: true, error: "" });
@@ -276,6 +366,35 @@ export default function ViewTrip() {
 
   const placeCount = useMemo(() => locations.length || 0, [locations]);
 
+  // Weather forecast (Open-Meteo, free, no API key)
+  const weather = useWeather(
+    trip?.placeMeta?.lat,
+    trip?.placeMeta?.lng,
+    trip?.startDate,
+    trip?.endDate
+  );
+
+  // Activity completion tracking (localStorage)
+  const [doneActivities, toggleDone] = useDoneActivities(id);
+  const completedCount = doneActivities.size;
+
+  // Total estimated cost across all activities
+  const totalEstimatedCost = useMemo(() => {
+    let sum = 0;
+    let hasCost = false;
+    (trip?.itinerary?.days || []).forEach((day) => {
+      BLOCKS.forEach((block) => {
+        (day[block] || []).forEach((act) => {
+          if (typeof act?.estimatedCostUSD === "number") {
+            sum += act.estimatedCostUSD;
+            hasCost = true;
+          }
+        });
+      });
+    });
+    return hasCost ? sum : null;
+  }, [trip]);
+
   const toggleDay = (dayNumber) => {
     setOpenDays((prev) => ({
       ...prev,
@@ -375,6 +494,8 @@ export default function ViewTrip() {
           totalActivities={totalActivities}
           totalHours={totalHours}
           placeCount={placeCount}
+          completedCount={completedCount}
+          totalEstimatedCost={totalEstimatedCost}
         />
 
         <HotelsSection trip={trip} />
@@ -396,6 +517,9 @@ export default function ViewTrip() {
               dayIndex={idx}
               isOpen={Boolean(openDays[d.day])}
               onToggle={() => toggleDay(d.day)}
+              weatherDay={weather[d.date] ?? null}
+              doneActivities={doneActivities}
+              onToggleDone={toggleDone}
             />
           ))}
         </div>
@@ -423,6 +547,8 @@ export default function ViewTrip() {
             </CardBody>
           </Card>
         )}
+
+        <BudgetSummaryPanel days={trip?.itinerary?.days || []} budget={trip?.preferences?.budget} />
 
         <RecommendedPlacesSection places={recommendedPlaces} />
 
@@ -626,12 +752,18 @@ function TripOverview({
   totalActivities,
   totalHours,
   placeCount,
+  completedCount,
+  totalEstimatedCost,
 }) {
   const { t } = useTranslation();
   const preferences = trip?.preferences || {};
   const interests = Array.isArray(preferences?.interests)
     ? preferences.interests
     : [];
+
+  const completionPct = totalActivities > 0
+    ? Math.round((completedCount / totalActivities) * 100)
+    : 0;
 
   return (
     <Card className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur">
@@ -664,15 +796,35 @@ function TripOverview({
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <FancyInfoTile label={t("viewTrip.activities")} value={totalActivities || "0"} icon="🧭" />
+          <FancyInfoTile label={t("viewTrip.activities")} value={`${completedCount}/${totalActivities}`} icon="✅" />
           <FancyInfoTile
             label={t("viewTrip.estimatedHours")}
             value={formatHours(totalHours)}
             icon="⏱️"
           />
           <FancyInfoTile label={t("viewTrip.events_label")} value={trip?.events?.length || "0"} icon="🎟️" />
-          <FancyInfoTile label={t("viewTrip.places")} value={placeCount || "0"} icon="📍" />
+          <FancyInfoTile
+            label="Est. Budget"
+            value={totalEstimatedCost != null ? `~$${totalEstimatedCost}` : "—"}
+            icon="💰"
+          />
         </div>
+
+        {totalActivities > 0 && (
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 px-5 py-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Trip Progress</div>
+              <div className="text-xs font-bold text-slate-700">{completionPct}%</div>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+              <div
+                className="h-full rounded-full bg-linear-to-r from-sky-500 to-emerald-500 transition-all duration-500"
+                style={{ width: `${completionPct}%` }}
+              />
+            </div>
+            <div className="mt-2 text-[11px] text-slate-500">{completedCount} of {totalActivities} activities completed</div>
+          </div>
+        )}
 
         {tripMode === "multi" && destinations.length > 1 ? (
           <div className="rounded-3xl border border-slate-200 bg-linear-to-r from-sky-50 to-indigo-50 p-5">
@@ -981,13 +1133,16 @@ function getDayGradient(dayNumber) {
   return DAY_GRADIENTS[(Number(dayNumber) - 1) % DAY_GRADIENTS.length];
 }
 
-function DayCard({ day, tripId, dayIndex, isOpen, onToggle }) {
+function DayCard({ day, tripId, dayIndex, isOpen, onToggle, weatherDay, doneActivities, onToggleDone }) {
   const { t } = useTranslation();
   const activityCount = countDayActivities(day);
   const totalHours = getDayEstimatedHours(day);
   const [note, setNote] = useState(day.userNote || "");
   const [noteSaved, setNoteSaved] = useState(false);
   const noteTimer = useRef(null);
+
+  const doneDayCount = BLOCKS.reduce((sum, block) =>
+    sum + (day[block] || []).filter((_, i) => doneActivities?.has(`${dayIndex}_${block}_${i}`)).length, 0);
 
   const saveNote = useCallback((val) => {
     clearTimeout(noteTimer.current);
@@ -1017,10 +1172,25 @@ function DayCard({ day, tripId, dayIndex, isOpen, onToggle }) {
             <div className="mt-2 text-2xl font-black tracking-tight leading-snug">
               {day.title}
             </div>
-            <div className="mt-2 text-sm text-white/80">{day.date}</div>
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-white/80">
+              <span>{day.date}</span>
+              {weatherDay?.code != null && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-semibold backdrop-blur">
+                  {getWeatherIcon(weatherDay.code)}
+                  {weatherDay.maxC != null && `${weatherDay.maxC}°`}
+                  {weatherDay.minC != null && ` / ${weatherDay.minC}°`}
+                  {weatherDay.precip != null && weatherDay.precip > 0 && ` · 💧${weatherDay.precip}%`}
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+            {doneDayCount > 0 && (
+              <Badge className="border-emerald-400/40 bg-emerald-500/20 text-emerald-100">
+                ✓ {doneDayCount}/{activityCount}
+              </Badge>
+            )}
             <Badge className="border-white/20 bg-white/10 text-white">
               {t("viewTrip.activitiesCount", { count: activityCount })}
             </Badge>
@@ -1041,9 +1211,9 @@ function DayCard({ day, tripId, dayIndex, isOpen, onToggle }) {
 
       {isOpen ? (
         <CardBody className="space-y-1">
-          <MiniSection title={t("viewTrip.morning")} items={day.morning} icon="☀️" />
-          <MiniSection title={t("viewTrip.afternoon")} items={day.afternoon} icon="🌤️" />
-          <MiniSection title={t("viewTrip.evening")} items={day.evening} icon="🌙" />
+          <MiniSection title={t("viewTrip.morning")} items={day.morning} icon="☀️" dayIdx={dayIndex} block="morning" doneSet={doneActivities} onToggle={onToggleDone} />
+          <MiniSection title={t("viewTrip.afternoon")} items={day.afternoon} icon="🌤️" dayIdx={dayIndex} block="afternoon" doneSet={doneActivities} onToggle={onToggleDone} />
+          <MiniSection title={t("viewTrip.evening")} items={day.evening} icon="🌙" dayIdx={dayIndex} block="evening" doneSet={doneActivities} onToggle={onToggleDone} />
 
           {(day.foodSuggestion || day.backupPlan) && (
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -1203,7 +1373,7 @@ function FancyInfoTile({ label, value, icon }) {
   );
 }
 
-function MiniSection({ title, items, icon }) {
+function MiniSection({ title, items, icon, dayIdx, block, doneSet, onToggle }) {
   const { t } = useTranslation();
   if (!items?.length) return null;
 
@@ -1220,16 +1390,38 @@ function MiniSection({ title, items, icon }) {
       </div>
 
       <ul className="mt-3 space-y-3 text-sm text-slate-800">
-        {items.map((x, i) => (
+        {items.map((x, i) => {
+          const doneKey = `${dayIdx}_${block}_${i}`;
+          const isDone = doneSet?.has(doneKey);
+          const cost = formatCost(x?.estimatedCostUSD);
+          return (
             <li
               key={x.id ?? `${x.title}-${x.address || x.location}-${i}`}
-              className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-sky-200"
+              className={`overflow-hidden rounded-3xl border shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md ${
+                isDone
+                  ? "border-emerald-200 bg-emerald-50/60"
+                  : "border-slate-200 bg-white hover:border-sky-200"
+              }`}
             >
               <div className="px-4 py-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-extrabold tracking-tight text-slate-900">
-                      {x.title}
+                    <div className="flex items-start gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onToggle?.(doneKey)}
+                        className={`mt-0.5 shrink-0 h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                          isDone
+                            ? "border-emerald-500 bg-emerald-500 text-white"
+                            : "border-slate-300 bg-white hover:border-emerald-400"
+                        }`}
+                        aria-label={isDone ? "Mark incomplete" : "Mark done"}
+                      >
+                        {isDone && <span className="text-[10px] font-bold">✓</span>}
+                      </button>
+                      <div className={`text-sm font-extrabold tracking-tight ${isDone ? "line-through text-slate-400" : "text-slate-900"}`}>
+                        {x.title}
+                      </div>
                     </div>
 
                     {x.location ? (
@@ -1264,15 +1456,91 @@ function MiniSection({ title, items, icon }) {
                     {x.durationHours ? (
                       <Tag color="indigo">{formatHours(Number(x.durationHours))}</Tag>
                     ) : null}
+                    {cost ? <Tag color="emerald">{cost}</Tag> : null}
                     {x.category ? <Tag color="slate">{x.category}</Tag> : null}
                     {x.type ? <Tag color="sky">{x.type}</Tag> : null}
                   </div>
                 </div>
               </div>
             </li>
-          ))}
+          );
+        })}
       </ul>
     </div>
+  );
+}
+
+const BUDGET_COLORS = { low: "emerald", mid: "sky", high: "violet" };
+const BUDGET_LABELS = { low: "Budget Trip", mid: "Mid-range", high: "Premium" };
+
+function BudgetSummaryPanel({ days, budget }) {
+  const dailyTotals = days.map((day) => {
+    let total = 0;
+    let hasCost = false;
+    BLOCKS.forEach((block) => {
+      (day[block] || []).forEach((act) => {
+        if (typeof act?.estimatedCostUSD === "number") {
+          total += act.estimatedCostUSD;
+          hasCost = true;
+        }
+      });
+    });
+    return { day: day.day, date: day.date, title: day.title, total, hasCost };
+  });
+
+  const tripTotal = dailyTotals.reduce((s, d) => s + d.total, 0);
+  const hasCostData = dailyTotals.some((d) => d.hasCost);
+  if (!hasCostData) return null;
+
+  const colorKey = BUDGET_COLORS[budget] || "sky";
+  const gradients = {
+    emerald: "from-emerald-500 to-teal-500",
+    sky: "from-sky-500 to-blue-500",
+    violet: "from-violet-500 to-purple-500",
+  };
+  const barGrad = gradients[colorKey] || gradients.sky;
+  const maxDay = Math.max(...dailyTotals.map((d) => d.total), 1);
+
+  return (
+    <Card className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur">
+      <CardHeader
+        title="Estimated Budget"
+        subtitle="Per-person cost estimates generated by AI — use as a rough guide"
+        right={
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600 capitalize">
+              {BUDGET_LABELS[budget] || budget}
+            </span>
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-black text-emerald-700">
+              ~${tripTotal} total
+            </span>
+          </div>
+        }
+      />
+      <CardBody>
+        <div className="space-y-3">
+          {dailyTotals.filter((d) => d.hasCost).map((d) => (
+            <div key={d.day} className="flex items-center gap-3">
+              <div className="w-20 shrink-0 text-[11px] font-bold text-slate-500 truncate">
+                Day {d.day}
+              </div>
+              <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+                <div
+                  className={`h-full rounded-full bg-linear-to-r ${barGrad} transition-all duration-500`}
+                  style={{ width: `${Math.round((d.total / maxDay) * 100)}%` }}
+                />
+              </div>
+              <div className="w-14 shrink-0 text-right text-xs font-bold text-slate-700">
+                ~${d.total}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-[11px] text-slate-500 leading-5">
+          ⚠️ These are AI-generated estimates per person in USD. Actual costs vary by season, group size, and booking method.
+        </div>
+      </CardBody>
+    </Card>
   );
 }
 
@@ -1387,6 +1655,7 @@ function Tag({ children, color = "slate" }) {
     slate: "bg-slate-100 text-slate-700",
     sky: "bg-sky-100 text-sky-700",
     indigo: "bg-indigo-100 text-indigo-700",
+    emerald: "bg-emerald-100 text-emerald-700",
   };
 
   return (

@@ -10,6 +10,7 @@ const ActivitySchema = new mongoose.Schema(
     category: { type: String, default: "", trim: true },
     type: { type: String, default: "", trim: true },
     rating: { type: Number, default: null },
+    estimatedCostUSD: { type: Number, default: null },
     image: { type: String, default: "", trim: true },
   },
   { _id: false }

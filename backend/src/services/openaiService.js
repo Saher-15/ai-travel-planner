@@ -164,6 +164,11 @@ function normalizeActivity(activity = {}, destination = "") {
   const location = normalizeLocationString(rawLocation, title, destination);
   const address = normalizeAddressString(rawAddress, location, destination);
   const rating = normalizeRating(activity?.rating);
+  const costRaw = activity?.estimatedCostUSD;
+  const estimatedCostUSD =
+    typeof costRaw === "number" && Number.isFinite(costRaw) && costRaw >= 0
+      ? Math.round(costRaw)
+      : null;
 
   return {
     title,
@@ -174,6 +179,7 @@ function normalizeActivity(activity = {}, destination = "") {
     category,
     type,
     rating,
+    estimatedCostUSD,
     image,
   };
 }
@@ -582,7 +588,8 @@ JSON schema:
           "address": "Specific route-friendly address or highly specific address-like text",
           "category": string,
           "type": string,
-          "rating": number | null
+          "rating": number | null,
+          "estimatedCostUSD": number | null
         }
       ],
       "afternoon": [
@@ -594,7 +601,8 @@ JSON schema:
           "address": "Specific route-friendly address or highly specific address-like text",
           "category": string,
           "type": string,
-          "rating": number | null
+          "rating": number | null,
+          "estimatedCostUSD": number | null
         }
       ],
       "evening": [
@@ -606,7 +614,8 @@ JSON schema:
           "address": "Specific route-friendly address or highly specific address-like text",
           "category": string,
           "type": string,
-          "rating": number | null
+          "rating": number | null,
+          "estimatedCostUSD": number | null
         }
       ],
       "foodSuggestion": string,
@@ -694,6 +703,12 @@ Recommended places rules:
 - "rating" is optional and should be null when uncertain. Do not guess precise ratings.
 - Recommended places MUST NOT repeat any place already used in the itinerary.
 - Recommended places should be extra options, not duplicates of scheduled activities.
+
+Budget estimation rules:
+- For each activity, set "estimatedCostUSD" to a realistic per-person cost in USD (e.g. 0 for free parks, 15–25 for museums, 20–60 for restaurants, 50+ for premium experiences).
+- Use null only if the cost is genuinely impossible to estimate.
+- Round to the nearest whole dollar.
+- Calibrate costs to match the trip's budget level (low/mid/high).
 
 Critical location and address rules:
 - Every activity MUST include a non-empty "location".

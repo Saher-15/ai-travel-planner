@@ -255,6 +255,22 @@ function getDestGradient(name) {
   return DEST_GRADIENTS[keys[idx]];
 }
 
+function getTripCountdown(startDate, endDate) {
+  if (!startDate || !endDate) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+  const diffStart = Math.round((start - today) / 86400000);
+  const diffEnd = Math.round((end - today) / 86400000);
+  if (diffStart > 0 && diffStart <= 90) return { label: `${diffStart}d to go`, type: "upcoming" };
+  if (diffStart === 0) return { label: "Today!", type: "today" };
+  if (diffStart < 0 && diffEnd >= 0) return { label: "Ongoing ✈️", type: "ongoing" };
+  return null;
+}
+
 function TripCard({ trip, onView, onDelete, onDuplicate, onStatusChange, coverPhoto }) {
   const { t } = useTranslation();
   const destination = trip.destination || t("common.notFound");
@@ -264,6 +280,7 @@ function TripCard({ trip, onView, onDelete, onDuplicate, onStatusChange, coverPh
   const interests = getInterests(trip);
   const gradient = getDestGradient(destination);
   const status = trip.status || "planning";
+  const countdown = getTripCountdown(trip.startDate, trip.endDate);
 
   return (
     <Card className="group overflow-hidden border border-slate-200/80 transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-24px_rgba(15,23,42,0.30)]">
@@ -289,6 +306,15 @@ function TripCard({ trip, onView, onDelete, onDuplicate, onStatusChange, coverPh
           <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/75">{t("myTrips.tripCard.destination")}</div>
           <div className="mt-2 line-clamp-2 text-3xl font-black tracking-tight drop-shadow-md">{destination}</div>
           <div className="mt-3 text-sm text-white/90 drop-shadow-sm">{fmtRange(trip.startDate, trip.endDate, t("common.datesNotSet"))}</div>
+          {countdown && (
+            <div className={`mt-2 inline-flex items-center rounded-full px-3 py-1 text-xs font-bold shadow-md backdrop-blur ${
+              countdown.type === "today"   ? "bg-yellow-400/90 text-yellow-900" :
+              countdown.type === "ongoing" ? "bg-emerald-400/90 text-emerald-900" :
+                                             "bg-white/20 text-white border border-white/30"
+            }`}>
+              {countdown.type === "upcoming" ? "✈️ " : ""}{countdown.label}
+            </div>
+          )}
         </div>
       </div>
 
