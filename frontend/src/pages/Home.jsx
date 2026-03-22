@@ -300,9 +300,12 @@ export default function Home() {
 
       {/* ── Hero ── */}
       <section className="relative -mx-4 -mt-8 overflow-hidden md:-mx-6">
-        {/* Background */}
+        {/* Background photo */}
         <img src={HERO_BG} alt="Travel" className="absolute inset-0 h-full w-full object-cover" />
+        {/* Dark gradient overlay */}
         <div className="absolute inset-0 bg-linear-to-b from-slate-900/70 via-slate-900/55 to-slate-900/80" />
+        {/* Grid texture overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-size-[30px_30px]" />
 
         <div className="relative px-4 pb-0 pt-16 sm:px-6 sm:pt-20 md:pt-24">
           {/* Headline */}
@@ -322,6 +325,24 @@ export default function Home() {
             <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/80 sm:text-lg">
               {t("home.hero.description")}
             </p>
+
+            {/* CTA buttons */}
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+              <button
+                onClick={() => nav("/create")}
+                className="inline-flex items-center gap-2 rounded-2xl bg-linear-to-r from-sky-500 to-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-sky-500/30 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-sky-500/40"
+              >
+                <PlaneTakeoff size={16} />
+                {t("home.cta.createTrip")} →
+              </button>
+              <button
+                onClick={() => nav("/hotels")}
+                className="inline-flex items-center gap-2 rounded-2xl border border-white/25 bg-white/10 px-6 py-3 text-sm font-bold text-white backdrop-blur transition hover:bg-white/20"
+              >
+                <Compass size={16} />
+                Browse Destinations
+              </button>
+            </div>
           </div>
 
           {/* Search card — overlaps the hero bottom */}
@@ -335,25 +356,29 @@ export default function Home() {
       </section>
 
       {/* ── Trust strip ── */}
-      <section className="mt-2 flex flex-wrap gap-2 sm:gap-3">
-        {TRUST.map((item) => (
-          <div key={item.value} className="flex items-center gap-2.5 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-sky-500 to-blue-600 text-white">
-              {item.icon}
-            </div>
-            <div className="min-w-0">
-              <div className="text-sm font-black text-slate-900">{item.value}</div>
-              <div className="text-xs text-slate-500">{item.label}</div>
-            </div>
+      <section className="mt-2">
+        <div className="rounded-3xl bg-slate-950 px-6 py-5 mt-6">
+          <div className="flex flex-wrap gap-3 justify-center sm:justify-start">
+            {TRUST.map((item) => (
+              <div key={item.value} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900 px-4 py-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-sky-500 to-blue-600 text-white shadow-[0_0_16px_rgba(14,165,233,0.35)]">
+                  {item.icon}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-black text-white">{item.value}</div>
+                  <div className="text-xs text-white/50">{item.label}</div>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
       </section>
 
       {/* ── Popular Destinations ── */}
       <section className="mt-14">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-sky-600">{t("home.destinations.badge")}</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sky-500">{t("home.destinations.badge")}</p>
             <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
               {t("home.destinations.title")}
             </h2>
@@ -384,7 +409,7 @@ export default function Home() {
                 </span>
               </div>
               <div className="absolute bottom-0 left-0 right-0 p-3 text-left">
-                <div className="text-sm font-black text-white">{d.city}</div>
+                <div className="text-lg font-black text-white">{d.city}</div>
                 <div className="text-xs text-white/75">{d.emoji} {d.country}</div>
               </div>
             </button>
@@ -393,24 +418,23 @@ export default function Home() {
       </section>
 
       {/* ── Why use us ── */}
-      <section className="mt-16">
-        <div className="mb-6 text-center">
-          <p className="text-xs font-bold uppercase tracking-widest text-sky-600">{t("home.features.badge")}</p>
-          <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+      <section className="-mx-4 md:-mx-6 px-4 md:px-6 py-16 mt-16 bg-linear-to-br from-slate-900 via-slate-800 to-indigo-950">
+        <div className="mb-8 text-center">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sky-400">{t("home.features.badge")}</p>
+          <h2 className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">
             {t("home.features.title")}
           </h2>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 max-w-7xl mx-auto">
           {FEATURES.map((f) => (
             <div key={f.title}
-              className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-              <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-linear-to-br from-sky-50/50 to-indigo-50/50" />
+              className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:bg-white/10 hover:shadow-xl hover:shadow-black/30">
               <div className="relative">
-                <div className={cx("inline-flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-md shadow-current/20", f.bg)}>
+                <div className={cx("inline-flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-[0_0_20px_rgba(56,189,248,0.4)]", f.bg)}>
                   {f.icon}
                 </div>
-                <div className="mt-4 text-base font-black text-slate-900">{f.title}</div>
-                <div className="mt-2 text-sm leading-relaxed text-slate-500">{f.text}</div>
+                <div className="mt-4 text-base font-black text-white">{f.title}</div>
+                <div className="mt-2 text-sm leading-relaxed text-white/60">{f.text}</div>
               </div>
             </div>
           ))}
@@ -420,41 +444,53 @@ export default function Home() {
       {/* ── How it works ── */}
       <section className="mt-16">
         <div className="mb-6 text-center">
-          <p className="text-xs font-bold uppercase tracking-widest text-sky-600">{t("home.howItWorks.badge")}</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sky-500">{t("home.howItWorks.badge")}</p>
           <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
             {t("home.howItWorks.title")}
           </h2>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           {STEPS.map((step, i) => (
-            <div key={step.number} className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div key={step.number} className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              {/* Large faded background step number */}
+              <div className="pointer-events-none absolute -right-2 -top-4 select-none text-8xl font-black text-slate-100 leading-none">
+                {step.number}
+              </div>
               {/* Connector line */}
               {i < STEPS.length - 1 && (
                 <div className="absolute -right-px top-8 hidden h-0.5 w-8 bg-linear-to-r from-sky-200 to-transparent sm:block" style={{ right: "-2rem" }} />
               )}
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-sky-500 to-blue-600 text-lg font-black text-white shadow-md shadow-sky-200/60">
-                {step.number}
+              <div className="relative">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-sky-500 to-blue-600 text-lg font-black text-white shadow-md shadow-sky-200/60">
+                  {step.number}
+                </div>
+                <div className="mt-4 text-base font-black text-slate-900">{step.title}</div>
+                <div className="mt-2 text-sm leading-relaxed text-slate-500">{step.text}</div>
               </div>
-              <div className="mt-4 text-base font-black text-slate-900">{step.title}</div>
-              <div className="mt-2 text-sm leading-relaxed text-slate-500">{step.text}</div>
             </div>
           ))}
         </div>
       </section>
 
       {/* ── CTA banner ── */}
-      <section className="relative mt-16 overflow-hidden rounded-3xl bg-linear-to-br from-sky-600 via-blue-600 to-indigo-700 px-8 py-12 text-white shadow-[0_20px_60px_-20px_rgba(37,99,235,0.5)] sm:px-12">
+      <section className="relative mt-16 overflow-hidden rounded-3xl bg-linear-to-br from-sky-600 via-blue-600 to-indigo-700 px-8 py-16 text-white shadow-[0_20px_80px_-20px_rgba(37,99,235,0.6)] sm:px-12">
         <div className="absolute -left-10 -top-10 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
         <div className="absolute -bottom-8 -right-8 h-56 w-56 rounded-full bg-cyan-400/15 blur-3xl" />
         <div className="relative flex flex-col items-center gap-6 text-center sm:flex-row sm:justify-between sm:text-left">
           <div className="max-w-xl">
-            <div className="text-xs font-bold uppercase tracking-widest text-white/70">{t("home.cta.badge")}</div>
-            <h3 className="mt-2 text-2xl font-black sm:text-3xl">{t("home.cta.title")}</h3>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-white/70">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+              </span>
+              {t("home.cta.badge")}
+            </div>
+            <h3 className="mt-3 text-2xl font-black sm:text-3xl">{t("home.cta.title")}</h3>
             <p className="mt-2 text-sm leading-relaxed text-white/80">{t("home.cta.description")}</p>
           </div>
           <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
             <button onClick={() => nav("/create")}
-              className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3 text-sm font-bold text-sky-700 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
+              className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3 text-sm font-bold text-sky-700 shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:shadow-xl">
               <PlaneTakeoff size={16} />
               {t("home.cta.createTrip")}
             </button>
