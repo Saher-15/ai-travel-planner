@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(wc -l /Users/sahersaadi/ai-travel-planner/frontend/src/pages/*.jsx)",
-      "Bash(wc -l /Users/sahersaadi/ai-travel-planner/backend/src/routes/*.js)"
+      "Bash(wc -l /Users/sahersaadi/ai-travel-planner/backend/src/routes/*.js)",
+      "Bash(npx --yes eslint src/pages/ViewTrip.jsx --no-eslintrc -c '{\"\"\"\"env\"\"\"\":{\"\"\"\"browser\"\"\"\":true,\"\"\"\"es2021\"\"\"\":true},\"\"\"\"parser\"\"\"\":\"\"\"\"@babel/eslint-parser\"\"\"\",\"\"\"\"parserOptions\"\"\"\":{\"\"\"\"requireConfigFile\"\"\"\":false,\"\"\"\"babelOptions\"\"\"\":{\"\"\"\"presets\"\"\"\":[\"\"\"\"@babel/preset-react\"\"\"\"]}},\"\"\"\"rules\"\"\"\":{\"\"\"\"no-undef\"\"\"\":\"\"\"\"error\"\"\"\"}}')",
+      "Bash(node -e \":*)",
+      "Bash(wc -l /Users/sahersaadi/ai-travel-planner/backend/src/services/*.js)",
+      "Bash(npm test:*)",
+      "Bash(node --experimental-vm-modules node_modules/.bin/jest src/__tests__/unit/tripService.test.js)"
     ]
   }
 }
