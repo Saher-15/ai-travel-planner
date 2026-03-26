@@ -590,75 +590,100 @@ export default function ViewTrip() {
           onStatusChange={handleStatusChange}
         />
 
-        <TripOverview
-          trip={trip}
-          summary={summary}
-          tripMode={tripMode}
-          destinations={destinations}
-          totalActivities={totalActivities}
-          totalHours={totalHours}
-          placeCount={placeCount}
-          completedCount={completedCount}
-          totalEstimatedCost={totalEstimatedCost}
-        />
+        <SectionToggle icon="📊" title={t("viewTrip.overview")} defaultOpen>
+          <TripOverview
+            trip={trip}
+            summary={summary}
+            tripMode={tripMode}
+            destinations={destinations}
+            totalActivities={totalActivities}
+            totalHours={totalHours}
+            placeCount={placeCount}
+            completedCount={completedCount}
+            totalEstimatedCost={totalEstimatedCost}
+          />
+        </SectionToggle>
 
-        <HotelsSection trip={trip} />
+        <SectionToggle icon="🏨" title={t("viewTrip.hotels")}>
+          <HotelsSection trip={trip} />
+        </SectionToggle>
 
-        <CityPlanSection
-          summary={summary}
-          tripMode={tripMode}
-          destinations={destinations}
-        />
+        <SectionToggle icon="🗺️" title={t("viewTrip.cityPlan")}>
+          <CityPlanSection
+            summary={summary}
+            tripMode={tripMode}
+            destinations={destinations}
+          />
+        </SectionToggle>
 
-        <EventsSection events={trip?.events || []} />
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          {trip?.itinerary?.days?.map((d, idx) => (
-            <DayCard
-              key={d.day}
-              day={d}
-              tripId={id}
-              dayIndex={idx}
-              isOpen={Boolean(openDays[d.day])}
-              onToggle={() => toggleDay(d.day)}
-              weatherDay={weather[d.date] ?? null}
-              dayDone={perDayDone.get(idx) ?? EMPTY_SET}
-              onToggleDone={toggleDone}
-            />
-          ))}
-        </div>
-
-        {!!trip?.itinerary?.tips?.length && (
-          <Card className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur">
-            <CardHeader
-              title={t("viewTrip.tripTips")}
-              subtitle={t("viewTrip.tripTipsSubtitle")}
-            />
-            <CardBody>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {trip.itinerary.tips.map((tip, i) => (
-                  <div
-                    key={i}
-                    className="rounded-3xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-4 text-sm leading-6 text-slate-700 shadow-sm"
-                  >
-                    <div className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-sky-600">
-                      {t("viewTrip.tip", { index: i + 1 })}
-                    </div>
-                    {tip}
-                  </div>
-                ))}
-              </div>
-            </CardBody>
-          </Card>
+        {!!trip?.events?.length && (
+          <SectionToggle icon="🎭" title={t("viewTrip.events")} meta={`${trip.events.length} event${trip.events.length !== 1 ? "s" : ""}`}>
+            <EventsSection events={trip.events} />
+          </SectionToggle>
         )}
 
-        <BudgetSummaryPanel days={trip?.itinerary?.days || []} budget={trip?.preferences?.budget} />
+        <SectionToggle
+          icon="📅"
+          title={t("viewTrip.itinerary")}
+          meta={`${trip?.itinerary?.days?.length ?? 0} day${(trip?.itinerary?.days?.length ?? 0) !== 1 ? "s" : ""}`}
+          defaultOpen
+        >
+          <div className="grid gap-6 lg:grid-cols-2">
+            {trip?.itinerary?.days?.map((d, idx) => (
+              <DayCard
+                key={d.day}
+                day={d}
+                tripId={id}
+                dayIndex={idx}
+                isOpen={Boolean(openDays[d.day])}
+                onToggle={() => toggleDay(d.day)}
+                weatherDay={weather[d.date] ?? null}
+                dayDone={perDayDone.get(idx) ?? EMPTY_SET}
+                onToggleDone={toggleDone}
+              />
+            ))}
+          </div>
+        </SectionToggle>
 
-        <ExpenseTrackerSection tripId={id} aiEstimate={totalEstimatedCost} />
+        {!!trip?.itinerary?.tips?.length && (
+          <SectionToggle icon="💡" title={t("viewTrip.tripTips")} meta={`${trip.itinerary.tips.length} tip${trip.itinerary.tips.length !== 1 ? "s" : ""}`}>
+            <Card className="overflow-hidden border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.25)] backdrop-blur">
+              <CardBody>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {trip.itinerary.tips.map((tip, i) => (
+                    <div
+                      key={i}
+                      className="rounded-3xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-4 text-sm leading-6 text-slate-700 shadow-sm"
+                    >
+                      <div className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-sky-600">
+                        {t("viewTrip.tip", { index: i + 1 })}
+                      </div>
+                      {tip}
+                    </div>
+                  ))}
+                </div>
+              </CardBody>
+            </Card>
+          </SectionToggle>
+        )}
 
-        <RecommendedPlacesSection places={recommendedPlaces} />
+        <SectionToggle icon="💰" title={t("viewTrip.budgetSummary")}>
+          <BudgetSummaryPanel days={trip?.itinerary?.days || []} budget={trip?.preferences?.budget} />
+        </SectionToggle>
 
-        <PackingListSection tripId={id} />
+        <SectionToggle icon="🧾" title={t("viewTrip.expenseTracker")}>
+          <ExpenseTrackerSection tripId={id} aiEstimate={totalEstimatedCost} />
+        </SectionToggle>
+
+        {recommendedPlaces.length > 0 && (
+          <SectionToggle icon="⭐" title={t("viewTrip.recommendedPlaces")} meta={`${recommendedPlaces.length} place${recommendedPlaces.length !== 1 ? "s" : ""}`}>
+            <RecommendedPlacesSection places={recommendedPlaces} />
+          </SectionToggle>
+        )}
+
+        <SectionToggle icon="🎒" title={t("viewTrip.packingList")}>
+          <PackingListSection tripId={id} />
+        </SectionToggle>
       </div>
     </div>
   );
@@ -1982,6 +2007,32 @@ function PackingListSection({ tripId }) {
         )}
       </CardBody>
     </Card>
+  );
+}
+
+function SectionToggle({ icon, title, meta, defaultOpen = false, children }) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center gap-3 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 text-left shadow-sm hover:border-sky-300 hover:bg-sky-50/50 transition-colors"
+        aria-expanded={open}
+      >
+        <span className="text-lg leading-none">{icon}</span>
+        <span className="flex-1 font-semibold text-slate-800 text-sm">{title}</span>
+        {meta ? <span className="text-xs text-slate-500 shrink-0">{meta}</span> : null}
+        <svg
+          className={`h-4 w-4 text-slate-400 transition-transform duration-200 shrink-0 ${open ? "rotate-180" : ""}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && <div className="mt-2">{children}</div>}
+    </div>
   );
 }
 

@@ -4,7 +4,9 @@
   "description": "",
   "main": "src/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "OPENAI_API_KEY=test-key JWT_ACCESS_SECRET=test-secret APP_URL=http://localhost node --experimental-vm-modules node_modules/.bin/jest",
+    "test:coverage": "OPENAI_API_KEY=test-key JWT_ACCESS_SECRET=test-secret APP_URL=http://localhost node --experimental-vm-modules node_modules/.bin/jest --coverage",
+    "test:watch": "OPENAI_API_KEY=test-key JWT_ACCESS_SECRET=test-secret APP_URL=http://localhost node --experimental-vm-modules node_modules/.bin/jest --watch",
     "dev": "nodemon src/server.js",
     "start": "node src/server.js"
   },
@@ -33,6 +35,10 @@
     "pdfkit": "^0.17.2"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "@jest/globals": "^30.3.0",
+    "jest": "^30.3.0",
+    "mongodb-memory-server": "^11.0.1",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
   }
 }
