@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 import { api } from "../api/client.js";
 import { useTranslation } from "react-i18next";
+import AccessibilityWidget from "./AccessibilityWidget.jsx";
 
 const cx = (...c) => c.filter(Boolean).join(" ");
 const DEVELOPER_LINKEDIN = "https://www.linkedin.com/in/saher-saadi-a637b11b5/";
@@ -141,7 +142,7 @@ function FooterExternalLink({ href, children }) {
 function Footer({ isLoggedIn, isAdmin }) {
   const { t } = useTranslation();
   return (
-    <footer className="relative overflow-hidden bg-slate-950 text-white">
+    <footer role="contentinfo" className="relative overflow-hidden bg-slate-950 text-white">
       {/* Top glow */}
       <div className="absolute -left-32 -top-32 h-80 w-80 rounded-full bg-sky-500/8 blur-3xl" />
       <div className="absolute -right-16 top-16 h-64 w-64 rounded-full bg-indigo-500/8 blur-3xl" />
@@ -329,8 +330,11 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen bg-linear-to-b from-sky-50/80 via-white to-slate-100">
 
+      {/* ── Skip navigation (WCAG 2.1 AA – 2.4.1) ── */}
+      <a href="#main-content" className="skip-nav">Skip to main content</a>
+
       {/* ── Header ── */}
-      <header className={cx(
+      <header role="banner" className={cx(
         "sticky top-0 z-50 bg-slate-950/95 backdrop-blur-2xl transition-all duration-300",
         scrolled ? "shadow-[0_4px_40px_-8px_rgba(0,0,0,0.5)]" : "shadow-none"
       )}>
@@ -344,7 +348,7 @@ export default function Layout({ children }) {
             <Brand />
 
             {/* Desktop nav */}
-            <nav className="hidden items-center gap-0.5 lg:flex">
+            <nav aria-label="Main navigation" className="hidden items-center gap-0.5 lg:flex">
               {mainItems.map((item) => (
                 <NavItem key={item.to} to={item.to} badgeCount={item.badgeCount || 0}>
                   {item.label}
@@ -459,7 +463,7 @@ export default function Layout({ children }) {
             )}
 
             {/* Main nav */}
-            <nav className="overflow-hidden rounded-2xl border border-white/8 bg-white/5">
+            <nav aria-label="Mobile navigation" className="overflow-hidden rounded-2xl border border-white/8 bg-white/5">
               <div className="grid divide-y divide-white/5">
                 {mainItems.map((item) => (
                   <NavLink key={item.to} to={item.to}
@@ -526,9 +530,13 @@ export default function Layout({ children }) {
         </div>
       )}
 
-      <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">{children}</main>
+      <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-8 md:px-6">
+        {children}
+      </main>
 
       <Footer isLoggedIn={isLoggedIn} isAdmin={isAdmin} />
+
+      <AccessibilityWidget />
     </div>
   );
 }
