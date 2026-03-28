@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { api } from "../api/client.js";
 import { Alert, Badge, Button, Card, CardBody, CardHeader } from "../components/UI.jsx";
+import { fmtRange } from "../utils/helpers.js";
 
 const BLOCKS = ["morning", "afternoon", "evening"];
 const BLOCK_ICON = { morning: "☀️", afternoon: "🌤️", evening: "🌙" };
@@ -17,7 +18,6 @@ const DAY_GRADIENTS = [
 ];
 
 /* ── helpers ── */
-function fmtRange(s, e) { return s && e ? `${s} → ${e}` : ""; }
 function formatHours(v) {
   if (!Number.isFinite(v) || v <= 0) return "—";
   return Number.isInteger(v) ? `${v}h` : `${v.toFixed(1)}h`;

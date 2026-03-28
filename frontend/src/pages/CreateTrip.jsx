@@ -1,10 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  CalendarDays,
-  Compass,
-  MapPinned,
   Plus,
   RefreshCw,
   Sparkles,
@@ -226,10 +223,59 @@ export default function CreateTrip() {
   const [travelers, setTravelers] = useState(parseTravelersParam(travelersParam));
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [draftSaved, setDraftSaved] = useState(false);
+  const draftTimer = useRef(null);
 
   const sourceTab = sourceTabParam;
   const tripType = tripTypeParam;
   const from = fromParam;
+
+  const DRAFT_KEY = "createTrip_draft";
+
+  // ── Restore draft on first mount (only when no URL params override) ──
+  useEffect(() => {
+    if (destinationParam) return; // URL params take priority
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      if (draft.destination)       setDestination(draft.destination);
+      if (draft.selectedPlace)     setSelectedPlace(draft.selectedPlace);
+      if (draft.startDate)         setStartDate(clampToToday(draft.startDate));
+      if (draft.endDate)           setEndDate(draft.endDate);
+      if (draft.pace)              setPace(draft.pace);
+      if (draft.budget)            setBudget(draft.budget);
+      if (Array.isArray(draft.interests)) setInterests(draft.interests);
+      if (draft.notes !== undefined)      setNotes(draft.notes);
+      if (draft.travelers)         setTravelers(draft.travelers);
+      if (draft.tripMode)          setTripMode(draft.tripMode);
+      if (Array.isArray(draft.multiCityPlaces)) setMultiCityPlaces(draft.multiCityPlaces);
+      if (draft.includeEvents !== undefined) setIncludeEvents(draft.includeEvents);
+      if (Array.isArray(draft.eventTypes))   setEventTypes(draft.eventTypes);
+    } catch { /* corrupt draft — ignore */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Auto-save draft with debounce ──
+  useEffect(() => {
+    clearTimeout(draftTimer.current);
+    draftTimer.current = setTimeout(() => {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({
+          destination, selectedPlace, startDate, endDate,
+          pace, budget, interests, notes, travelers,
+          tripMode, multiCityPlaces, includeEvents, eventTypes,
+        }));
+        setDraftSaved(true);
+        setTimeout(() => setDraftSaved(false), 2000);
+      } catch { /* quota exceeded — ignore */ }
+    }, 1500);
+    return () => clearTimeout(draftTimer.current);
+  }, [destination, selectedPlace, startDate, endDate, pace, budget, interests, notes, travelers, tripMode, multiCityPlaces, includeEvents, eventTypes]);
+
+  function clearDraft() {
+    localStorage.removeItem(DRAFT_KEY);
+  }
 
   useEffect(() => {
     const nextStart = clampToToday(startDateParam || todayISOPlus(0));
@@ -600,6 +646,7 @@ export default function CreateTrip() {
           : [],
     };
 
+    clearDraft();
     nav("/generating-trip", {
       state: { payload },
     });
@@ -608,7 +655,7 @@ export default function CreateTrip() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-slate-900 via-slate-800 to-indigo-950 px-6 py-8 text-white shadow-xl sm:px-8">
+      <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-slate-900 via-slate-800 to-indigo-950 px-4 py-6 text-white shadow-xl sm:px-6 sm:py-8 lg:px-8">
         <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-sky-500/20 blur-3xl" />
         <div className="absolute -bottom-8 left-10 h-40 w-40 rounded-full bg-indigo-500/20 blur-3xl" />
         <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -618,6 +665,11 @@ export default function CreateTrip() {
             </div>
             <h1 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl">{t("createTrip.title")}</h1>
             <p className="mt-2 text-sm leading-6 text-white/60">{formSummary}</p>
+            {draftSaved && (
+              <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-300 transition-opacity">
+                ✓ Draft saved
+              </span>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
             {[

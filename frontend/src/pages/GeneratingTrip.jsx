@@ -107,7 +107,7 @@ export default function GeneratingTrip() {
       <div className="w-full max-w-lg space-y-3">
 
         {/* ── Hero dark card ── */}
-        <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-slate-900 via-slate-800 to-indigo-950 px-8 py-12 text-white shadow-2xl">
+        <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-slate-900 via-slate-800 to-indigo-950 px-5 py-8 text-white shadow-2xl sm:px-8 sm:py-12">
           {/* Blobs */}
           <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-sky-500/20 blur-3xl" />
           <div className="absolute -right-12 top-4 h-56 w-56 rounded-full bg-indigo-500/20 blur-3xl" />

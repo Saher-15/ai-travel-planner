@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Compass, Copy, Eye, MapPinned, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Compass, Copy, Eye, MapPinned, Plus, RefreshCw, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { api } from "../api/client.js";
-import { Alert, Button, Card, CardBody } from "../components/UI.jsx";
+import { Alert, Button, toast } from "../components/UI.jsx";
 import { useTranslation } from "react-i18next";
+import { fmtRange } from "../utils/helpers.js";
 
 const STATUS_BADGE = {
   planning:  "border-amber-200 bg-amber-50 text-amber-700",
@@ -11,10 +12,8 @@ const STATUS_BADGE = {
   completed: "border-emerald-200 bg-emerald-50 text-emerald-700",
 };
 const STATUS_LABEL = { planning: "📋 Planning", upcoming: "✈️ Upcoming", completed: "✅ Completed" };
+const PAGE_SIZE = 12;
 
-function fmtRange(start, end, fallback) {
-  return start && end ? `${start} → ${end}` : fallback;
-}
 
 function getTripDays(trip) {
   return Number(trip?.itinerary?.tripSummary?.days || 0);
@@ -57,39 +56,62 @@ export default function MyTrips() {
   useEffect(() => { window.scrollTo(0, 0); document.title = t("myTrips.pageTitle"); }, [t]);
 
   const nav = useNavigate();
-  const [trips, setTrips]           = useState([]);
-  const [err, setErr]               = useState("");
-  const [loading, setLoading]       = useState(true);
-  const [query, setQuery]           = useState("");
+  const [trips, setTrips]               = useState([]);
+  const [err, setErr]                   = useState("");
+  const [loading, setLoading]           = useState(true);
+  const [query, setQuery]               = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [coverPhotos, setCoverPhotos]   = useState({});
+  const [page, setPage]                 = useState(1);
+  const [totalPages, setTotalPages]     = useState(1);
+  const [total, setTotal]               = useState(0);
+  const debounceRef = useRef(null);
 
-  async function load() {
+  // Debounce search query
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedQuery(query);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(debounceRef.current);
+  }, [query]);
+
+  // Reset page on filter change
+  useEffect(() => { setPage(1); }, [statusFilter]);
+
+  const load = useCallback(async () => {
     setErr(""); setLoading(true);
     try {
-      const { data } = await api.get("/trips");
-      const loaded = Array.isArray(data) ? data : [];
+      const params = new URLSearchParams({ page, limit: PAGE_SIZE });
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (debouncedQuery.trim()) params.set("q", debouncedQuery.trim());
+
+      const { data } = await api.get(`/trips?${params}`);
+      // Support both paginated { trips, total, totalPages } and legacy array
+      const loaded = Array.isArray(data) ? data : (data?.trips ?? []);
       setTrips(loaded);
+      setTotal(Array.isArray(data) ? loaded.length : (data?.total ?? loaded.length));
+      setTotalPages(Array.isArray(data) ? 1 : (data?.totalPages ?? 1));
+
       if (loaded.length) {
         try {
-          // Build one place entry per city across all trips (multi-city = multiple entries)
           const requests = [];
           loaded.forEach((trip) => {
-            // Multi-city: gather all city names from every available source
             if (trip.tripMode === "multi") {
-              const cities =
-                (trip.multiCityMeta?.length
+              const cities = (
+                trip.multiCityMeta?.length
                   ? trip.multiCityMeta.map((m) => m.name || m.label || "")
                   : trip.destinations?.length
                   ? trip.destinations
                   : (trip.destination || "").split(/\s*→\s*/)
-                ).map((s) => String(s).trim()).filter(Boolean);
+              ).map((s) => String(s).trim()).filter(Boolean);
               if (cities.length > 1) {
                 cities.forEach((city) => requests.push({ tripId: trip._id, name: city }));
                 return;
               }
             }
-            // Single city (or multi fallback)
             const name =
               trip.placeMeta?.name ||
               trip.placeMeta?.label ||
@@ -109,52 +131,49 @@ export default function MyTrips() {
           setCoverPhotos(photoMap);
         } catch { /* photos optional */ }
       }
-    } catch (e2) {
-      setErr(e2?.response?.data?.message || t("myTrips.errors.loadFailed"));
+    } catch (e) {
+      setErr(e?.response?.data?.message || t("myTrips.errors.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }
+  }, [page, statusFilter, debouncedQuery, t]);
 
-  async function del(id) {
+  useEffect(() => { load(); }, [load]);
+
+  const del = useCallback(async (id) => {
     if (!window.confirm(t("myTrips.errors.deleteConfirm"))) return;
     try {
       await api.delete(`/trips/${id}`);
       setTrips((prev) => prev.filter((item) => item._id !== id));
-    } catch (e2) {
-      setErr(e2?.response?.data?.message || t("myTrips.errors.deleteFailed"));
+      setTotal((n) => Math.max(0, n - 1));
+      toast("Trip deleted.", "success");
+    } catch (e) {
+      toast(e?.response?.data?.message || t("myTrips.errors.deleteFailed"), "error");
     }
-  }
+  }, [t]);
 
-  async function duplicate(id) {
+  const duplicate = useCallback(async (id) => {
     try {
       const { data } = await api.post(`/trips/${id}/duplicate`);
       setTrips((prev) => [data, ...prev]);
-    } catch (e2) {
-      setErr(e2?.response?.data?.message || "Failed to duplicate trip.");
+      setTotal((n) => n + 1);
+      toast("Trip duplicated successfully.", "success");
+    } catch (e) {
+      toast(e?.response?.data?.message || "Failed to duplicate trip.", "error");
     }
-  }
+  }, []);
 
-  async function changeStatus(id, status) {
+  const changeStatus = useCallback(async (id, status) => {
     try {
       await api.patch(`/trips/${id}/status`, { status });
       setTrips((prev) => prev.map((tr) => tr._id === id ? { ...tr, status } : tr));
     } catch { /* silent */ }
-  }
+  }, []);
 
-  useEffect(() => { load(); }, []);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return trips.filter((trip) => {
-      if (statusFilter !== "all" && trip.status !== statusFilter) return false;
-      if (!q) return true;
-      return [trip?.destination, trip?.preferences?.budget, trip?.preferences?.pace, ...getInterests(trip)]
-        .join(" ").toLowerCase().includes(q);
-    });
-  }, [trips, query, statusFilter]);
-
-  const totalDays = trips.reduce((sum, trip) => sum + getTripDays(trip), 0);
+  const handleView         = useCallback((id) => nav(`/trip/${id}`), [nav]);
+  const handleDelete       = useCallback((id) => del(id), [del]);
+  const handleDuplicate    = useCallback((id) => duplicate(id), [duplicate]);
+  const handleStatusChange = useCallback((id, status) => changeStatus(id, status), [changeStatus]);
 
   return (
     <div className="space-y-6">
@@ -173,10 +192,7 @@ export default function MyTrips() {
           </div>
           <div className="flex flex-wrap gap-2 sm:shrink-0">
             <span className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-white/10 px-4 py-2 text-sm font-bold">
-              <Compass size={14} className="text-sky-300" /> {trips.length} trips
-            </span>
-            <span className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-white/10 px-4 py-2 text-sm font-bold">
-              <MapPinned size={14} className="text-indigo-300" /> {totalDays} days
+              <Compass size={14} className="text-sky-300" /> {total} trips
             </span>
           </div>
         </div>
@@ -214,7 +230,7 @@ export default function MyTrips() {
           </Button>
           <button onClick={load} type="button"
             className="rounded-2xl border border-slate-200 bg-white p-2.5 text-slate-500 transition hover:bg-slate-50 hover:text-sky-600">
-            <RefreshCw size={16} />
+            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
           </button>
         </div>
       </div>
@@ -224,28 +240,104 @@ export default function MyTrips() {
       {/* ── Grid ── */}
       {loading ? (
         <TripsSkeleton />
-      ) : filtered.length ? (
-        <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
-          {filtered.map((trip) => (
-            <TripCard
-              key={trip._id}
-              trip={trip}
-              onView={() => nav(`/trip/${trip._id}`)}
-              onDelete={() => del(trip._id)}
-              onDuplicate={() => duplicate(trip._id)}
-              onStatusChange={(s) => changeStatus(trip._id, s)}
-              coverPhotos={coverPhotos[trip._id] || null}
-            />
-          ))}
-        </div>
+      ) : trips.length ? (
+        <>
+          <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
+            {trips.map((trip) => (
+              <TripCard
+                key={trip._id}
+                trip={trip}
+                onView={handleView}
+                onDelete={handleDelete}
+                onDuplicate={handleDuplicate}
+                onStatusChange={handleStatusChange}
+                coverPhotos={coverPhotos[trip._id] || null}
+              />
+            ))}
+          </div>
+
+          {/* ── Pagination ── */}
+          {totalPages > 1 && (
+            <Pagination page={page} totalPages={totalPages} onPage={setPage} />
+          )}
+        </>
       ) : (
-        <EmptyTrips hasSearch={Boolean(query.trim())} onCreate={() => nav("/create")} onClear={() => setQuery("")} />
+        <EmptyTrips
+          hasSearch={Boolean(query.trim()) || statusFilter !== "all"}
+          onCreate={() => nav("/create")}
+          onClear={() => { setQuery(""); setStatusFilter("all"); }}
+        />
       )}
     </div>
   );
 }
 
-function TripCard({ trip, onView, onDelete, onDuplicate, onStatusChange, coverPhotos }) {
+function Pagination({ page, totalPages, onPage }) {
+  const pages = useMemo(() => {
+    const arr = [];
+    const delta = 2;
+    for (let i = Math.max(1, page - delta); i <= Math.min(totalPages, page + delta); i++) {
+      arr.push(i);
+    }
+    return arr;
+  }, [page, totalPages]);
+
+  return (
+    <div className="flex items-center justify-center gap-1.5 py-2">
+      <button
+        type="button"
+        disabled={page === 1}
+        onClick={() => onPage(page - 1)}
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 disabled:opacity-40"
+      >
+        <ChevronLeft size={16} />
+      </button>
+
+      {pages[0] > 1 && (
+        <>
+          <PageBtn n={1} current={page} onPage={onPage} />
+          {pages[0] > 2 && <span className="px-1 text-slate-400">…</span>}
+        </>
+      )}
+
+      {pages.map((n) => <PageBtn key={n} n={n} current={page} onPage={onPage} />)}
+
+      {pages[pages.length - 1] < totalPages && (
+        <>
+          {pages[pages.length - 1] < totalPages - 1 && <span className="px-1 text-slate-400">…</span>}
+          <PageBtn n={totalPages} current={page} onPage={onPage} />
+        </>
+      )}
+
+      <button
+        type="button"
+        disabled={page === totalPages}
+        onClick={() => onPage(page + 1)}
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 disabled:opacity-40"
+      >
+        <ChevronRight size={16} />
+      </button>
+    </div>
+  );
+}
+
+function PageBtn({ n, current, onPage }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onPage(n)}
+      className={`flex h-9 w-9 items-center justify-center rounded-xl border text-sm font-semibold transition ${
+        n === current
+          ? "border-sky-400 bg-sky-600 text-white shadow-sm"
+          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+      }`}
+    >
+      {n}
+    </button>
+  );
+}
+
+const TripCard = memo(function TripCard({ trip, onView, onDelete, onDuplicate, onStatusChange, coverPhotos }) {
   const { t } = useTranslation();
   const destination = trip.destination || t("common.notFound");
   const tripDays    = getTripDays(trip);
@@ -255,6 +347,11 @@ function TripCard({ trip, onView, onDelete, onDuplicate, onStatusChange, coverPh
   const gradient    = getDestGradient(destination);
   const status      = trip.status || "planning";
   const countdown   = getTripCountdown(trip.startDate, trip.endDate);
+  const id          = trip._id;
+  const handleView         = useCallback(() => onView(id),         [onView, id]);
+  const handleDelete       = useCallback(() => onDelete(id),       [onDelete, id]);
+  const handleDuplicate    = useCallback(() => onDuplicate(id),    [onDuplicate, id]);
+  const handleStatusChange = useCallback((s) => onStatusChange(id, s), [onStatusChange, id]);
 
   const photos = Array.isArray(coverPhotos) ? coverPhotos : (coverPhotos ? [coverPhotos] : []);
   const cityNames = trip.tripMode === "multi"
@@ -316,7 +413,7 @@ function TripCard({ trip, onView, onDelete, onDuplicate, onStatusChange, coverPh
             )}
           </div>
           <div className="mt-8">
-            <div className="line-clamp-1 text-2xl font-black tracking-tight text-white drop-shadow">{destination}</div>
+            <div className="line-clamp-1 text-xl font-black tracking-tight text-white drop-shadow sm:text-2xl">{destination}</div>
             {activeCity && (
               <div className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-white/90">
                 <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
@@ -361,7 +458,7 @@ function TripCard({ trip, onView, onDelete, onDuplicate, onStatusChange, coverPh
         {/* Status quick-change */}
         <div className="flex gap-1.5">
           {["planning", "upcoming", "completed"].map((s) => (
-            <button key={s} type="button" onClick={() => onStatusChange(s)}
+            <button key={s} type="button" onClick={() => handleStatusChange(s)}
               className={`flex-1 rounded-xl border py-1.5 text-[11px] font-semibold transition ${
                 status === s ? STATUS_BADGE[s] : "border-slate-200 bg-white text-slate-400 hover:text-slate-600"
               }`}>
@@ -372,15 +469,15 @@ function TripCard({ trip, onView, onDelete, onDuplicate, onStatusChange, coverPh
 
         {/* Actions */}
         <div className="grid grid-cols-3 gap-2">
-          <button onClick={onView} type="button"
+          <button onClick={handleView} type="button"
             className="flex items-center justify-center gap-1.5 rounded-2xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700">
             <Eye size={14} /> View
           </button>
-          <button onClick={onDuplicate} type="button"
+          <button onClick={handleDuplicate} type="button"
             className="flex items-center justify-center gap-1.5 rounded-2xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700">
             <Copy size={14} /> Copy
           </button>
-          <button onClick={onDelete} type="button"
+          <button onClick={handleDelete} type="button"
             className="flex items-center justify-center gap-1.5 rounded-2xl border border-red-100 bg-red-50 py-2.5 text-xs font-bold text-red-600 transition hover:border-red-300 hover:bg-red-100">
             <Trash2 size={14} /> Delete
           </button>
@@ -388,7 +485,7 @@ function TripCard({ trip, onView, onDelete, onDuplicate, onStatusChange, coverPh
       </div>
     </div>
   );
-}
+});
 
 function EmptyTrips({ onCreate, onClear, hasSearch }) {
   const { t } = useTranslation();

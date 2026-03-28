@@ -438,11 +438,35 @@ async function searchPixabay(query) {
 // ---------------------------------------------------------------------------
 
 /**
+ * When a place name is in Hebrew, resolve it to its English Wikipedia title
+ * BEFORE building search candidates. This ensures the main Wikipedia search
+ * path works correctly instead of falling through to a slow last-resort.
+ * e.g. "ירושלים" → "Jerusalem" → candidates: ["Jerusalem", "Jerusalem travel", ...]
+ */
+async function normalizeHebrewPlace(place) {
+  const raw = clean(place?.query || place?.title || place?.name || place?.destination || place?.placeName);
+  if (!raw || !isHebrew(raw)) return place;
+
+  const hebrewCity = raw.split(",")[0].trim();
+  const englishTitle = await resolveHebrewToEnglishTitle(hebrewCity);
+  if (!englishTitle) return place;
+
+  return {
+    ...place,
+    title:       englishTitle,
+    name:        englishTitle,
+    query:       englishTitle,
+    placeName:   englishTitle,
+    destination: englishTitle,
+  };
+}
+
+/**
  * Resolve photos for a list of places.
  * For each place, candidates are tried in priority order:
- *   1. Wikipedia (all candidates)
+ *   1. Wikipedia (all candidates — after Hebrew→English normalization)
  *   2. Pixabay (last 2 generic candidates only)
- *   3. Hebrew Wikipedia (if the raw query contains Hebrew characters)
+ *   3. Hebrew Wikipedia last resort (if resolution failed)
  *
  * @param {Array<object>} places — Array of place objects with title/name, location, address.
  * @returns {Promise<Array<{ title, location, address, query, matchedQuery, photoUrl, photoAttribution }>>}
@@ -450,7 +474,9 @@ async function searchPixabay(query) {
 export async function getPhotosForPlaces(places) {
   return Promise.all(
     places.map(async (place) => {
-      const candidates = buildQueryCandidates(place);
+      // Resolve Hebrew names to English before building candidates
+      const normalizedPlace = await normalizeHebrewPlace(place);
+      const candidates = buildQueryCandidates(normalizedPlace);
       const base = {
         title: clean(place?.title),
         location: clean(place?.location),
@@ -472,7 +498,6 @@ export async function getPhotosForPlaces(places) {
       }
 
       // 2) Pixabay fallback — only the last 2 generic candidates
-      //    (e.g. "Barcelona restaurant food" or "Barcelona travel")
       for (const candidate of candidates.slice(-2)) {
         const pix = await searchPixabay(candidate);
         if (pix?.photoUrl) {
@@ -486,7 +511,7 @@ export async function getPhotosForPlaces(places) {
         }
       }
 
-      // 3) Hebrew Wikipedia — handles trips stored with Hebrew destination names
+      // 3) Last resort: Hebrew Wikipedia if resolution failed above
       const rawQuery = clean(place?.query || place?.title);
       if (isHebrew(rawQuery)) {
         const heWiki = await searchHebrewWikipedia(rawQuery);

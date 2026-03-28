@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(1.5rem); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 :root {
   color-scheme: light;
 }

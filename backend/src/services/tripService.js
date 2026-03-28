@@ -218,11 +218,28 @@ export async function createTrip(userId, body) {
   });
 }
 
-export async function getTrips(userId) {
-  return Trip.find({ userId })
-    .select("destination destinations tripMode startDate endDate preferences itinerary.tripSummary status shareToken createdAt placeMeta multiCityMeta")
-    .sort({ createdAt: -1 })
-    .lean();
+export async function getTrips(userId, { page = 1, limit = 12, status, q } = {}) {
+  const filter = { userId };
+  if (status && status !== "all") filter.status = status;
+  if (q) {
+    filter.$or = [
+      { destination: { $regex: q, $options: "i" } },
+      { "preferences.interests": { $regex: q, $options: "i" } },
+    ];
+  }
+
+  const skip = (page - 1) * limit;
+  const [trips, total] = await Promise.all([
+    Trip.find(filter)
+      .select("destination destinations tripMode startDate endDate preferences itinerary.tripSummary status shareToken createdAt placeMeta multiCityMeta")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    Trip.countDocuments(filter),
+  ]);
+
+  return { trips, total, page, totalPages: Math.ceil(total / limit) };
 }
 
 export async function getTrip(id, userId) {

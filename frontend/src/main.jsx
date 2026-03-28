@@ -5,6 +5,7 @@ import App from "./App.jsx";
 import "./index.css";
 import { AuthProvider } from "./auth/AuthProvider.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
+import { ToastProvider } from "./components/UI.jsx";
 import axios from "axios";
 import "./i18n.js";
 
@@ -21,6 +22,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <ErrorBoundary>
       <AuthProvider>
         <App />
+        <ToastProvider />
       </AuthProvider>
     </ErrorBoundary>
   </React.StrictMode>

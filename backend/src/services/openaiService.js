@@ -757,11 +757,6 @@ Quality rules:
 - Food suggestions should be destination-specific.
 - Tips should be practical and concise.
 
-${language === "he" ? `Language rules:
-- Write ALL text fields in Hebrew (title, notes, foodSuggestion, backupPlan, tips, reason, style, budget).
-- Keep place names, addresses, and locations in their original language (English/local) so maps and search work correctly.
-- The "destination" field in tripSummary must stay in English/original.
-` : ""}
 Return only JSON.
 `.trim();
 }
@@ -821,4 +816,74 @@ export async function generateItinerary(payload) {
   data = normalizeAndFillLocations(data, payload);
 
   return data;
+}
+
+// ─── Trip Chat Assistant ──────────────────────────────────────────────────────
+
+function buildTripContext(trip) {
+  const destination = trip.destination || (trip.destinations || []).join(", ") || "Unknown";
+  const dates = trip.startDate && trip.endDate ? `${trip.startDate} to ${trip.endDate}` : "unknown dates";
+  const prefs = trip.preferences || {};
+  const days = trip.itinerary?.days || [];
+
+  const daysSummary = days
+    .map((d) => {
+      const activities = [
+        ...(d.morning || []),
+        ...(d.afternoon || []),
+        ...(d.evening || []),
+      ].map((a) => a.title).filter(Boolean);
+      return `Day ${d.day}${d.date ? ` (${d.date})` : ""}: ${activities.join(", ") || "No activities"}`;
+    })
+    .join("\n");
+
+  const tips = (trip.itinerary?.tips || []).join("; ");
+  const events = (trip.events || []).map((e) => `${e.name} on ${e.date}`).join(", ");
+
+  return [
+    `Destination: ${destination}`,
+    `Dates: ${dates}`,
+    `Budget: ${prefs.budget || "mid"}`,
+    `Pace: ${prefs.pace || "moderate"}`,
+    `Travelers: ${prefs.travelers?.count || 1}`,
+    prefs.interests?.length ? `Interests: ${prefs.interests.join(", ")}` : null,
+    "",
+    "Itinerary:",
+    daysSummary,
+    tips ? `\nTravel Tips: ${tips}` : null,
+    events ? `\nLocal Events: ${events}` : null,
+  ]
+    .filter((x) => x !== null)
+    .join("\n");
+}
+
+export async function chatWithTripAssistant({ trip, message, history = [] }) {
+  const tripContext = buildTripContext(trip);
+
+  const systemPrompt = `You are a knowledgeable and friendly AI travel assistant helping with a specific trip. You have full knowledge of the user's itinerary and can answer questions, suggest alternatives, provide tips, and help with any travel-related queries.
+
+Here is the trip details you are helping with:
+${tripContext}
+
+Guidelines:
+- Be concise but helpful (2-4 sentences per response unless more detail is needed)
+- Reference specific days, activities, or places from the itinerary when relevant
+- Suggest practical alternatives when asked
+- Be warm and enthusiastic about travel
+- If asked about something outside the trip context, still help as a general travel expert`;
+
+  const messages = [
+    { role: "system", content: systemPrompt },
+    ...history.slice(-10).map((m) => ({ role: m.role, content: m.content })),
+    { role: "user", content: message },
+  ];
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4.1-mini",
+    messages,
+    max_tokens: 400,
+    temperature: 0.7,
+  });
+
+  return response.choices[0]?.message?.content?.trim() || "Sorry, I couldn't generate a response. Please try again.";
 }

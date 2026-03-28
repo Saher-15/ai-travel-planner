@@ -23,6 +23,7 @@ import {
   updatePackingList,
   updateDayNote,
 } from "../services/tripService.js";
+import { chatWithTripAssistant } from "../services/openaiService.js";
 import { generateTripPDF } from "../services/pdfService.js";
 
 const router = express.Router();
@@ -110,8 +111,11 @@ router.get("/shared/:token", async (req, res) => {
 
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const trips = await getTrips(req.user.id);
-    return res.json(trips);
+    const page  = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 12));
+    const { status, q } = req.query;
+    const result = await getTrips(req.user.id, { page, limit, status, q });
+    return res.json(result);
   } catch {
     return res.status(500).json({ message: "Failed to fetch trips" });
   }
@@ -281,6 +285,31 @@ router.get("/:id/pdf", authMiddleware, async (req, res) => {
     console.error("PDF error:", err);
     if (!res.headersSent) return res.status(500).json({ message: "Failed to generate PDF" });
     return res.end();
+  }
+});
+
+// ─── AI Trip Chat ─────────────────────────────────────────────────────────────
+
+router.post("/:id/chat", authMiddleware, aiLimiter, async (req, res) => {
+  const { message, history } = req.body;
+  if (!message || typeof message !== "string" || !message.trim()) {
+    return res.status(400).json({ message: "message is required" });
+  }
+
+  try {
+    const trip = await getTrip(req.params.id, req.user.id);
+    if (!trip) return res.status(404).json({ message: "Trip not found" });
+
+    const reply = await chatWithTripAssistant({
+      trip,
+      message: message.trim(),
+      history: Array.isArray(history) ? history : [],
+    });
+
+    return res.json({ reply });
+  } catch (err) {
+    console.error("Trip chat error:", err);
+    return res.status(500).json({ message: "Failed to get AI response. Please try again." });
   }
 });
 

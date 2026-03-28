@@ -364,7 +364,7 @@ export default function Layout({ children }) {
 
             {/* Desktop right */}
             <div className="hidden items-center gap-3 lg:flex">
-              {isLoggedIn ? (
+                {isLoggedIn ? (
                 <>
                   <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/8 px-3 py-1.5">
                     <span className="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-linear-to-br from-sky-500 to-blue-600 text-xs font-bold text-white shadow-sm">

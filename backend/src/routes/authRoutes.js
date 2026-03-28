@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { User } from "../models/User.js";
-import { JWT_ACCESS_SECRET, APP_URL } from "../config.js";
+import { JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, APP_URL } from "../config.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import { sendEmail } from "../utils/email.js";
 import {
@@ -16,6 +16,18 @@ const router = express.Router();
 // Strong password regex
 const strongPassword =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+const COOKIE_OPTS = {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+};
+
+function issueTokens(userId) {
+  const accessToken = jwt.sign({ userId }, JWT_ACCESS_SECRET, { expiresIn: "15m" });
+  const refreshToken = jwt.sign({ userId }, JWT_REFRESH_SECRET, { expiresIn: "7d" });
+  return { accessToken, refreshToken };
+}
 
 /* ============================
    REGISTER
@@ -171,16 +183,13 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign({ userId: user._id }, JWT_ACCESS_SECRET, {
-      expiresIn: "1d",
-    });
+    const { accessToken, refreshToken } = issueTokens(user._id);
+    user.refreshTokenHash = await bcrypt.hash(refreshToken, 8);
+    await user.save();
 
     return res
-      .cookie("token", token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-      })
+      .cookie("token", accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 * 1000 })
+      .cookie("refreshToken", refreshToken, { ...COOKIE_OPTS, maxAge: 7 * 24 * 60 * 60 * 1000 })
       .json({
         message: "Logged in",
         user: {
@@ -193,6 +202,51 @@ router.post("/login", async (req, res) => {
       });
   } catch (err) {
     console.error("LOGIN ERROR:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ============================
+   REFRESH TOKEN
+============================ */
+router.post("/refresh", async (req, res) => {
+  try {
+    const incoming = req.cookies?.refreshToken;
+    if (!incoming) {
+      return res.status(401).json({ message: "No refresh token" });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(incoming, JWT_REFRESH_SECRET);
+    } catch {
+      return res.status(401).json({ message: "Invalid or expired refresh token" });
+    }
+
+    const user = await User.findById(decoded.userId);
+    if (!user || !user.refreshTokenHash) {
+      return res.status(401).json({ message: "Session revoked" });
+    }
+
+    const valid = await bcrypt.compare(incoming, user.refreshTokenHash);
+    if (!valid) {
+      // Possible token reuse — revoke all sessions
+      user.refreshTokenHash = undefined;
+      await user.save();
+      return res.status(401).json({ message: "Token reuse detected. Please log in again." });
+    }
+
+    // Rotate: issue new pair
+    const { accessToken, refreshToken: newRefresh } = issueTokens(user._id);
+    user.refreshTokenHash = await bcrypt.hash(newRefresh, 8);
+    await user.save();
+
+    return res
+      .cookie("token", accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 * 1000 })
+      .cookie("refreshToken", newRefresh, { ...COOKIE_OPTS, maxAge: 7 * 24 * 60 * 60 * 1000 })
+      .json({ message: "Token refreshed" });
+  } catch (err) {
+    console.error("REFRESH ERROR:", err);
     return res.status(500).json({ message: "Server error" });
   }
 });
@@ -280,6 +334,8 @@ router.post("/reset-password/:token", async (req, res) => {
     user.passwordHash = await bcrypt.hash(newPassword, 10);
     user.resetToken = undefined;
     user.resetTokenExpires = undefined;
+    // Revoke all refresh sessions on password reset
+    user.refreshTokenHash = undefined;
     await user.save();
 
     return res.json({ message: "Password reset successful" });
@@ -292,13 +348,18 @@ router.post("/reset-password/:token", async (req, res) => {
 /* ============================
    LOGOUT
 ============================ */
-router.post("/logout", (req, res) => {
+router.post("/logout", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (user) {
+      user.refreshTokenHash = undefined;
+      await user.save();
+    }
+  } catch { /* best-effort */ }
+
   return res
-    .clearCookie("token", {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-    })
+    .clearCookie("token", COOKIE_OPTS)
+    .clearCookie("refreshToken", COOKIE_OPTS)
     .json({ message: "Logged out" });
 });
 

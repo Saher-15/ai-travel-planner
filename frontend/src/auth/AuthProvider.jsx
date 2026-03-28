@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api/client";
 
 const AuthCtx = createContext(null);
@@ -16,28 +16,37 @@ function normalizeUser(u) {
 export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [user, setUserState] = useState(null);
+  // Track if a refresh is already in flight to avoid concurrent calls
+  const refreshingRef = useRef(null);
 
   const setUser = useCallback((u) => {
     setUserState(u ? normalizeUser(u) : null);
   }, []);
 
   const refresh = useCallback(async () => {
+    // Deduplicate concurrent refresh calls
+    if (refreshingRef.current) return refreshingRef.current;
+
     setLoading(true);
+    const promise = api
+      .get("/auth/me", { withCredentials: true })
+      .then(({ data }) => {
+        const rawUser = data?.user || data || null;
+        setUser(rawUser);
+      })
+      .catch((err) => {
+        if (err?.response?.status !== 401) {
+          console.error("Auth refresh error:", err);
+        }
+        setUser(null);
+      })
+      .finally(() => {
+        setLoading(false);
+        refreshingRef.current = null;
+      });
 
-    try {
-      const { data } = await api.get("/auth/me", { withCredentials: true });
-
-      // supports either { user: {...} } or direct user object
-      const rawUser = data?.user || data || null;
-      setUser(rawUser);
-    } catch (err) {
-      if (err?.response?.status !== 401) {
-        console.error("Auth refresh error:", err);
-      }
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
+    refreshingRef.current = promise;
+    return promise;
   }, [setUser]);
 
   const logout = useCallback(async () => {
@@ -53,6 +62,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  // Listen for silent-refresh failure from api/client.js
+  useEffect(() => {
+    function handleExpiry() { setUser(null); }
+    window.addEventListener("auth:expired", handleExpiry);
+    return () => window.removeEventListener("auth:expired", handleExpiry);
+  }, [setUser]);
 
   const value = useMemo(
     () => ({

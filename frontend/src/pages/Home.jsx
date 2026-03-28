@@ -389,7 +389,7 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 xl:grid-cols-8">
           {DESTINATIONS.map((d) => (
             <button
               key={d.city}
@@ -418,7 +418,7 @@ export default function Home() {
       </section>
 
       {/* ── Why use us ── */}
-      <section className="-mx-4 md:-mx-6 px-4 md:px-6 py-16 mt-16 bg-linear-to-br from-slate-900 via-slate-800 to-indigo-950">
+      <section className="-mx-4 md:-mx-6 px-4 md:px-6 py-10 mt-16 sm:py-14 lg:py-16 bg-linear-to-br from-slate-900 via-slate-800 to-indigo-950">
         <div className="mb-8 text-center">
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sky-400">{t("home.features.badge")}</p>
           <h2 className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">
@@ -473,7 +473,7 @@ export default function Home() {
       </section>
 
       {/* ── CTA banner ── */}
-      <section className="relative mt-16 overflow-hidden rounded-3xl bg-linear-to-br from-sky-600 via-blue-600 to-indigo-700 px-8 py-16 text-white shadow-[0_20px_80px_-20px_rgba(37,99,235,0.6)] sm:px-12">
+      <section className="relative mt-16 overflow-hidden rounded-3xl bg-linear-to-br from-sky-600 via-blue-600 to-indigo-700 px-5 py-10 text-white shadow-[0_20px_80px_-20px_rgba(37,99,235,0.6)] sm:px-8 sm:py-16 lg:px-12">
         <div className="absolute -left-10 -top-10 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
         <div className="absolute -bottom-8 -right-8 h-56 w-56 rounded-full bg-cyan-400/15 blur-3xl" />
         <div className="relative flex flex-col items-center gap-6 text-center sm:flex-row sm:justify-between sm:text-left">

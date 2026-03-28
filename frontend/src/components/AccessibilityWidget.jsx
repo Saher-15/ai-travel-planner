@@ -177,11 +177,21 @@ export default function AccessibilityWidget() {
           aria-haspopup="dialog"
           className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg shadow-slate-900/30 transition hover:scale-105 hover:bg-slate-800 hover:shadow-xl focus-visible:outline-2 focus-visible:outline-sky-500 focus-visible:outline-offset-2"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} className="h-6 w-6" aria-hidden="true">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 8v4m0 4h.01" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M9 11l3-3 3 3" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="12" cy="7" r="1" fill="currentColor" />
+          {/* Universal accessibility symbol */}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6" aria-hidden="true">
+            {/* Head */}
+            <circle cx="12" cy="3.5" r="1.5" />
+            {/* Torso + arm reaching forward */}
+            <path d="M12 5.5v4.5" />
+            <path d="M9 8h6" />
+            {/* Leg bent at knee (seated) */}
+            <path d="M12 10v3h3" />
+            {/* Large rear wheel */}
+            <circle cx="10" cy="17" r="3.5" />
+            {/* Small front caster */}
+            <circle cx="16" cy="19" r="1.2" />
+            {/* Seat / footrest */}
+            <path d="M10 13.5h5l1 3" />
           </svg>
         </button>
       </div>

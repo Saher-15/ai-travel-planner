@@ -1,3 +1,5 @@
+import { useCallback, useState } from "react";
+
 const cx = (...classes) => classes.filter(Boolean).join(" ");
 
 export function Card({ children, className = "" }) {
@@ -159,4 +161,85 @@ export function Alert({ type = "info", children, className = "" }) {
       {children}
     </div>
   );
+}
+
+// ── Spinner ────────────────────────────────────────────────────────────────────
+
+export function Spinner({ size = 20, className = "" }) {
+  return (
+    <svg
+      className={cx("animate-spin text-sky-500", className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+    </svg>
+  );
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────────
+
+const ICONS = {
+  success: "✓",
+  error:   "✕",
+  warning: "⚠",
+  info:    "ℹ",
+};
+
+const TOAST_STYLES = {
+  success: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  error:   "border-rose-200   bg-rose-50   text-rose-800",
+  warning: "border-amber-200  bg-amber-50  text-amber-800",
+  info:    "border-sky-200    bg-sky-50    text-sky-800",
+};
+
+let _setToasts = null;
+
+export function ToastProvider() {
+  const [toasts, setToasts] = useState([]);
+  _setToasts = setToasts;
+
+  return (
+    <div className="fixed bottom-5 right-5 z-9999 flex flex-col gap-2 sm:bottom-6 sm:right-6">
+      {toasts.map((t) => (
+        <div
+          key={t.id}
+          className={cx(
+            "flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm font-medium shadow-lg",
+            "animate-[slideInRight_0.2s_ease-out]",
+            TOAST_STYLES[t.type] || TOAST_STYLES.info
+          )}
+        >
+          <span className="mt-0.5 shrink-0 text-base font-bold">{ICONS[t.type]}</span>
+          <span className="leading-relaxed">{t.message}</span>
+          <button
+            type="button"
+            onClick={() => setToasts((prev) => prev.filter((x) => x.id !== t.id))}
+            className="ml-2 shrink-0 opacity-60 transition hover:opacity-100"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function toast(message, type = "info", duration = 4000) {
+  if (!_setToasts) return;
+  const id = Date.now() + Math.random();
+  _setToasts((prev) => [...prev, { id, message, type }]);
+  setTimeout(() => {
+    _setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, duration);
+}
+
+export function useToast() {
+  return useCallback((message, type = "info", duration = 4000) => {
+    toast(message, type, duration);
+  }, []);
 }

@@ -377,6 +377,34 @@ async function searchPixabay(query) {
 }
 
 // ------------------------------
+// Hebrew-to-English normalization
+// When a place name is in Hebrew, resolve it to its English Wikipedia title
+// BEFORE building search candidates, so the main Wikipedia path works correctly.
+// e.g. "ברצלונה" → "Barcelona" → candidates include "Barcelona travel" etc.
+// ------------------------------
+async function normalizeHebrewPlace(place) {
+  const raw = clean(place?.query || place?.title || place?.name || place?.destination || place?.placeName);
+  if (!raw || !isHebrew(raw)) return place;
+
+  // Take only the city part ("ברצלונה, ספרד" → "ברצלונה")
+  const hebrewCity = raw.split(",")[0].trim();
+  const englishTitle = await resolveHebrewToEnglishTitle(hebrewCity);
+  if (!englishTitle) return place; // could not resolve — keep original, Hebrew fallback handles it
+
+  // Replace all text fields with the English title so buildQueryCandidates
+  // generates proper English candidates for Wikipedia and Pixabay.
+  return {
+    ...place,
+    title:      englishTitle,
+    name:       englishTitle,
+    query:      englishTitle,
+    placeName:  englishTitle,
+    destination: englishTitle,
+    // Preserve location/address so city-extraction still works
+  };
+}
+
+// ------------------------------
 // Main Route
 // ------------------------------
 router.post("/photos", async (req, res) => {
@@ -389,7 +417,9 @@ router.post("/photos", async (req, res) => {
 
     const results = await Promise.all(
       places.map(async (place) => {
-        const candidates = buildQueryCandidates(place);
+        // Resolve Hebrew names to English first so Wikipedia search works normally
+        const normalizedPlace = await normalizeHebrewPlace(place);
+        const candidates = buildQueryCandidates(normalizedPlace);
         const base = {
           title: clean(place?.title),
           location: clean(place?.location),
@@ -404,9 +434,8 @@ router.post("/photos", async (req, res) => {
           }
         }
 
-        // 2) Pixabay fallback — but ONLY with the last 2 generic candidates:
+        // 2) Pixabay fallback — only the last 2 generic candidates
         //    e.g. "Barcelona restaurant food" or "Barcelona travel"
-        //    These are always city/category level, never wrong specific names.
         for (const candidate of candidates.slice(-2)) {
           const pix = await searchPixabay(candidate);
           if (pix?.photoUrl) {
@@ -414,8 +443,8 @@ router.post("/photos", async (req, res) => {
           }
         }
 
-        // 3) Hebrew Wikipedia — handles existing trips where destination is stored in Hebrew
-        //    e.g. "ברצלונה, ספרד" or "נפולי, איטליה"
+        // 3) Last resort: if the original query was Hebrew and resolution failed,
+        //    try Hebrew Wikipedia directly
         const rawQuery = clean(place?.query || place?.title);
         if (isHebrew(rawQuery)) {
           const heWiki = await searchHebrewWikipedia(rawQuery);
