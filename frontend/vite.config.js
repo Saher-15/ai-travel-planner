@@ -63,13 +63,26 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          "vendor-react":  ["react", "react-dom"],
-          "vendor-router": ["react-router-dom"],
-          "vendor-map":    ["@maptiler/sdk", "@maptiler/client"],
-          "vendor-i18n":   ["i18next", "react-i18next"],
-          "vendor-icons":  ["lucide-react"],
-          "vendor-http":   ["axios"],
+        manualChunks(id) {
+          // Stable vendor chunks — browsers cache these across deployments
+          if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/") || id.includes("node_modules/scheduler/")) {
+            return "vendor-react";
+          }
+          if (id.includes("node_modules/react-router") || id.includes("node_modules/@remix-run/")) {
+            return "vendor-router";
+          }
+          if (id.includes("node_modules/@maptiler/")) {
+            return "vendor-map";
+          }
+          if (id.includes("node_modules/i18next") || id.includes("node_modules/react-i18next")) {
+            return "vendor-i18n";
+          }
+          if (id.includes("node_modules/lucide-react")) {
+            return "vendor-icons";
+          }
+          if (id.includes("node_modules/axios")) {
+            return "vendor-http";
+          }
         },
       },
     },

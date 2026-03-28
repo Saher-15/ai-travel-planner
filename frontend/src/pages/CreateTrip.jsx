@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -26,7 +26,7 @@ import {
   Input,
   Select,
 } from "../components/UI.jsx";
-import MapTilerMap from "../components/MapTilerMap.jsx";
+const MapTilerMap = lazy(() => import("../components/MapTilerMap.jsx"));
 import CityAutoComplete from "../components/CityAutoComplete.jsx";
 
 const interestOptions = [
@@ -1411,7 +1411,9 @@ export default function CreateTrip() {
 
             <CardBody className="space-y-4 bg-linear-to-b from-white to-slate-50/60">
               <div className="overflow-hidden rounded-3xl border border-slate-200 shadow-sm">
-                <MapTilerMap query={mapQuery} height={400} />
+                <Suspense fallback={<div className="flex h-100 items-center justify-center bg-slate-100 text-sm text-slate-400">Loading map…</div>}>
+                  <MapTilerMap query={mapQuery} height={400} />
+                </Suspense>
               </div>
 
               <div className="rounded-3xl border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
