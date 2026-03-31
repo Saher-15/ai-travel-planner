@@ -63,7 +63,7 @@ export default function Profile() {
   const [firstName,         setFirstName]         = useState(user?.firstName || "");
   const [lastName,          setLastName]           = useState(user?.lastName  || "");
   const [nationality,       setNationality]        = useState(user?.nationality || "");
-  const [phone,             setPhone]              = useState(user?.phone || "");
+
   const [dateOfBirth,       setDateOfBirth]        = useState(user?.dateOfBirth || "");
   const [travelStyle,       setTravelStyle]        = useState(user?.travelStyle || "");
   const [preferredCurrency, setPreferredCurrency]  = useState(user?.preferredCurrency || "");
@@ -89,16 +89,13 @@ export default function Profile() {
       showMessage("First and last name are required", "error");
       return;
     }
-    if (phone && (phone.length < 7 || phone.length > 15)) {
-      showMessage("Phone number must be between 7 and 15 digits", "error");
-      return;
-    }
+
     setProfileLoading(true);
     try {
       const { data } = await api.patch("/auth/profile", {
         firstName: firstName.trim(),
         lastName:  lastName.trim(),
-        nationality, phone, dateOfBirth, travelStyle, preferredCurrency,
+        nationality, dateOfBirth, travelStyle, preferredCurrency,
       });
       setUser(data.user);
       showMessage("Profile updated successfully");
@@ -314,37 +311,14 @@ export default function Profile() {
                 {/* Email (read-only) */}
                 <Input label={t("common.email")} value={user?.email || ""} readOnly className="bg-slate-50 text-slate-600" />
 
-                {/* Nationality + Phone */}
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Nationality</label>
-                    <select value={nationality} onChange={(e) => setNationality(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100">
-                      <option value="">Select country…</option>
-                      {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Phone number</label>
-                    <div className="flex gap-2">
-                      <span className="flex items-center rounded-2xl border border-slate-200 bg-slate-100 px-3 text-sm font-semibold text-slate-500 select-none">+</span>
-                      <input value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))} placeholder="1 555 000 0000" type="tel" inputMode="numeric" autoComplete="tel" maxLength={15}
-                        className={`w-full rounded-2xl border bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:bg-white focus:ring-4 ${
-                          phone.length === 0 ? "border-slate-200 focus:border-sky-400 focus:ring-sky-100"
-                          : phone.length >= 7 && phone.length <= 15 ? "border-emerald-400 focus:border-emerald-400 focus:ring-emerald-100"
-                          : "border-red-400 focus:border-red-400 focus:ring-red-100"
-                        }`} />
-                    </div>
-                    {phone.length > 0 && (
-                      <p className={`text-xs font-medium ${phone.length >= 7 && phone.length <= 15 ? "text-emerald-600" : "text-red-500"}`}>
-                        {phone.length >= 7 && phone.length <= 15
-                          ? `✓ Valid (${phone.length} digits)`
-                          : phone.length < 7
-                          ? `Too short — minimum 7 digits (${phone.length}/7)`
-                          : `Too long — maximum 15 digits (${phone.length}/15)`}
-                      </p>
-                    )}
-                  </div>
+                {/* Nationality */}
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-slate-700">Nationality</label>
+                  <select value={nationality} onChange={(e) => setNationality(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100">
+                    <option value="">Select country…</option>
+                    {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
                 </div>
 
                 {/* Date of birth + Currency */}
