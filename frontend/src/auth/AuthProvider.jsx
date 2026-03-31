@@ -67,9 +67,15 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     try {
-      await api.post("/auth/logout", null, { withCredentials: true });
-    } catch (err) {
-      console.error("Logout error:", err);
+      // Send refresh token in body so the server can revoke the session
+      // even on iOS where cross-site cookies are blocked.
+      await api.post(
+        "/auth/logout",
+        { refreshToken: tokenStore.getRefresh() || undefined },
+        { withCredentials: true },
+      );
+    } catch {
+      // best-effort — client-side cleanup always happens
     } finally {
       tokenStore.clearTokens();
       setUser(null);

@@ -326,14 +326,10 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-          {DESTINATIONS.map((d, i) => (
+          {DESTINATIONS.map((d) => (
             <button key={d.city} onClick={() => goToCreate(d.city)}
-              className={cx(
-                "group relative overflow-hidden rounded-2xl bg-slate-200 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-900/15",
-                // Make first card span 2 rows on desktop for visual interest
-                i === 0 ? "sm:row-span-2" : ""
-              )}>
-              <div className={cx("overflow-hidden", i === 0 ? "aspect-square sm:h-full" : "aspect-video sm:aspect-3/4")}>
+              className="group relative overflow-hidden rounded-2xl bg-slate-200 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-900/15">
+              <div className="aspect-video overflow-hidden">
                 <img src={d.photo} alt={d.city}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   loading="lazy" />

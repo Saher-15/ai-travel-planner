@@ -15,7 +15,7 @@ export default function Login() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const nav = useNavigate();
-  const { refresh } = useAuth();
+  const { setUser } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,7 +37,9 @@ export default function Login() {
     setLoading(true);
     try {
       const { data } = await api.post("/auth/login", { email: cleanEmail, password }, { withCredentials: true });
-      await refresh();
+      // Set user directly from login response — avoids a second /auth/me round-trip
+      // that is timing-sensitive on iOS (localStorage token commit vs. request interceptor).
+      setUser(data.user);
       nav(data?.user?.verified === false ? "/profile" : "/");
     } catch (e2) {
       setErr(e2?.response?.status === 429

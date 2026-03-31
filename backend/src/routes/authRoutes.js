@@ -352,12 +352,18 @@ router.post("/reset-password/:token", async (req, res) => {
 /* ============================
    LOGOUT
 ============================ */
-router.post("/logout", authMiddleware, async (req, res) => {
+// No authMiddleware — accept the refresh token to revoke the session even
+// when the short-lived access token has already expired (common on iOS).
+router.post("/logout", async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    if (user) {
-      user.refreshTokenHash = undefined;
-      await user.save();
+    const incoming = req.cookies?.refreshToken || req.body?.refreshToken;
+    if (incoming) {
+      let decoded;
+      try { decoded = jwt.verify(incoming, JWT_REFRESH_SECRET); } catch { /* expired is fine */ }
+      if (decoded?.userId) {
+        const user = await User.findById(decoded.userId);
+        if (user) { user.refreshTokenHash = undefined; await user.save(); }
+      }
     }
   } catch { /* best-effort */ }
 
