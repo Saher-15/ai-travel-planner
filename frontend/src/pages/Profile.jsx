@@ -89,6 +89,10 @@ export default function Profile() {
       showMessage("First and last name are required", "error");
       return;
     }
+    if (phone && (phone.length < 7 || phone.length > 15)) {
+      showMessage("Phone number must be between 7 and 15 digits", "error");
+      return;
+    }
     setProfileLoading(true);
     try {
       const { data } = await api.patch("/auth/profile", {
@@ -322,8 +326,24 @@ export default function Profile() {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-semibold text-slate-700">Phone number</label>
-                    <input value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))} placeholder="15550000000" type="tel" inputMode="numeric" autoComplete="tel"
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100" />
+                    <div className="flex gap-2">
+                      <span className="flex items-center rounded-2xl border border-slate-200 bg-slate-100 px-3 text-sm font-semibold text-slate-500 select-none">+</span>
+                      <input value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))} placeholder="1 555 000 0000" type="tel" inputMode="numeric" autoComplete="tel" maxLength={15}
+                        className={`w-full rounded-2xl border bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:bg-white focus:ring-4 ${
+                          phone.length === 0 ? "border-slate-200 focus:border-sky-400 focus:ring-sky-100"
+                          : phone.length >= 7 && phone.length <= 15 ? "border-emerald-400 focus:border-emerald-400 focus:ring-emerald-100"
+                          : "border-red-400 focus:border-red-400 focus:ring-red-100"
+                        }`} />
+                    </div>
+                    {phone.length > 0 && (
+                      <p className={`text-xs font-medium ${phone.length >= 7 && phone.length <= 15 ? "text-emerald-600" : "text-red-500"}`}>
+                        {phone.length >= 7 && phone.length <= 15
+                          ? `✓ Valid (${phone.length} digits)`
+                          : phone.length < 7
+                          ? `Too short — minimum 7 digits (${phone.length}/7)`
+                          : `Too long — maximum 15 digits (${phone.length}/15)`}
+                      </p>
+                    )}
                   </div>
                 </div>
 
