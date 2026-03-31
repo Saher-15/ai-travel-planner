@@ -622,7 +622,7 @@ export default function ViewTrip() {
       />
 
       {/* ── Feature grid navigation ── */}
-      <div className="mt-4 grid grid-cols-3 gap-1.5 min-[480px]:grid-cols-4 sm:gap-2 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-6">
+      <div className="mt-4 grid grid-cols-5 gap-1.5 sm:gap-2">
         {PANELS.map((p) => {
           const active = activePanel === p.id;
           return (
