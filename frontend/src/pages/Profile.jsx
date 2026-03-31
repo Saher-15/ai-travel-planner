@@ -322,7 +322,7 @@ export default function Profile() {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-semibold text-slate-700">Phone number</label>
-                    <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 555 000 0000" type="tel" autoComplete="tel"
+                    <input value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))} placeholder="15550000000" type="tel" inputMode="numeric" autoComplete="tel"
                       className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100" />
                   </div>
                 </div>
