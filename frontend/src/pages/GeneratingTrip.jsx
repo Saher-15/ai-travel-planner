@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { CalendarDays, Compass, MapPinned, PlaneTakeoff, Sparkles, Stars, UtensilsCrossed, Wand2 } from "lucide-react";
 import { api } from "../api/client.js";
 import { Alert, Button } from "../components/UI.jsx";
+import UpgradeBanner from "../components/UpgradeBanner.jsx";
 import { useTranslation } from "react-i18next";
 
 const TIPS = [
@@ -59,6 +60,8 @@ export default function GeneratingTrip() {
     return () => { clearInterval(stepId); clearInterval(tipId); };
   }, [payload]);
 
+  const [upgradeErr, setUpgradeErr] = useState(null);
+
   useEffect(() => {
     if (!payload || processedRef.current) return;
     processedRef.current = true;
@@ -70,8 +73,13 @@ export default function GeneratingTrip() {
         nav(`/trip/${trip._id}`, { replace: true });
       } catch (e) {
         if (navigatedRef.current) return;
-        const isTimeout = e?.code === "ECONNABORTED" || e?.message?.includes("timeout");
-        const isAuth    = e?.response?.status === 401;
+        const isTimeout  = e?.code === "ECONNABORTED" || e?.message?.includes("timeout");
+        const isAuth     = e?.response?.status === 401;
+        const isUpgrade  = e?.response?.status === 403 && e?.response?.data?.upgradeRequired;
+        if (isUpgrade) {
+          setUpgradeErr(e.response.data);
+          return;
+        }
         setErr(
           isTimeout ? "Generation timed out — the AI is busy. Please try again." :
           isAuth    ? "Session expired. Please log in and try again." :
@@ -83,6 +91,23 @@ export default function GeneratingTrip() {
   }, [payload, nav]);
 
   const progress = Math.round(((activeStep + 1) / STEPS.length) * 100);
+
+  if (upgradeErr) {
+    return (
+      <div className="flex min-h-[calc(100vh-96px)] items-center justify-center px-4">
+        <div className="w-full max-w-md space-y-4">
+          <div className="text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-3xl">🔒</div>
+            <h2 className="mt-3 text-xl font-black text-slate-900">Plan limit reached</h2>
+          </div>
+          <UpgradeBanner message={upgradeErr.message} feature={upgradeErr.feature} />
+          <Button variant="secondary" onClick={() => nav("/create")} className="w-full">
+            ← Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (err) {
     return (

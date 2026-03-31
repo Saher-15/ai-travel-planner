@@ -10,14 +10,19 @@ import { getPlanLimits, isSameMonth } from "../utils/planLimits.js";
  *   requireFeature("sharing")
  *   requireFeature("aiGen")    — checks monthly AI generation quota AND increments it on pass
  *   requireFeature("saveTrip") — checks saved-trip count limit
+ *
+ * Admins bypass all plan limits.
  */
 export function requireFeature(feature) {
   return async (req, res, next) => {
     try {
       const user = await User.findById(req.user.id).select(
-        "plan aiGenerationsThisMonth aiGenerationsResetAt"
+        "plan role aiGenerationsThisMonth aiGenerationsResetAt"
       );
       if (!user) return res.status(404).json({ message: "User not found" });
+
+      // Admins have no limits — bypass everything
+      if (user.role === "admin") return next();
 
       const plan   = user.plan || "free";
       const limits = getPlanLimits(plan);

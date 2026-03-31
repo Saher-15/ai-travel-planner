@@ -11,6 +11,7 @@ import {
   CardBody,
   CardHeader,
 } from "../components/UI.jsx";
+import UpgradeBanner from "../components/UpgradeBanner.jsx";
 import { clamp, fmtRange } from "../utils/helpers.js";
 
 const BLOCKS = ["morning", "afternoon", "evening"];
@@ -387,6 +388,7 @@ export default function ViewTrip() {
   const [activePanel, setActivePanel] = useState("itinerary");
   const [openDays, setOpenDays] = useState({});
   const [downloadError, setDownloadError] = useState("");
+  const [upgradeErr, setUpgradeErr] = useState(null);
   const [shareToken, setShareToken] = useState(null);
   const [tripStatus, setTripStatus] = useState("planning");
   const [shareOpen, setShareOpen] = useState(false);
@@ -403,11 +405,16 @@ export default function ViewTrip() {
 
   const handleShare = useCallback(async () => {
     setShareBusy(true);
+    setUpgradeErr(null);
     try {
       const { data } = await api.post(`/trips/${id}/share`);
       setShareToken(data.shareToken);
       setShareOpen(true);
-    } catch { /* silent */ }
+    } catch (e) {
+      if (e?.response?.status === 403 && e?.response?.data?.upgradeRequired) {
+        setUpgradeErr(e.response.data);
+      }
+    }
     finally { setShareBusy(false); }
   }, [id]);
 
@@ -526,6 +533,7 @@ export default function ViewTrip() {
 
   const downloadPDF = async () => {
     setDownloadError("");
+    setUpgradeErr(null);
 
     try {
       const res = await api.get(`/trips/${id}/pdf`, { responseType: "blob" });
@@ -554,9 +562,13 @@ export default function ViewTrip() {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Download PDF error:", err);
-      setDownloadError(
-        err?.response?.data?.message || err?.message || t("viewTrip.failedDownloadPDF")
-      );
+      if (err?.response?.status === 403 && err?.response?.data?.upgradeRequired) {
+        setUpgradeErr(err.response.data);
+      } else {
+        setDownloadError(
+          err?.response?.data?.message || err?.message || t("viewTrip.failedDownloadPDF")
+        );
+      }
     }
   };
 
@@ -596,6 +608,7 @@ export default function ViewTrip() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       {downloadError ? <Alert type="error" className="mb-4">{downloadError}</Alert> : null}
+      {upgradeErr ? <div className="mb-4"><UpgradeBanner message={upgradeErr.message} feature={upgradeErr.feature} onDismiss={() => setUpgradeErr(null)} /></div> : null}
 
       {/* ── Trip header ── */}
       <Header
@@ -1995,12 +2008,19 @@ function PackingListSection({ tripId }) {
     persistList(updated);
   };
 
+  const [packingUpgradeErr, setPackingUpgradeErr] = useState(null);
+
   const generate = async () => {
     setGenerating(true);
+    setPackingUpgradeErr(null);
     try {
       const { data } = await api.post(`/trips/${tripId}/packing/generate`);
       setList(data.packingList || []);
-    } catch { /* silent */ }
+    } catch (e) {
+      if (e?.response?.status === 403 && e?.response?.data?.upgradeRequired) {
+        setPackingUpgradeErr(e.response.data);
+      }
+    }
     finally { setGenerating(false); }
   };
 
@@ -2025,6 +2045,11 @@ function PackingListSection({ tripId }) {
         }
       />
       <CardBody>
+        {packingUpgradeErr && (
+          <div className="mb-4">
+            <UpgradeBanner message={packingUpgradeErr.message} feature={packingUpgradeErr.feature} onDismiss={() => setPackingUpgradeErr(null)} />
+          </div>
+        )}
         {list.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
             <p className="text-sm text-slate-500">No packing list yet. Generate one with AI based on your trip details.</p>
