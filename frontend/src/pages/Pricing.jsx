@@ -47,7 +47,6 @@ const PLANS = [
       { label: "PDF export",                      included: true },
       { label: "AI packing list",                 included: true },
       { label: "Trip sharing",                    included: true },
-      { label: "Unlimited saved trips",           included: true },
       { label: "Priority support",                included: false },
     ],
   },
@@ -69,7 +68,6 @@ const PLANS = [
       { label: "PDF export",                      included: true },
       { label: "AI packing list",                 included: true },
       { label: "Trip sharing",                    included: true },
-      { label: "Unlimited saved trips",           included: true },
       { label: "Priority support",                included: true },
     ],
   },
@@ -290,7 +288,13 @@ export default function Pricing() {
       const { data } = await api.post("/subscription/checkout", { plan: planId });
       window.location.href = data.url;
     } catch (err) {
-      setError(err?.response?.data?.message || "Failed to start checkout.");
+      const status = err?.response?.status;
+      const msg    = err?.response?.data?.message;
+      setError(
+        status === 503
+          ? "Payments are not configured yet. Please try again later or contact support."
+          : msg || "Failed to start checkout. Please try again."
+      );
       setLoadingPlan(null);
     }
   }
@@ -302,7 +306,12 @@ export default function Pricing() {
       const { data } = await api.post("/subscription/portal");
       window.location.href = data.url;
     } catch (err) {
-      setError(err?.response?.data?.message || "Failed to open billing portal.");
+      const status = err?.response?.status;
+      setError(
+        status === 503
+          ? "Billing portal is not configured yet. Please contact support."
+          : err?.response?.data?.message || "Failed to open billing portal."
+      );
       setLoadingPlan(null);
     }
   }
