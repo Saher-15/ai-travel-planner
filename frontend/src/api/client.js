@@ -6,6 +6,28 @@ export const api = axios.create({
   timeout: 30_000,
 });
 
+// ── Token storage (for iOS PWA — WebKit blocks cross-site cookies) ────────────
+
+const TOKEN_KEY   = "auth_token";
+const REFRESH_KEY = "auth_refresh";
+
+export const tokenStore = {
+  getAccess:      ()        => localStorage.getItem(TOKEN_KEY),
+  getRefresh:     ()        => localStorage.getItem(REFRESH_KEY),
+  setTokens:      (a, r)    => { localStorage.setItem(TOKEN_KEY, a); if (r) localStorage.setItem(REFRESH_KEY, r); },
+  clearTokens:    ()        => { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(REFRESH_KEY); },
+};
+
+// ── Attach Authorization header when a token is stored ───────────────────────
+api.interceptors.request.use((config) => {
+  const token = tokenStore.getAccess();
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // Attach a human-readable message to every rejected response
 function attachUserMessage(err) {
   err.userMessage =
@@ -21,13 +43,28 @@ let _refreshPromise = null;
 async function tryRefresh() {
   if (_refreshPromise) return _refreshPromise;
   _refreshPromise = api
-    .post("/auth/refresh", null, { withCredentials: true, _retry: true })
+    .post(
+      "/auth/refresh",
+      // Send stored refresh token in body for iOS PWA (cookie may be blocked)
+      { refreshToken: tokenStore.getRefresh() || undefined },
+      { withCredentials: true, _retry: true },
+    )
+    .then((res) => {
+      // Store new tokens if returned in body (iOS PWA path)
+      const { accessToken, refreshToken } = res.data || {};
+      if (accessToken) tokenStore.setTokens(accessToken, refreshToken);
+    })
     .finally(() => { _refreshPromise = null; });
   return _refreshPromise;
 }
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    // Persist tokens returned by login / refresh (iOS PWA path)
+    const { accessToken, refreshToken } = res.data || {};
+    if (accessToken) tokenStore.setTokens(accessToken, refreshToken);
+    return res;
+  },
   async (err) => {
     const original = err.config;
 
@@ -40,11 +77,10 @@ api.interceptors.response.use(
       original._retry = true;
       try {
         await tryRefresh();
-        // Retry the original request with new access token cookie
+        // Retry the original request — interceptor will attach new token
         return api(original);
       } catch {
-        // Refresh failed → user must log in again
-        // Fire a custom event so AuthProvider can clear user state
+        tokenStore.clearTokens();
         window.dispatchEvent(new Event("auth:expired"));
       }
     }

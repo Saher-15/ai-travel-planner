@@ -192,6 +192,9 @@ router.post("/login", async (req, res) => {
       .cookie("refreshToken", refreshToken, { ...COOKIE_OPTS, maxAge: 7 * 24 * 60 * 60 * 1000 })
       .json({
         message: "Logged in",
+        // Also return tokens in body for iOS PWA (cookies blocked by WebKit ITP)
+        accessToken,
+        refreshToken,
         user: {
           id: user._id,
           name: user.name,
@@ -211,7 +214,8 @@ router.post("/login", async (req, res) => {
 ============================ */
 router.post("/refresh", async (req, res) => {
   try {
-    const incoming = req.cookies?.refreshToken;
+    // Accept from cookie (web) or request body (iOS PWA)
+    const incoming = req.cookies?.refreshToken || req.body?.refreshToken;
     if (!incoming) {
       return res.status(401).json({ message: "No refresh token" });
     }
@@ -244,7 +248,7 @@ router.post("/refresh", async (req, res) => {
     return res
       .cookie("token", accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 * 1000 })
       .cookie("refreshToken", newRefresh, { ...COOKIE_OPTS, maxAge: 7 * 24 * 60 * 60 * 1000 })
-      .json({ message: "Token refreshed" });
+      .json({ message: "Token refreshed", accessToken, refreshToken: newRefresh });
   } catch (err) {
     console.error("REFRESH ERROR:", err);
     return res.status(500).json({ message: "Server error" });

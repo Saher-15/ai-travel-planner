@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { api } from "../api/client";
+import { api, tokenStore } from "../api/client";
 
 const AuthCtx = createContext(null);
 
@@ -55,6 +55,7 @@ export function AuthProvider({ children }) {
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
+      tokenStore.clearTokens();
       setUser(null);
     }
   }, [setUser]);
