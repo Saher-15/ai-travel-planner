@@ -23,6 +23,7 @@ import {
   updatePackingList,
   updateDayNote,
 } from "../services/tripService.js";
+import { Trip } from "../models/Trip.js";
 import { chatWithTripAssistant } from "../services/openaiService.js";
 import { generateTripPDF } from "../services/pdfService.js";
 
@@ -205,6 +206,24 @@ router.put("/:id/packing", authMiddleware, async (req, res) => {
     return res.json({ packingList: trip.packingList });
   } catch {
     return res.status(500).json({ message: "Failed to save packing list." });
+  }
+});
+
+// ─── Personal notes ───────────────────────────────────────────────────────────
+
+router.patch("/:id/personal-notes", authMiddleware, async (req, res) => {
+  const { notes } = req.body;
+  if (typeof notes !== "string") return res.status(400).json({ message: "notes must be a string" });
+  try {
+    const trip = await Trip.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id },
+      { personalNotes: notes.trim() },
+      { new: true, select: "personalNotes" }
+    );
+    if (!trip) return res.status(404).json({ message: "Trip not found" });
+    return res.json({ personalNotes: trip.personalNotes });
+  } catch {
+    return res.status(500).json({ message: "Failed to save notes" });
   }
 });
 

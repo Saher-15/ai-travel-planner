@@ -121,6 +121,8 @@ const TripSchema = new mongoose.Schema(
 
     events: { type: [EventSchema], default: [] },
 
+    personalNotes: { type: String, default: "", trim: true },
+
     status: {
       type: String,
       enum: ["planning", "upcoming", "completed"],

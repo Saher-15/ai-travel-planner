@@ -347,6 +347,7 @@ const PANEL_PATHS = {
   packing:   "M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z",
   hotels:    "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4",
   chat:      "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
+  notes:     "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z",
 };
 
 function PanelIcon({ id, className = "h-5 w-5" }) {
@@ -589,6 +590,7 @@ export default function ViewTrip() {
     { id: "packing",   label: t("viewTrip.packingList.title"),  subtitle: "Packing checklist" },
     { id: "hotels",    label: "Hotels",                        subtitle: "Find accommodation" },
     { id: "chat",      label: "AI Assistant",                  subtitle: "Ask about your trip" },
+    { id: "notes",     label: "Personal Notes",                subtitle: "Your private notes" },
   ].filter((p) => !p.hidden);
 
   return (
@@ -739,6 +741,10 @@ export default function ViewTrip() {
 
           {activePanel === "chat" && (
             <TripChatSection trip={trip} tripId={id} />
+          )}
+
+          {activePanel === "notes" && (
+            <PersonalNotesSection tripId={id} initialNotes={trip?.personalNotes || ""} />
           )}
         </div>
       </div>
@@ -2212,6 +2218,88 @@ const CHAT_SUGGESTIONS = [
   "How much cash should I bring?",
   "What's the best way to get around?",
 ];
+
+function PersonalNotesSection({ tripId, initialNotes }) {
+  const { api } = window.__apiRef ?? {};
+  const [notes, setNotes]         = useState(initialNotes);
+  const [saved, setSaved]         = useState(true);
+  const [saving, setSaving]       = useState(false);
+  const [error, setError]         = useState("");
+  const debounceRef               = useRef(null);
+  const MAX                       = 5000;
+
+  // Import api inline — ViewTrip already imports it at the top
+  const saveNotes = useCallback(async (text) => {
+    setSaving(true);
+    setError("");
+    try {
+      await api.patch(`/trips/${tripId}/personal-notes`, { notes: text });
+      setSaved(true);
+    } catch {
+      setError("Failed to save. Will retry on next change.");
+    } finally {
+      setSaving(false);
+    }
+  }, [tripId]);
+
+  const handleChange = (e) => {
+    const val = e.target.value;
+    if (val.length > MAX) return;
+    setNotes(val);
+    setSaved(false);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => saveNotes(val), 1200);
+  };
+
+  useEffect(() => () => clearTimeout(debounceRef.current), []);
+
+  const lines   = notes.split("\n").length;
+  const words   = notes.trim() ? notes.trim().split(/\s+/).length : 0;
+  const remaining = MAX - notes.length;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">Personal Notes</h3>
+          <p className="text-sm text-slate-500">Private to you — never shared with others</p>
+        </div>
+        <div className="flex items-center gap-2 text-xs">
+          {saving ? (
+            <span className="flex items-center gap-1.5 text-slate-400">
+              <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16 8 8 0 01-8-8z" />
+              </svg>
+              Saving…
+            </span>
+          ) : saved && notes.length > 0 ? (
+            <span className="flex items-center gap-1 text-emerald-600">
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Saved
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      {error && <p className="text-xs text-red-500">{error}</p>}
+
+      <textarea
+        value={notes}
+        onChange={handleChange}
+        placeholder={"Write anything about your trip — packing reminders, must-try restaurants, important addresses, contacts, budget notes…\n\nOnly you can see this."}
+        className="w-full min-h-72 resize-y rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm leading-relaxed text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+        spellCheck
+      />
+
+      <div className="flex items-center justify-between text-xs text-slate-400">
+        <span>{words} {words === 1 ? "word" : "words"} · {lines} {lines === 1 ? "line" : "lines"}</span>
+        <span className={remaining < 200 ? "text-amber-500 font-medium" : ""}>{remaining.toLocaleString()} characters left</span>
+      </div>
+    </div>
+  );
+}
 
 function TripChatSection({ trip, tripId }) {
   const [messages, setMessages] = useState([
