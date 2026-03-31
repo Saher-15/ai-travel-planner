@@ -4,6 +4,7 @@ import { AlertTriangle, Eye, EyeOff, LogOut, MailCheck, MessageSquareText, Refre
 import { useAuth } from "../auth/AuthProvider";
 import { api } from "../api/client";
 import { Alert, Badge, Button, Card, CardBody, CardHeader, Input } from "../components/UI.jsx";
+import PasswordStrengthBar from "../components/PasswordStrengthBar.jsx";
 import { useTranslation } from "react-i18next";
 
 function formatDate(value) {
@@ -28,17 +29,6 @@ function PasswordField({ label, value, onChange, show, onToggle, placeholder, au
           {show ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
       </div>
-    </div>
-  );
-}
-
-function Requirement({ ok, text }) {
-  return (
-    <div className={`flex items-center gap-2 text-xs transition-colors duration-200 ${ok ? "text-emerald-600" : "text-slate-400"}`}>
-      <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-black transition-all duration-200 ${
-        ok ? "bg-emerald-500 text-white shadow-sm shadow-emerald-200" : "bg-slate-200 text-slate-200"
-      }`}>✓</span>
-      <span>{text}</span>
     </div>
   );
 }
@@ -79,15 +69,6 @@ export default function Profile() {
   function isStrongPassword(pw) {
     return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(pw);
   }
-
-  const passwordChecks = useMemo(() => ({
-    minLength: newPassword.length >= 8,
-    upper: /[A-Z]/.test(newPassword),
-    lower: /[a-z]/.test(newPassword),
-    number: /\d/.test(newPassword),
-    special: /[@$!%*?&]/.test(newPassword),
-    matches: newPassword.length > 0 && confirmPassword.length > 0 && newPassword === confirmPassword,
-  }), [newPassword, confirmPassword]);
 
   const canChangePassword = useMemo(() => (
     !passwordLoading && oldPassword.trim().length > 0 && newPassword.trim().length > 0 && confirmPassword.trim().length > 0
@@ -289,19 +270,7 @@ export default function Profile() {
                 <PasswordField label={t("profile.changePassword.confirmNewPassword")} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} show={showConfirmPassword} onToggle={() => setShowConfirmPassword((p) => !p)} placeholder={t("profile.changePassword.confirmNewPasswordPlaceholder")} autoComplete="new-password" />
               </div>
 
-              {(newPassword.length > 0 || confirmPassword.length > 0) && (
-                <div className="rounded-2xl bg-slate-50 px-4 py-3.5">
-                  <p className="mb-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">{t("passwordRequirements.title")}</p>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                    <Requirement ok={passwordChecks.minLength} text={t("passwordRequirements.minLength")} />
-                    <Requirement ok={passwordChecks.upper}     text={t("passwordRequirements.uppercase")} />
-                    <Requirement ok={passwordChecks.lower}     text={t("passwordRequirements.lowercase")} />
-                    <Requirement ok={passwordChecks.number}    text={t("passwordRequirements.number")} />
-                    <Requirement ok={passwordChecks.special}   text={t("passwordRequirements.special")} />
-                    <Requirement ok={passwordChecks.matches}   text={t("passwordRequirements.match")} />
-                  </div>
-                </div>
-              )}
+              <PasswordStrengthBar password={newPassword} confirmPassword={confirmPassword} />
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-sm text-slate-500">{t("profile.changePassword.updateNote")}</div>

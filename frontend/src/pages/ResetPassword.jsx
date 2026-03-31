@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, LockKeyhole, ShieldCheck } from "lucide-react";
+import PasswordStrengthBar from "../components/PasswordStrengthBar.jsx";
 import { api } from "../api/client";
 import { Card, CardHeader, CardBody, Button, Alert, Badge } from "../components/UI";
 import { useTranslation } from "react-i18next";
@@ -17,14 +18,6 @@ function PasswordField({ label, value, onChange, show, onToggle, placeholder = "
           {show ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
       </div>
-    </div>
-  );
-}
-
-function Requirement({ ok, text }) {
-  return (
-    <div className={`rounded-2xl border px-3 py-2 text-sm transition ${ok ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-white text-slate-600"}`}>
-      {text}
     </div>
   );
 }
@@ -47,15 +40,6 @@ export default function ResetPassword() {
   function isStrongPassword(pw) {
     return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(pw);
   }
-
-  const passwordChecks = useMemo(() => ({
-    minLength: newPassword.length >= 8,
-    upper: /[A-Z]/.test(newPassword),
-    lower: /[a-z]/.test(newPassword),
-    number: /\d/.test(newPassword),
-    special: /[@$!%*?&]/.test(newPassword),
-    matches: newPassword.length > 0 && confirmPassword.length > 0 && newPassword === confirmPassword,
-  }), [newPassword, confirmPassword]);
 
   const canSubmit = useMemo(() => (
     !loading && Boolean(token) && newPassword.trim().length > 0 && confirmPassword.trim().length > 0
@@ -125,17 +109,7 @@ export default function ResetPassword() {
                   </div>
                 </div>
 
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="text-sm font-bold text-slate-800">{t("passwordRequirements.title")}</div>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                    <Requirement ok={passwordChecks.minLength} text={t("passwordRequirements.minLength")} />
-                    <Requirement ok={passwordChecks.upper} text={t("passwordRequirements.uppercase")} />
-                    <Requirement ok={passwordChecks.lower} text={t("passwordRequirements.lowercase")} />
-                    <Requirement ok={passwordChecks.number} text={t("passwordRequirements.number")} />
-                    <Requirement ok={passwordChecks.special} text={t("passwordRequirements.special")} />
-                    <Requirement ok={passwordChecks.matches} text={t("passwordRequirements.match")} />
-                  </div>
-                </div>
+                <PasswordStrengthBar password={newPassword} confirmPassword={confirmPassword} />
 
                 {msg ? <Alert type="success">{msg}</Alert> : null}
                 {err ? <Alert type="error">{err}</Alert> : null}

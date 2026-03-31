@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { api } from "../api/client.js";
 import { Alert, Button } from "../components/UI.jsx";
+import PasswordStrengthBar from "../components/PasswordStrengthBar.jsx";
 import { useTranslation } from "react-i18next";
 
 function PasswordField({ label, value, onChange, show, onToggle, placeholder = "••••••••", autoComplete = "new-password" }) {
@@ -31,16 +32,6 @@ function PasswordField({ label, value, onChange, show, onToggle, placeholder = "
   );
 }
 
-function Check({ ok, text }) {
-  return (
-    <div className={`flex items-center gap-2 text-xs transition-colors duration-200 ${ok ? "text-emerald-600" : "text-slate-400"}`}>
-      <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-black transition-all duration-200 ${
-        ok ? "bg-emerald-500 text-white shadow-sm shadow-emerald-200" : "bg-slate-200 text-slate-200"
-      }`}>✓</span>
-      <span>{text}</span>
-    </div>
-  );
-}
 
 function isStrongPassword(pw) {
   return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(pw);
@@ -60,15 +51,6 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
-
-  const checks = useMemo(() => ({
-    minLength: password.length >= 8,
-    upper:     /[A-Z]/.test(password),
-    lower:     /[a-z]/.test(password),
-    number:    /\d/.test(password),
-    special:   /[@$!%*?&]/.test(password),
-    matches:   password.length > 0 && confirmPassword.length > 0 && password === confirmPassword,
-  }), [password, confirmPassword]);
 
   const canSubmit = useMemo(
     () => !loading && name.trim() && email.trim() && password && confirmPassword,
@@ -160,20 +142,7 @@ export default function Register() {
                 autoComplete="new-password"
               />
 
-              {/* Password requirements */}
-              {password.length > 0 && (
-                <div className="rounded-2xl bg-slate-50 px-4 py-3.5">
-                  <p className="mb-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Requirements</p>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                    <Check ok={checks.minLength} text={t("passwordRequirements.minLength")} />
-                    <Check ok={checks.upper}     text={t("passwordRequirements.uppercase")} />
-                    <Check ok={checks.lower}     text={t("passwordRequirements.lowercase")} />
-                    <Check ok={checks.number}    text={t("passwordRequirements.number")} />
-                    <Check ok={checks.special}   text={t("passwordRequirements.special")} />
-                    <Check ok={checks.matches}   text={t("passwordRequirements.match")} />
-                  </div>
-                </div>
-              )}
+              <PasswordStrengthBar password={password} confirmPassword={confirmPassword} />
             </div>
 
             {err ? <div className="mt-5"><Alert type="error">{err}</Alert></div> : null}
