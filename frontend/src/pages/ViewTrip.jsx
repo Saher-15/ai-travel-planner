@@ -622,7 +622,7 @@ export default function ViewTrip() {
       />
 
       {/* ── Feature grid navigation ── */}
-      <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+      <div className="mt-4 grid grid-cols-3 gap-1.5 min-[480px]:grid-cols-4 sm:gap-2 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-6">
         {PANELS.map((p) => {
           const active = activePanel === p.id;
           return (
@@ -631,26 +631,40 @@ export default function ViewTrip() {
               type="button"
               onClick={() => setActivePanel(p.id)}
               className={[
-                "group relative flex flex-col items-center gap-2 rounded-2xl border p-3 text-center transition-all duration-150",
+                "group relative flex flex-col items-center gap-1.5 rounded-xl border p-2 text-center transition-all duration-150 sm:gap-2 sm:rounded-2xl sm:p-3",
                 active
                   ? "border-blue-500 bg-blue-600 shadow-md shadow-blue-200"
                   : "border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50",
               ].join(" ")}
             >
+              {/* Badge */}
               {p.badge > 0 && (
-                <span className={`absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none ${
+                <span className={`absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold leading-none sm:h-5 sm:min-w-5 sm:text-[10px] ${
                   active ? "bg-white text-blue-600" : "bg-blue-600 text-white"
                 }`}>
                   {p.badge}
                 </span>
               )}
-              <div className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-150 ${
+
+              {/* Icon */}
+              <div className={`flex h-7 w-7 items-center justify-center rounded-lg transition-all duration-150 sm:h-9 sm:w-9 sm:rounded-xl ${
                 active ? "bg-white/20" : "bg-slate-100 group-hover:bg-blue-100"
               }`}>
-                <PanelIcon id={p.id} className={`h-5 w-5 ${active ? "text-white" : "text-slate-500 group-hover:text-blue-600"}`} />
+                <PanelIcon id={p.id} className={`h-4 w-4 sm:h-5 sm:w-5 ${active ? "text-white" : "text-slate-500 group-hover:text-blue-600"}`} />
               </div>
-              <span className={`text-xs font-semibold leading-tight ${active ? "text-white" : "text-slate-600 group-hover:text-blue-700"}`}>
+
+              {/* Label */}
+              <span className={`w-full truncate text-[10px] font-semibold leading-tight sm:text-xs ${
+                active ? "text-white" : "text-slate-600 group-hover:text-blue-700"
+              }`}>
                 {p.label}
+              </span>
+
+              {/* Subtitle — only on md+ */}
+              <span className={`hidden w-full truncate text-[9px] leading-none md:block ${
+                active ? "text-blue-100" : "text-slate-400"
+              }`}>
+                {p.subtitle}
               </span>
             </button>
           );
