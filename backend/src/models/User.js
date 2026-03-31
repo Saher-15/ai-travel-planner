@@ -20,6 +20,20 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
 
+    // ── Subscription ───────────────────────────────────────────────────────────
+    plan: {
+      type: String,
+      enum: ["free", "explorer", "pro"],
+      default: "free",
+    },
+    stripeCustomerId:     { type: String, default: null },
+    stripeSubscriptionId: { type: String, default: null },
+    planExpiresAt:        { type: Date,   default: null },
+
+    // AI generation quota — reset each calendar month
+    aiGenerationsThisMonth: { type: Number, default: 0 },
+    aiGenerationsResetAt:   { type: Date,   default: null },
+
     verified: { type: Boolean, default: false },
     verificationToken: { type: String },
     resetToken: { type: String },

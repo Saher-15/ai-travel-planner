@@ -205,6 +205,7 @@ router.post("/login", async (req, res) => {
           email: user.email,
           verified: user.verified,
           role: user.role || "user",
+          plan: user.plan || "free",
         },
       });
   } catch (err) {
@@ -383,7 +384,7 @@ router.post("/logout", async (req, res) => {
 router.get("/me", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select(
-      "name firstName lastName email verified role nationality phone dateOfBirth travelStyle preferredCurrency"
+      "name firstName lastName email verified role nationality phone dateOfBirth travelStyle preferredCurrency plan planExpiresAt stripeSubscriptionId aiGenerationsThisMonth aiGenerationsResetAt"
     );
 
     if (!user) {
@@ -405,6 +406,9 @@ router.get("/me", authMiddleware, async (req, res) => {
         dateOfBirth: user.dateOfBirth || "",
         travelStyle: user.travelStyle || "",
         preferredCurrency: user.preferredCurrency || "",
+        plan: user.plan || "free",
+        planExpiresAt: user.planExpiresAt || null,
+        stripeSubscriptionId: user.stripeSubscriptionId || null,
       },
     });
   } catch (err) {
@@ -451,6 +455,8 @@ router.patch("/profile", authMiddleware, async (req, res) => {
         dateOfBirth: user.dateOfBirth,
         travelStyle: user.travelStyle,
         preferredCurrency: user.preferredCurrency,
+        plan: user.plan || "free",
+        planExpiresAt: user.planExpiresAt || null,
       },
     });
   } catch (err) {

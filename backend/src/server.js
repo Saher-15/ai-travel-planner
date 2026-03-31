@@ -11,6 +11,7 @@ import tripRoutes from "./routes/tripRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import placePhotosRoutes from "./routes/placePhotos.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import {
   readLimiter,
   authLimiter,
@@ -49,6 +50,8 @@ app.use(
 );
 
 app.use(compression());
+// Stripe webhook needs raw body — mount before express.json()
+app.use("/api/subscription/webhook", express.raw({ type: "application/json" }));
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
@@ -62,6 +65,7 @@ app.use("/api/trips/generate",                aiLimiter);
 app.use("/api/trips/generate-and-save",       aiLimiter);
 app.use("/api/trips",                         readLimiter,    tripRoutes);
 app.use("/api/admin",                         readLimiter,    adminRoutes);
+app.use("/api/subscription",                  readLimiter,    subscriptionRoutes);
 
 // ── Error handlers ────────────────────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ message: "Route not found" }));

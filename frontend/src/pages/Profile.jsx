@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AlertTriangle, Eye, EyeOff, LogOut, MailCheck, MessageSquareText, RefreshCw } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
 import { api } from "../api/client";
@@ -42,6 +42,74 @@ function PasswordField({ label, value, onChange, show, onToggle, placeholder, au
 }
 
 const SUPPORT_PAGE_SIZE = 6;
+
+const PLAN_META = {
+  free:     { label: "Free",     color: "from-slate-600 to-slate-700",   ring: "border-slate-200",   text: "text-slate-700"   },
+  explorer: { label: "Explorer", color: "from-sky-500 to-blue-600",      ring: "border-sky-200",     text: "text-sky-700"     },
+  pro:      { label: "Pro",      color: "from-violet-500 to-purple-600", ring: "border-violet-200",  text: "text-violet-700"  },
+};
+
+function PlanCard({ plan, planExpiresAt }) {
+  const [loadingPortal, setLoadingPortal] = useState(false);
+  const meta = PLAN_META[plan] || PLAN_META.free;
+
+  async function openPortal() {
+    setLoadingPortal(true);
+    try {
+      const { data } = await api.post("/subscription/portal");
+      window.location.href = data.url;
+    } catch {
+      setLoadingPortal(false);
+    }
+  }
+
+  return (
+    <div className={`overflow-hidden rounded-3xl border bg-white shadow-sm ${meta.ring}`}>
+      <div className={`bg-linear-to-r ${meta.color} px-5 py-4 text-white`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Current Plan</div>
+            <div className="mt-0.5 text-xl font-black">{meta.label}</div>
+          </div>
+          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white/20 text-2xl">
+            {plan === "pro" ? "👑" : plan === "explorer" ? "🧭" : "🆓"}
+          </div>
+        </div>
+        {planExpiresAt && (
+          <div className="mt-2 text-xs text-white/70">
+            Access until {new Date(planExpiresAt).toLocaleDateString()}
+          </div>
+        )}
+      </div>
+
+      <div className="px-5 py-4">
+        {plan === "free" ? (
+          <div className="space-y-3">
+            <p className="text-sm text-slate-500">Upgrade to unlock PDF export, AI packing lists, trip sharing, and more generations.</p>
+            <Link
+              to="/pricing"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-sky-500 to-blue-600 py-2.5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5"
+            >
+              View Plans
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-slate-500">Manage your subscription, update payment method, or cancel anytime.</p>
+            <button
+              type="button"
+              onClick={openPortal}
+              disabled={loadingPortal}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+            >
+              {loadingPortal ? "Opening…" : "Manage billing"}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function Profile() {
   const { t } = useTranslation();
@@ -252,6 +320,15 @@ export default function Profile() {
             <span className={`rounded-full border px-3 py-1.5 text-xs font-bold ${user?.verified ? "border-emerald-400/30 bg-emerald-500/20 text-emerald-300" : "border-amber-400/30 bg-amber-500/20 text-amber-300"}`}>
               {user?.verified ? "✓ Verified" : "⚠ Unverified"}
             </span>
+            {user?.plan && user.plan !== "free" ? (
+              <span className={`rounded-full border px-3 py-1.5 text-xs font-bold capitalize ${user.plan === "pro" ? "border-violet-400/30 bg-violet-500/20 text-violet-200" : "border-sky-400/30 bg-sky-500/20 text-sky-200"}`}>
+                ★ {user.plan}
+              </span>
+            ) : (
+              <Link to="/pricing" className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/70 transition hover:bg-white/20">
+                Free plan · Upgrade
+              </Link>
+            )}
             <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/80">
               {supportItems.length} messages
             </span>
@@ -387,6 +464,10 @@ export default function Profile() {
         </div>
 
         <div className="space-y-6 xl:col-span-5">
+
+          {/* ── Plan card ── */}
+          <PlanCard plan={user?.plan || "free"} planExpiresAt={user?.planExpiresAt} />
+
           <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
             <CardHeader title={t("profile.supportInbox.title")} subtitle={t("profile.supportInbox.subtitle")}
               right={

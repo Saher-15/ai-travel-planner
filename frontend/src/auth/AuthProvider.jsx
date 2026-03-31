@@ -18,6 +18,8 @@ function normalizeUser(u) {
     dateOfBirth: u?.dateOfBirth || "",
     travelStyle: u?.travelStyle || "",
     preferredCurrency: u?.preferredCurrency || "",
+    plan: u?.plan || "free",
+    planExpiresAt: u?.planExpiresAt || null,
   };
 }
 

@@ -19,7 +19,8 @@
     "flights": "Flights",
     "attractions": "Attractions",
     "bookTravel": "Book Travel",
-    "cars": "Cars"
+    "cars": "Cars",
+    "pricing": "Pricing"
   },
   "header": {
     "signedIn": "Signed in",

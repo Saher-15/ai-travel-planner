@@ -1,6 +1,7 @@
 import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
 import { aiLimiter } from "../middleware/limiters.js";
+import { requireFeature } from "../middleware/planMiddleware.js";
 import {
   ALLOWED_STATUSES,
   validateTripPayload,
@@ -31,7 +32,7 @@ const router = express.Router();
 
 // ─── Generate (no save) ───────────────────────────────────────────────────────
 
-router.post("/generate", authMiddleware, aiLimiter, async (req, res) => {
+router.post("/generate", authMiddleware, aiLimiter, requireFeature("aiGen"), async (req, res) => {
   const { tripMode, destination, destinations, startDate, endDate } = req.body;
   const error = validateTripPayload({
     tripMode: normalizeTripMode(tripMode),
@@ -53,7 +54,7 @@ router.post("/generate", authMiddleware, aiLimiter, async (req, res) => {
 
 // ─── Generate + save ──────────────────────────────────────────────────────────
 
-router.post("/generate-and-save", authMiddleware, aiLimiter, async (req, res) => {
+router.post("/generate-and-save", authMiddleware, aiLimiter, requireFeature("aiGen"), requireFeature("saveTrip"), async (req, res) => {
   const { tripMode, destination, destinations, startDate, endDate } = req.body;
   const error = validateTripPayload({
     tripMode: normalizeTripMode(tripMode),
@@ -75,7 +76,7 @@ router.post("/generate-and-save", authMiddleware, aiLimiter, async (req, res) =>
 
 // ─── Create ───────────────────────────────────────────────────────────────────
 
-router.post("/", authMiddleware, async (req, res) => {
+router.post("/", authMiddleware, requireFeature("saveTrip"), async (req, res) => {
   const { tripMode, destination, destinations, startDate, endDate, itinerary } = req.body;
   const error = validateTripPayload({
     tripMode: normalizeTripMode(tripMode),
@@ -124,7 +125,7 @@ router.get("/", authMiddleware, async (req, res) => {
 
 // ─── Share / unshare ──────────────────────────────────────────────────────────
 
-router.post("/:id/share", authMiddleware, async (req, res) => {
+router.post("/:id/share", authMiddleware, requireFeature("sharing"), async (req, res) => {
   try {
     const token = await shareTrip(req.params.id, req.user.id);
     if (!token) return res.status(404).json({ message: "Trip not found" });
@@ -184,7 +185,7 @@ router.get("/:id/packing", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/:id/packing/generate", authMiddleware, aiLimiter, async (req, res) => {
+router.post("/:id/packing/generate", authMiddleware, aiLimiter, requireFeature("aiPacking"), async (req, res) => {
   try {
     const list = await generatePackingListForTrip(req.params.id, req.user.id);
     if (list === null) return res.status(404).json({ message: "Trip not found" });
@@ -295,7 +296,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 
 // ─── PDF export ───────────────────────────────────────────────────────────────
 
-router.get("/:id/pdf", authMiddleware, async (req, res) => {
+router.get("/:id/pdf", authMiddleware, requireFeature("pdf"), async (req, res) => {
   try {
     const trip = await getTrip(req.params.id, req.user.id);
     if (!trip) return res.status(404).json({ message: "Trip not found" });

@@ -172,7 +172,7 @@ function Footer({ isLoggedIn, isAdmin }) {
               {[
                 { value: "100+", label: "Destinations" },
                 { value: "AI",   label: "Powered" },
-                { value: "Free", label: "Forever" },
+                { value: "Free", label: "To Start" },
               ].map(({ value, label }) => (
                 <div key={label}>
                   <div className="text-lg font-black text-sky-400">{value}</div>
@@ -202,6 +202,7 @@ function Footer({ isLoggedIn, isAdmin }) {
               <FooterLink to="/">{t("nav.home")}</FooterLink>
               <FooterLink to="/create">{t("nav.createTrip")}</FooterLink>
               {isLoggedIn && <FooterLink to="/trips">{t("nav.myTrips")}</FooterLink>}
+              <FooterLink to="/pricing">{t("nav.pricing")}</FooterLink>
               <FooterLink to="/hotels">{t("nav.hotels")}</FooterLink>
               <FooterLink to="/flights">{t("nav.flights")}</FooterLink>
               <FooterLink to="/attractions">{t("nav.attractions")}</FooterLink>
@@ -320,9 +321,11 @@ export default function Layout({ children }) {
     { to: "/",        label: t("nav.home") },
     { to: "/create",  label: t("nav.createTrip") },
     { to: "/trips",   label: t("nav.myTrips") },
+    { to: "/pricing", label: t("nav.pricing") },
     { to: "/profile", label: t("nav.profile"), badgeCount: unreadReplyCount },
   ] : [
     { to: "/",         label: t("nav.home") },
+    { to: "/pricing",  label: t("nav.pricing") },
     { to: "/login",    label: t("nav.login") },
     { to: "/register", label: t("nav.register") },
   ], [isLoggedIn, t, unreadReplyCount]);
