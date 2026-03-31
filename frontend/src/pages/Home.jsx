@@ -25,9 +25,9 @@ const DESTINATIONS = [
   { city: "London",    country: "UK",      emoji: "🇬🇧", photo: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&q=80" },
 ];
 
-const LABEL_CLS  = "mb-1.5 block text-xs font-semibold text-slate-500";
-const DATE_CLS   = "w-full rounded-xl border border-slate-200 bg-white py-3 pl-9 pr-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:shadow-[0_0_0_3px_rgba(14,165,233,0.12)]";
-const SELECT_CLS = "w-full rounded-xl border border-slate-200 bg-white py-3 pl-9 pr-3 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:shadow-[0_0_0_3px_rgba(14,165,233,0.12)]";
+const LABEL_CLS  = "mb-2 block text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400";
+const DATE_CLS   = "w-full rounded-2xl border border-slate-200 bg-white py-3 pl-9 pr-3 text-sm font-medium text-slate-800 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-sky-400 focus:shadow-[0_0_0_3px_rgba(14,165,233,0.15)]";
+const SELECT_CLS = "w-full rounded-2xl border border-slate-200 bg-white py-3 pl-9 pr-3 text-sm font-medium text-slate-800 shadow-sm outline-none transition hover:border-slate-300 focus:border-sky-400 focus:shadow-[0_0_0_3px_rgba(14,165,233,0.15)]";
 
 const TAB_BTN_COLOR = {
   sky:     "data-[active=true]:border-sky-500    data-[active=true]:text-sky-600",
@@ -49,7 +49,7 @@ function SearchBtn({ color, children }) {
   return (
     <button type="submit"
       className={cx(
-        "flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg",
+        "mt-1 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0",
         SEARCH_BTN_COLOR[color]
       )}>
       <Search size={15} />{children}
@@ -141,12 +141,12 @@ function QuickSearch() {
       </div>
 
       {/* ── Forms ── */}
-      <div className="p-4 sm:p-5">
+      <div className="bg-slate-50/70 px-5 py-6 sm:px-6">
 
         {/* Hotels */}
         {tab === "hotels" && (
           <form onSubmit={e => { e.preventDefault(); go("/hotels", { destination: hotelDest, checkin: checkIn, checkout: checkOut, adults: hotelAdults, children: hotelChildren }); }}
-            className="space-y-3">
+            className="space-y-4">
             <div>
               <label className={LABEL_CLS}>{t("hotels.destination")}</label>
               <CityAutoComplete label="" value={hotelDest} onChange={setHotelDest}
@@ -187,7 +187,7 @@ function QuickSearch() {
         {/* Flights */}
         {tab === "flights" && (
           <form onSubmit={e => { e.preventDefault(); go("/flights", { from: flightFrom, destination: flightTo, depart: flightDate, adults: flightPax }); }}
-            className="space-y-3">
+            className="space-y-4">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className={LABEL_CLS}>{t("flights.from")}</label>
@@ -221,7 +221,7 @@ function QuickSearch() {
         {/* Attractions */}
         {tab === "attractions" && (
           <form onSubmit={e => { e.preventDefault(); go("/attractions", { destination: attrDest }); }}
-            className="space-y-3">
+            className="space-y-4">
             <div>
               <label className={LABEL_CLS}>{t("attractions.destination")}</label>
               <CityAutoComplete label="" value={attrDest} onChange={setAttrDest}
@@ -234,7 +234,7 @@ function QuickSearch() {
         {/* Cars */}
         {tab === "cars" && (
           <form onSubmit={e => { e.preventDefault(); go("/cars", { destination: carDest, checkin: carPickup, checkout: carDropoff }); }}
-            className="space-y-3">
+            className="space-y-4">
             <div>
               <label className={LABEL_CLS}>{t("cars.pickupLocation")}</label>
               <CityAutoComplete label="" value={carDest} onChange={setCarDest}
@@ -251,7 +251,7 @@ function QuickSearch() {
         {/* Plan with AI */}
         {tab === "plan" && (
           <form onSubmit={e => { e.preventDefault(); nav(aiDest ? `/create?destination=${encodeURIComponent(aiDest)}` : "/create"); }}
-            className="space-y-3">
+            className="space-y-4">
             <div>
               <label className={LABEL_CLS}>{t("home.quickSearch.destination")}</label>
               <CityAutoComplete label="" value={aiDest} onChange={setAiDest}
