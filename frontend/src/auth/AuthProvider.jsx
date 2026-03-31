@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { api, tokenStore } from "../api/client";
 
 const AuthCtx = createContext(null);
+const SESSION_HINT = "auth_session";
 
 function normalizeUser(u) {
   return {
@@ -20,10 +21,25 @@ export function AuthProvider({ children }) {
   const refreshingRef = useRef(null);
 
   const setUser = useCallback((u) => {
-    setUserState(u ? normalizeUser(u) : null);
+    if (u) {
+      localStorage.setItem(SESSION_HINT, "1");
+      setUserState(normalizeUser(u));
+    } else {
+      localStorage.removeItem(SESSION_HINT);
+      setUserState(null);
+    }
   }, []);
 
   const refresh = useCallback(async () => {
+    // Skip the /auth/me call (and its 401 console noise) when we have no
+    // evidence of a session — no stored token and no session hint flag.
+    const hasToken = Boolean(tokenStore.getAccess());
+    const hasHint  = Boolean(localStorage.getItem(SESSION_HINT));
+    if (!hasToken && !hasHint) {
+      setLoading(false);
+      return;
+    }
+
     // Deduplicate concurrent refresh calls
     if (refreshingRef.current) return refreshingRef.current;
 
