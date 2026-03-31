@@ -34,6 +34,7 @@ const Attractions     = lazy(() => import("./pages/Attractions.jsx"));
 const Cars            = lazy(() => import("./pages/Cars.jsx"));
 const SharedTrip      = lazy(() => import("./pages/SharedTrip.jsx"));
 const Pricing         = lazy(() => import("./pages/Pricing.jsx"));
+const Checkout        = lazy(() => import("./pages/Checkout.jsx"));
 const UpgradeSuccess  = lazy(() => import("./pages/UpgradeSuccess.jsx"));
 const NotFound        = lazy(() => import("./pages/NotFound.jsx"));
 
@@ -81,6 +82,7 @@ function AppRoutes() {
           <Route path="/terms"                 element={<Terms />} />
           <Route path="/about"                 element={<About />} />
           <Route path="/pricing"               element={<Pricing />} />
+          <Route path="/checkout/:plan"        element={<Checkout />} />
           <Route path="/upgrade/success"       element={<UpgradeSuccess />} />
 
           <Route path="/create"               element={<P><CreateTrip /></P>} />

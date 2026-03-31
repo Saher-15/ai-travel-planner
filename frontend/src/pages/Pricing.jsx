@@ -229,15 +229,14 @@ function PlanCard({ plan, isCurrent, isLoggedIn, payMethod, loadingPlan, onStrip
               <button
                 type="button"
                 onClick={() => onStripe(plan.id)}
-                disabled={!!loadingPlan}
                 className={cx(
-                  "w-full rounded-2xl py-2.5 text-sm font-bold transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60",
+                  "w-full rounded-2xl py-2.5 text-sm font-bold transition hover:-translate-y-0.5",
                   plan.id === "explorer"
                     ? "bg-linear-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/25"
                     : "bg-linear-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/25"
                 )}
               >
-                {loadingPlan === plan.id ? "Redirecting…" : isLoggedIn ? `Upgrade to ${plan.name}` : `Get ${plan.name}`}
+                {isLoggedIn ? `Upgrade to ${plan.name}` : `Get ${plan.name}`}
               </button>
             )}
 
@@ -279,24 +278,11 @@ export default function Pricing() {
 
   const currentPlan = user?.plan || "free";
 
-  async function handleStripe(planId) {
+  function handleStripe(planId) {
     setError("");
     if (!isLoggedIn) { navigate("/register"); return; }
     if (planId === currentPlan) return;
-    setLoadingPlan(planId);
-    try {
-      const { data } = await api.post("/subscription/checkout", { plan: planId });
-      window.location.href = data.url;
-    } catch (err) {
-      const status = err?.response?.status;
-      const msg    = err?.response?.data?.message;
-      setError(
-        status === 503
-          ? "Payments are not configured yet. Please try again later or contact support."
-          : msg || "Failed to start checkout. Please try again."
-      );
-      setLoadingPlan(null);
-    }
+    navigate(`/checkout/${planId}`);
   }
 
   async function handleManageBilling() {

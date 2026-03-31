@@ -90,6 +90,46 @@ router.get("/plan", authMiddleware, async (req, res) => {
   }
 });
 
+// ─── POST /checkout-session ───────────────────────────────────────────────────
+// Creates a Stripe Checkout Session in embedded mode and returns clientSecret
+// so the frontend can render the payment form inside the page.
+
+router.post("/checkout-session", authMiddleware, async (req, res) => {
+  if (!stripe) return res.status(503).json({ message: "Payments not configured." });
+
+  const { plan } = req.body;
+  const priceId = plan === "explorer" ? STRIPE_EXPLORER_PRICE_ID : plan === "pro" ? STRIPE_PRO_PRICE_ID : null;
+  if (!priceId) return res.status(400).json({ message: "Invalid plan." });
+
+  try {
+    const user = await User.findById(req.user.id).select("email stripeCustomerId");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    let customerId = user.stripeCustomerId;
+    if (!customerId) {
+      const customer = await stripe.customers.create({ email: user.email, metadata: { userId: String(user._id) } });
+      user.stripeCustomerId = customer.id;
+      await user.save();
+      customerId = customer.id;
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      ui_mode: "embedded",
+      mode: "subscription",
+      line_items: [{ price: priceId, quantity: 1 }],
+      return_url: `${CLIENT_URL}/upgrade/success?session_id={CHECKOUT_SESSION_ID}`,
+      metadata: { userId: String(user._id), plan },
+      subscription_data: { metadata: { userId: String(user._id), plan } },
+    });
+
+    return res.json({ clientSecret: session.client_secret });
+  } catch (err) {
+    console.error("Checkout session error:", err);
+    return res.status(500).json({ message: "Failed to create checkout session." });
+  }
+});
+
 // ─── POST /checkout ────────────────────────────────────────────────────────────
 
 router.post("/checkout", authMiddleware, async (req, res) => {
