@@ -9,18 +9,22 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "apple-touch-icon.png"],
+      includeAssets: ["favicon.ico", "travel-icon.svg", "apple-touch-icon-180x180.png"],
       manifest: {
         name: "AI Travel Planner",
         short_name: "TravelAI",
         description: "Plan your perfect trip with AI-powered itineraries",
         theme_color: "#0284c7",
-        background_color: "#ffffff",
+        background_color: "#0f172a",
         display: "standalone",
+        orientation: "portrait",
         start_url: "/",
+        scope: "/",
         icons: [
-          { src: "/pwa-192x192.png", sizes: "192x192", type: "image/png" },
-          { src: "/pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
+          { src: "pwa-64x64.png",            sizes: "64x64",   type: "image/png" },
+          { src: "pwa-192x192.png",           sizes: "192x192", type: "image/png" },
+          { src: "pwa-512x512.png",           sizes: "512x512", type: "image/png" },
+          { src: "maskable-icon-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
       },
       workbox: {
