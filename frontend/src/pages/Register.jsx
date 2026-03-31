@@ -42,7 +42,8 @@ export default function Register() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const nav = useNavigate();
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -53,19 +54,19 @@ export default function Register() {
   const [ok, setOk] = useState("");
 
   const canSubmit = useMemo(
-    () => !loading && name.trim() && email.trim() && password && confirmPassword,
-    [name, email, password, confirmPassword, loading]
+    () => !loading && firstName.trim() && lastName.trim() && email.trim() && password && confirmPassword,
+    [firstName, lastName, email, password, confirmPassword, loading]
   );
 
   async function onSubmit(e) {
     e.preventDefault();
     setErr(""); setOk("");
-    if (!name.trim() || !email.trim() || !password || !confirmPassword) { setErr(t("register.errors.fillAllFields")); return; }
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password || !confirmPassword) { setErr(t("register.errors.fillAllFields")); return; }
     if (password !== confirmPassword) { setErr(t("register.errors.passwordsNoMatch")); return; }
     if (!isStrongPassword(password)) { setErr(t("register.errors.weakPassword")); return; }
     setLoading(true);
     try {
-      await api.post("/auth/register", { name: name.trim(), email: email.trim().toLowerCase(), password, confirmPassword }, { withCredentials: false });
+      await api.post("/auth/register", { firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim().toLowerCase(), password, confirmPassword }, { withCredentials: false });
       setOk(t("register.errors.accountCreated"));
       setTimeout(() => nav("/login"), 700);
     } catch (e2) {
@@ -97,19 +98,34 @@ export default function Register() {
         <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_20px_60px_-20px_rgba(15,23,42,0.18)]">
           <form onSubmit={onSubmit} className="p-6 sm:p-8">
             <div className="space-y-5">
-              {/* Name + Email */}
+              {/* Name row */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-slate-700">{t("common.name")}</label>
+                  <label className="text-sm font-semibold text-slate-700">First name</label>
                   <input
                     type="text"
-                    placeholder="Alex Smith"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    autoComplete="name"
+                    placeholder="Alex"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    autoComplete="given-name"
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"
                   />
                 </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-slate-700">Last name</label>
+                  <input
+                    type="text"
+                    placeholder="Smith"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    autoComplete="family-name"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div className="grid gap-4">
                 <div className="space-y-1.5">
                   <label className="text-sm font-semibold text-slate-700">{t("common.email")}</label>
                   <input

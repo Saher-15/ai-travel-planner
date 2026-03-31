@@ -5,7 +5,15 @@ import { useAuth } from "../auth/AuthProvider";
 import { api } from "../api/client";
 import { Alert, Badge, Button, Card, CardBody, CardHeader, Input } from "../components/UI.jsx";
 import PasswordStrengthBar from "../components/PasswordStrengthBar.jsx";
+import { COUNTRIES } from "../utils/countries.js";
 import { useTranslation } from "react-i18next";
+
+const CURRENCIES = ["USD", "EUR", "GBP", "AED", "SAR", "JPY", "CNY", "INR", "CAD", "AUD", "CHF", "KRW", "BRL", "MXN", "SGD"];
+const TRAVEL_STYLES = [
+  { value: "budget",   label: "Budget — hostels, street food, local transport" },
+  { value: "standard", label: "Standard — mid-range hotels, mix of dining" },
+  { value: "luxury",   label: "Luxury — 5-star hotels, fine dining, private transfers" },
+];
 
 function formatDate(value) {
   if (!value) return "—";
@@ -40,7 +48,7 @@ export default function Profile() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const nav = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, setUser } = useAuth();
 
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -50,6 +58,16 @@ export default function Profile() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [msg, setMsg] = useState(null);
+
+  // Profile details
+  const [firstName,         setFirstName]         = useState(user?.firstName || "");
+  const [lastName,          setLastName]           = useState(user?.lastName  || "");
+  const [nationality,       setNationality]        = useState(user?.nationality || "");
+  const [phone,             setPhone]              = useState(user?.phone || "");
+  const [dateOfBirth,       setDateOfBirth]        = useState(user?.dateOfBirth || "");
+  const [travelStyle,       setTravelStyle]        = useState(user?.travelStyle || "");
+  const [preferredCurrency, setPreferredCurrency]  = useState(user?.preferredCurrency || "");
+  const [profileLoading,    setProfileLoading]     = useState(false);
 
   const [supportItems, setSupportItems] = useState([]);
   const [supportLoading, setSupportLoading] = useState(true);
@@ -64,6 +82,27 @@ export default function Profile() {
   const showMessage = (text, type = "success") => {
     setMsg({ text, type });
     setTimeout(() => setMsg(null), 3000);
+  };
+
+  const onSaveProfile = async () => {
+    if (!firstName.trim() || !lastName.trim()) {
+      showMessage("First and last name are required", "error");
+      return;
+    }
+    setProfileLoading(true);
+    try {
+      const { data } = await api.patch("/auth/profile", {
+        firstName: firstName.trim(),
+        lastName:  lastName.trim(),
+        nationality, phone, dateOfBirth, travelStyle, preferredCurrency,
+      });
+      setUser(data.user);
+      showMessage("Profile updated successfully");
+    } catch (err) {
+      showMessage(err?.response?.data?.message || "Failed to update profile", "error");
+    } finally {
+      setProfileLoading(false);
+    }
   };
 
   function isStrongPassword(pw) {
@@ -243,8 +282,8 @@ export default function Profile() {
                 </div>
               )}
 
-              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="text-lg font-bold text-slate-900">{t("profile.accountOverview.profileInfo")}</div>
                     <div className="text-sm text-slate-500">{t("profile.accountOverview.profileInfoSubtitle")}</div>
@@ -253,9 +292,80 @@ export default function Profile() {
                     {user?.verified ? t("profile.accountOverview.verifiedBadge") : t("profile.accountOverview.unverifiedBadge")}
                   </Badge>
                 </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Input label={t("common.name")} value={user?.name || ""} readOnly className="bg-slate-50 text-slate-600" />
-                  <Input label={t("common.email")} value={user?.email || ""} readOnly className="bg-slate-50 text-slate-600" />
+
+                {/* Name */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-slate-700">First name</label>
+                    <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Alex" autoComplete="given-name"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Last name</label>
+                    <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Smith" autoComplete="family-name"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100" />
+                  </div>
+                </div>
+
+                {/* Email (read-only) */}
+                <Input label={t("common.email")} value={user?.email || ""} readOnly className="bg-slate-50 text-slate-600" />
+
+                {/* Nationality + Phone */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Nationality</label>
+                    <select value={nationality} onChange={(e) => setNationality(e.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100">
+                      <option value="">Select country…</option>
+                      {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Phone number</label>
+                    <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 555 000 0000" type="tel" autoComplete="tel"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100" />
+                  </div>
+                </div>
+
+                {/* Date of birth + Currency */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Date of birth</label>
+                    <input value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} type="date"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Preferred currency</label>
+                    <select value={preferredCurrency} onChange={(e) => setPreferredCurrency(e.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100">
+                      <option value="">Select currency…</option>
+                      {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Travel style */}
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-slate-700">Travel style</label>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {TRAVEL_STYLES.map((s) => (
+                      <button key={s.value} type="button" onClick={() => setTravelStyle(s.value === travelStyle ? "" : s.value)}
+                        className={`rounded-2xl border px-4 py-3 text-left text-xs font-medium transition ${
+                          travelStyle === s.value
+                            ? "border-blue-400 bg-blue-50 text-blue-700"
+                            : "border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:bg-white"
+                        }`}>
+                        <div className="font-bold capitalize">{s.value}</div>
+                        <div className="mt-0.5 text-slate-500 leading-4">{s.label.split("—")[1]?.trim()}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button variant="primary" onClick={onSaveProfile} disabled={profileLoading}>
+                    {profileLoading ? "Saving…" : "Save profile"}
+                  </Button>
                 </div>
               </div>
             </CardBody>

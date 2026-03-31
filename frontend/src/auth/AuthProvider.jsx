@@ -8,9 +8,16 @@ function normalizeUser(u) {
   return {
     id: u?.id || u?._id || u?.userId || null,
     name: u?.name || "",
+    firstName: u?.firstName || "",
+    lastName: u?.lastName || "",
     email: u?.email || "",
     verified: Boolean(u?.verified),
     role: u?.role || "user",
+    nationality: u?.nationality || "",
+    phone: u?.phone || "",
+    dateOfBirth: u?.dateOfBirth || "",
+    travelStyle: u?.travelStyle || "",
+    preferredCurrency: u?.preferredCurrency || "",
   };
 }
 

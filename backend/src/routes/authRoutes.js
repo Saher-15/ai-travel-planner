@@ -34,9 +34,9 @@ function issueTokens(userId) {
 ============================ */
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password, confirmPassword } = req.body;
+    const { firstName, lastName, email, password, confirmPassword } = req.body;
 
-    if (!name || !email || !password || !confirmPassword) {
+    if (!firstName || !lastName || !email || !password || !confirmPassword) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -52,7 +52,9 @@ router.post("/register", async (req, res) => {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const trimmedName = name.trim();
+    const trimmedFirst = firstName.trim();
+    const trimmedLast  = lastName.trim();
+    const fullName     = `${trimmedFirst} ${trimmedLast}`;
 
     const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
@@ -63,7 +65,9 @@ router.post("/register", async (req, res) => {
     const verificationToken = crypto.randomBytes(32).toString("hex");
 
     await User.create({
-      name: trimmedName,
+      name: fullName,
+      firstName: trimmedFirst,
+      lastName: trimmedLast,
       email: normalizedEmail,
       passwordHash,
       verificationToken,
@@ -74,7 +78,7 @@ router.post("/register", async (req, res) => {
     const emailResult = await sendEmail(
       normalizedEmail,
       "Verify your email",
-      verificationEmail(trimmedName, link)
+      verificationEmail(trimmedFirst, link)
     );
 
     if (!emailResult.success) {
@@ -379,7 +383,7 @@ router.post("/logout", async (req, res) => {
 router.get("/me", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select(
-      "name email verified role"
+      "name firstName lastName email verified role nationality phone dateOfBirth travelStyle preferredCurrency"
     );
 
     if (!user) {
@@ -391,13 +395,66 @@ router.get("/me", authMiddleware, async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
         email: user.email,
         verified: user.verified,
         role: user.role || "user",
+        nationality: user.nationality || "",
+        phone: user.phone || "",
+        dateOfBirth: user.dateOfBirth || "",
+        travelStyle: user.travelStyle || "",
+        preferredCurrency: user.preferredCurrency || "",
       },
     });
   } catch (err) {
     console.error("ME ERROR:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ============================
+   UPDATE PROFILE
+============================ */
+router.patch("/profile", authMiddleware, async (req, res) => {
+  try {
+    const { firstName, lastName, nationality, phone, dateOfBirth, travelStyle, preferredCurrency } = req.body;
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (firstName !== undefined) user.firstName = firstName.trim();
+    if (lastName  !== undefined) user.lastName  = lastName.trim();
+    if (firstName !== undefined || lastName !== undefined) {
+      user.name = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.name;
+    }
+    if (nationality       !== undefined) user.nationality       = nationality;
+    if (phone             !== undefined) user.phone             = phone.trim();
+    if (dateOfBirth       !== undefined) user.dateOfBirth       = dateOfBirth;
+    if (travelStyle       !== undefined) user.travelStyle       = travelStyle;
+    if (preferredCurrency !== undefined) user.preferredCurrency = preferredCurrency;
+
+    await user.save();
+
+    return res.json({
+      message: "Profile updated",
+      user: {
+        id: user._id,
+        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        verified: user.verified,
+        role: user.role || "user",
+        nationality: user.nationality,
+        phone: user.phone,
+        dateOfBirth: user.dateOfBirth,
+        travelStyle: user.travelStyle,
+        preferredCurrency: user.preferredCurrency,
+      },
+    });
+  } catch (err) {
+    console.error("PROFILE UPDATE ERROR:", err);
     return res.status(500).json({ message: "Server error" });
   }
 });
