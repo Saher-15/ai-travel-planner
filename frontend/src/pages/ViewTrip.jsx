@@ -803,167 +803,165 @@ function Header({
   const { t } = useTranslation();
   const shareUrl = shareToken ? `${window.location.origin}/shared/${shareToken}` : "";
 
+  const hasCover = Boolean(trip?.coverPhoto);
+
   return (
-    <Card className="relative overflow-hidden border-0 shadow-[0_24px_80px_-28px_rgba(37,99,235,0.55)]">
-      <div className="relative text-white">
-        <div className="absolute inset-0 bg-linear-to-br from-sky-700 via-blue-700 to-indigo-900" />
-        <div className="relative z-10 flex flex-col gap-6 px-4 py-6 sm:px-6 sm:py-7 lg:px-8 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.25em] text-white/85">
-              {tripMode === "multi" ? t("viewTrip.multiCityItinerary") : t("viewTrip.smartTravelPlan")}
-            </div>
+    <div className="relative overflow-hidden rounded-3xl shadow-[0_20px_60px_-16px_rgba(15,23,42,0.35)]">
+      {/* Background — cover photo or gradient fallback */}
+      {hasCover && (
+        <img
+          src={trip.coverPhoto}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      )}
+      <div className={`absolute inset-0 ${
+        hasCover
+          ? "bg-linear-to-b from-black/30 via-black/55 to-black/85"
+          : "bg-linear-to-br from-slate-900 via-slate-800 to-blue-950"
+      }`} />
 
-            <div className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">
-              {trip?.destination || t("viewTrip.trip")}
-            </div>
+      {/* ── Main content ── */}
+      <div className="relative z-10 px-5 pb-5 pt-6 sm:px-7 sm:pt-7">
 
-            <div className="mt-2 text-sm text-white/85 sm:text-base">
-              {fmtRange(trip?.startDate, trip?.endDate)}
-            </div>
+        {/* Top row: badge + status */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-white/80 backdrop-blur-sm">
+            {tripMode === "multi" ? t("viewTrip.multiCityItinerary") : t("viewTrip.smartTravelPlan")}
+          </span>
 
-            {tripMode === "multi" && destinations.length > 1 ? (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {destinations.map((city) => (
-                  <span
-                    key={city}
-                    className="rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white backdrop-blur-sm"
-                  >
-                    {city}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="flex flex-wrap gap-2 lg:max-w-md lg:justify-end">
-            {summary.days ? (
-              <Badge className="border-white/20 bg-white/10 text-white shadow-sm">
-                {t("viewTrip.days", { count: summary.days })}
-              </Badge>
-            ) : null}
-
-            {tripMode === "multi" ? (
-              <Badge className="border-white/20 bg-white/10 text-white shadow-sm">
-                {t("viewTrip.cities", { count: destinations.length })}
-              </Badge>
-            ) : null}
-
-            {summary.style ? (
-              <Badge className="border-white/20 bg-white/10 text-white shadow-sm">
-                {t("viewTrip.pace", { pace: summary.style })}
-              </Badge>
-            ) : null}
-
-            {summary.budget && summary.budget.toLowerCase() !== "null" ? (
-              <Badge className="border-white/20 bg-white/10 text-white shadow-sm">
-                {t("viewTrip.budget", { budget: summary.budget })}
-              </Badge>
-            ) : null}
-
-            {!!trip?.events?.length ? (
-              <Badge className="border-white/20 bg-white/10 text-white shadow-sm">
-                {t("viewTrip.events", { count: trip.events.length })}
-              </Badge>
-            ) : null}
+          {/* Status pills */}
+          <div className="flex items-center gap-1.5">
+            {["planning", "upcoming", "completed"].map((s) => (
+              <button
+                key={s}
+                type="button"
+                disabled={statusBusy}
+                onClick={() => onStatusChange(s)}
+                className={`rounded-full px-3 py-1 text-[11px] font-bold border transition-all ${
+                  tripStatus === s
+                    ? STATUS_STYLES[s]
+                    : "border-white/15 bg-white/8 text-white/55 hover:bg-white/15 hover:text-white/80"
+                }`}
+              >
+                {STATUS_LABELS[s]}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="relative z-10 flex flex-wrap gap-2 px-4 pb-4 sm:gap-3 sm:px-6 lg:px-8">
-          <Button type="button" onClick={onBack} variant="secondary">
-            {t("viewTrip.back")}
-          </Button>
-
-          <Button
-            type="button"
-            onClick={onEdit}
-            variant="secondary"
-            className="bg-white/15 text-white backdrop-blur hover:bg-white/20"
-          >
-            {t("viewTrip.editTrip")}
-          </Button>
-
-          <Button
-            type="button"
-            onClick={onNew}
-            variant="ghost"
-            className="bg-white/10 text-white backdrop-blur hover:bg-white/15"
-          >
-            {t("viewTrip.createNew")}
-          </Button>
-
-          <Button
-            type="button"
-            className="text-sky-800 shadow-lg hover:bg-sky-50"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload?.(); }}
-          >
-            {t("viewTrip.downloadPDF")}
-          </Button>
-
-          <Button
-            type="button"
-            className="bg-white/15 text-white backdrop-blur hover:bg-white/20"
-            onClick={onExportCalendar}
-          >
-            📅 Calendar
-          </Button>
-
-          <Button
-            type="button"
-            disabled={shareBusy}
-            onClick={shareToken ? () => setShareOpen((o) => !o) : onShare}
-            className="bg-white/15 text-white backdrop-blur hover:bg-white/20"
-          >
-            {shareBusy ? "..." : shareToken ? "🔗 Shared" : "🔗 Share"}
-          </Button>
-
+        {/* Destination + date */}
+        <div className="mt-4">
+          <h1 className="text-3xl font-black tracking-tight text-white drop-shadow-sm sm:text-4xl lg:text-5xl">
+            {trip?.destination || t("viewTrip.trip")}
+          </h1>
+          <p className="mt-1.5 text-sm text-white/70 sm:text-base">
+            {fmtRange(trip?.startDate, trip?.endDate)}
+          </p>
         </div>
 
-        {/* Status selector */}
-        <div className="relative z-10 flex flex-wrap items-center gap-2 px-4 pb-5 sm:px-6 sm:pb-6 lg:px-8">
-          <span className="text-xs font-semibold text-white/60 uppercase tracking-wider">Status:</span>
-          {["planning", "upcoming", "completed"].map((s) => (
-            <button
-              key={s}
-              type="button"
-              disabled={statusBusy}
-              onClick={() => onStatusChange(s)}
-              className={`rounded-full px-3 py-1 text-xs font-bold border transition ${
-                tripStatus === s
-                  ? STATUS_STYLES[s]
-                  : "border-white/20 bg-white/10 text-white/70 hover:bg-white/20"
-              }`}
-            >
-              {STATUS_LABELS[s]}
-            </button>
-          ))}
-        </div>
-
-        {/* Share panel */}
-        {shareOpen && shareToken && (
-          <div className="relative z-10 mx-6 mb-6 rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur sm:mx-8">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-semibold text-white/80">Public link — anyone with this can view the trip:</p>
-              <button type="button" onClick={() => setShareOpen(false)} className="text-white/60 hover:text-white text-lg leading-none">×</button>
-            </div>
-            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
-              <input
-                readOnly
-                value={shareUrl}
-                className="flex-1 rounded-xl bg-white/20 px-3 py-2 text-xs text-white placeholder-white/40 outline-none"
-              />
-              <div className="flex gap-2">
-                <Button type="button" onClick={onCopy} className="text-sky-800 text-xs px-3 py-2">
-                  {copied ? "✓ Copied!" : "Copy Link"}
-                </Button>
-                <Button type="button" onClick={onUnshare} variant="danger" className="text-xs px-3 py-2">
-                  Remove
-                </Button>
-              </div>
-            </div>
+        {/* Multi-city chips */}
+        {tripMode === "multi" && destinations.length > 1 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {destinations.map((city) => (
+              <span key={city} className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+                {city}
+              </span>
+            ))}
           </div>
         )}
+
+        {/* Stats row */}
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {summary.days ? (
+            <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/85 backdrop-blur-sm">
+              {t("viewTrip.days", { count: summary.days })}
+            </span>
+          ) : null}
+          {tripMode === "multi" ? (
+            <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/85 backdrop-blur-sm">
+              {t("viewTrip.cities", { count: destinations.length })}
+            </span>
+          ) : null}
+          {summary.style ? (
+            <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/85 backdrop-blur-sm">
+              {t("viewTrip.pace", { pace: summary.style })}
+            </span>
+          ) : null}
+          {summary.budget && summary.budget.toLowerCase() !== "null" ? (
+            <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/85 backdrop-blur-sm">
+              {t("viewTrip.budget", { budget: summary.budget })}
+            </span>
+          ) : null}
+          {!!trip?.events?.length ? (
+            <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/85 backdrop-blur-sm">
+              {t("viewTrip.events", { count: trip.events.length })}
+            </span>
+          ) : null}
+        </div>
       </div>
-    </Card>
+
+      {/* ── Action bar ── */}
+      <div className="relative z-10 border-t border-white/10 px-5 py-3 sm:px-7">
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={onBack}
+            className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
+            ← {t("viewTrip.back")}
+          </button>
+          <button type="button" onClick={onEdit}
+            className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
+            ✏ {t("viewTrip.editTrip")}
+          </button>
+          <button type="button" onClick={onNew}
+            className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
+            + {t("viewTrip.createNew")}
+          </button>
+          <button type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload?.(); }}
+            className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
+            ↓ {t("viewTrip.downloadPDF")}
+          </button>
+          <button type="button" onClick={onExportCalendar}
+            className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
+            📅 Calendar
+          </button>
+          <button type="button" disabled={shareBusy}
+            onClick={shareToken ? () => setShareOpen((o) => !o) : onShare}
+            className={`flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold backdrop-blur-sm transition ${
+              shareToken
+                ? "border-emerald-400/40 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30"
+                : "border-white/20 bg-white/10 text-white hover:bg-white/20"
+            }`}>
+            🔗 {shareBusy ? "..." : shareToken ? "Shared" : "Share"}
+          </button>
+        </div>
+      </div>
+
+      {/* Share panel */}
+      {shareOpen && shareToken && (
+        <div className="relative z-10 mx-5 mb-4 rounded-2xl border border-white/15 bg-black/30 p-4 backdrop-blur-md sm:mx-7">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold text-white/75">Public link — anyone with this can view the trip:</p>
+            <button type="button" onClick={() => setShareOpen(false)} className="text-white/50 hover:text-white text-xl leading-none">×</button>
+          </div>
+          <div className="mt-2.5 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <input readOnly value={shareUrl}
+              className="flex-1 rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-xs text-white outline-none" />
+            <div className="flex gap-2">
+              <button type="button" onClick={onCopy}
+                className="rounded-xl bg-white px-3 py-2 text-xs font-bold text-slate-800 transition hover:bg-slate-100">
+                {copied ? "✓ Copied!" : "Copy"}
+              </button>
+              <button type="button" onClick={onUnshare}
+                className="rounded-xl border border-red-400/40 bg-red-500/20 px-3 py-2 text-xs font-bold text-red-300 transition hover:bg-red-500/30">
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
