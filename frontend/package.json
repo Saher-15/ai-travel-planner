@@ -15,6 +15,7 @@
   "dependencies": {
     "@maptiler/client": "^2.7.0",
     "@maptiler/sdk": "^3.11.1",
+    "@paypal/react-paypal-js": "^9.1.0",
     "axios": "^1.13.6",
     "i18next": "^25.8.18",
     "lucide-react": "^0.577.0",

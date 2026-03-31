@@ -20,6 +20,7 @@ function normalizeUser(u) {
     preferredCurrency: u?.preferredCurrency || "",
     plan: u?.plan || "free",
     planExpiresAt: u?.planExpiresAt || null,
+    paymentProvider: u?.paymentProvider || null,
   };
 }
 

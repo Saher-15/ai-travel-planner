@@ -1,5 +1,6 @@
 import express from "express";
 import Stripe from "stripe";
+import axios from "axios";
 import authMiddleware from "../middleware/authMiddleware.js";
 import { User } from "../models/User.js";
 import {
@@ -7,9 +8,48 @@ import {
   STRIPE_WEBHOOK_SECRET,
   STRIPE_EXPLORER_PRICE_ID,
   STRIPE_PRO_PRICE_ID,
+  PAYPAL_CLIENT_ID,
+  PAYPAL_CLIENT_SECRET,
+  PAYPAL_EXPLORER_PLAN_ID,
+  PAYPAL_PRO_PLAN_ID,
+  PAYPAL_WEBHOOK_ID,
+  PAYPAL_MODE,
   CLIENT_URL,
 } from "../config.js";
 import { getPlanLimits, isSameMonth } from "../utils/planLimits.js";
+
+// ─── PayPal helpers ───────────────────────────────────────────────────────────
+
+const PAYPAL_BASE = PAYPAL_MODE === "live"
+  ? "https://api-m.paypal.com"
+  : "https://api-m.sandbox.paypal.com";
+
+async function getPayPalToken() {
+  const res = await axios.post(
+    `${PAYPAL_BASE}/v1/oauth2/token`,
+    "grant_type=client_credentials",
+    {
+      auth: { username: PAYPAL_CLIENT_ID, password: PAYPAL_CLIENT_SECRET },
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    }
+  );
+  return res.data.access_token;
+}
+
+async function getPayPalSubscription(subscriptionId) {
+  const token = await getPayPalToken();
+  const res = await axios.get(
+    `${PAYPAL_BASE}/v1/billing/subscriptions/${subscriptionId}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return res.data;
+}
+
+function paypalPlanIdToName(planId) {
+  if (planId === PAYPAL_EXPLORER_PLAN_ID) return "explorer";
+  if (planId === PAYPAL_PRO_PLAN_ID)      return "pro";
+  return null;
+}
 
 const router = express.Router();
 
@@ -175,6 +215,158 @@ router.post("/webhook", express.raw({ type: "application/json" }), async (req, r
     }
   } catch (err) {
     console.error("Webhook handler error:", err);
+    return res.status(500).json({ message: "Webhook handler error." });
+  }
+
+  return res.json({ received: true });
+});
+
+// ─── GET /paypal/plan-ids ──────────────────────────────────────────────────────
+// Returns PayPal plan IDs so the frontend can pass them to PayPal SDK directly
+
+router.get("/paypal/plan-ids", authMiddleware, (_req, res) => {
+  if (!PAYPAL_CLIENT_ID) return res.status(503).json({ message: "PayPal not configured." });
+  return res.json({
+    explorer: PAYPAL_EXPLORER_PLAN_ID || null,
+    pro:      PAYPAL_PRO_PLAN_ID      || null,
+    clientId: PAYPAL_CLIENT_ID,
+  });
+});
+
+// ─── POST /paypal/approve ──────────────────────────────────────────────────────
+// Called by frontend after user approves subscription on PayPal
+
+router.post("/paypal/approve", authMiddleware, async (req, res) => {
+  if (!PAYPAL_CLIENT_ID) return res.status(503).json({ message: "PayPal not configured." });
+
+  const { subscriptionId } = req.body;
+  if (!subscriptionId) return res.status(400).json({ message: "subscriptionId is required." });
+
+  try {
+    const sub = await getPayPalSubscription(subscriptionId);
+
+    if (sub.status !== "ACTIVE") {
+      return res.status(400).json({ message: `Subscription not active (status: ${sub.status})` });
+    }
+
+    const planId = sub.plan_id;
+    const plan   = paypalPlanIdToName(planId);
+    if (!plan) return res.status(400).json({ message: "Unknown PayPal plan." });
+
+    await User.findByIdAndUpdate(req.user.id, {
+      plan,
+      paypalSubscriptionId: subscriptionId,
+      paymentProvider: "paypal",
+      stripeSubscriptionId: null,
+      planExpiresAt: null,
+    });
+
+    return res.json({ plan });
+  } catch (err) {
+    console.error("PayPal approve error:", err);
+    return res.status(500).json({ message: "Failed to activate PayPal subscription." });
+  }
+});
+
+// ─── POST /paypal/cancel ───────────────────────────────────────────────────────
+
+router.post("/paypal/cancel", authMiddleware, async (req, res) => {
+  if (!PAYPAL_CLIENT_ID) return res.status(503).json({ message: "PayPal not configured." });
+
+  try {
+    const user = await User.findById(req.user.id).select("paypalSubscriptionId");
+    if (!user?.paypalSubscriptionId) {
+      return res.status(400).json({ message: "No active PayPal subscription." });
+    }
+
+    const token = await getPayPalToken();
+    await axios.post(
+      `${PAYPAL_BASE}/v1/billing/subscriptions/${user.paypalSubscriptionId}/cancel`,
+      { reason: "User requested cancellation" },
+      { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+    );
+
+    await User.findByIdAndUpdate(req.user.id, {
+      plan: "free",
+      paypalSubscriptionId: null,
+      paymentProvider: null,
+      planExpiresAt: null,
+    });
+
+    return res.json({ message: "PayPal subscription cancelled." });
+  } catch (err) {
+    console.error("PayPal cancel error:", err);
+    return res.status(500).json({ message: "Failed to cancel PayPal subscription." });
+  }
+});
+
+// ─── POST /paypal/webhook ──────────────────────────────────────────────────────
+
+router.post("/paypal/webhook", express.json(), async (req, res) => {
+  if (!PAYPAL_CLIENT_ID) return res.status(503).json({ message: "PayPal not configured." });
+
+  // Verify webhook signature
+  try {
+    const token = await getPayPalToken();
+    const verifyRes = await axios.post(
+      `${PAYPAL_BASE}/v1/notifications/verify-webhook-signature`,
+      {
+        auth_algo:         req.headers["paypal-auth-algo"],
+        cert_url:          req.headers["paypal-cert-url"],
+        transmission_id:   req.headers["paypal-transmission-id"],
+        transmission_sig:  req.headers["paypal-transmission-sig"],
+        transmission_time: req.headers["paypal-transmission-time"],
+        webhook_id:        PAYPAL_WEBHOOK_ID,
+        webhook_event:     req.body,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (verifyRes.data.verification_status !== "SUCCESS") {
+      return res.status(400).json({ message: "Webhook verification failed." });
+    }
+  } catch (err) {
+    console.error("PayPal webhook verify error:", err.message);
+    return res.status(400).json({ message: "Webhook verification error." });
+  }
+
+  const event = req.body;
+  try {
+    switch (event.event_type) {
+      case "BILLING.SUBSCRIPTION.ACTIVATED": {
+        const sub    = event.resource;
+        const plan   = paypalPlanIdToName(sub.plan_id);
+        const userId = sub.custom_id; // set when subscription created via custom_id
+        if (plan && userId) {
+          await User.findByIdAndUpdate(userId, {
+            plan,
+            paypalSubscriptionId: sub.id,
+            paymentProvider: "paypal",
+            planExpiresAt: null,
+          });
+        }
+        break;
+      }
+
+      case "BILLING.SUBSCRIPTION.CANCELLED":
+      case "BILLING.SUBSCRIPTION.EXPIRED": {
+        const sub = event.resource;
+        const user = await User.findOne({ paypalSubscriptionId: sub.id });
+        if (user) {
+          await User.findByIdAndUpdate(user._id, {
+            plan: "free",
+            paypalSubscriptionId: null,
+            paymentProvider: null,
+            planExpiresAt: null,
+          });
+        }
+        break;
+      }
+
+      default:
+        break;
+    }
+  } catch (err) {
+    console.error("PayPal webhook handler error:", err);
     return res.status(500).json({ message: "Webhook handler error." });
   }
 

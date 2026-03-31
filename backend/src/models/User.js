@@ -26,9 +26,11 @@ const userSchema = new mongoose.Schema(
       enum: ["free", "explorer", "pro"],
       default: "free",
     },
-    stripeCustomerId:     { type: String, default: null },
-    stripeSubscriptionId: { type: String, default: null },
-    planExpiresAt:        { type: Date,   default: null },
+    stripeCustomerId:      { type: String, default: null },
+    stripeSubscriptionId:  { type: String, default: null },
+    paypalSubscriptionId:  { type: String, default: null },
+    paymentProvider:       { type: String, enum: ["stripe", "paypal", null], default: null },
+    planExpiresAt:         { type: Date,   default: null },
 
     // AI generation quota — reset each calendar month
     aiGenerationsThisMonth: { type: Number, default: 0 },

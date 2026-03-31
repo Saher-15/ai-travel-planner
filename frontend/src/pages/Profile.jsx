@@ -49,18 +49,29 @@ const PLAN_META = {
   pro:      { label: "Pro",      color: "from-violet-500 to-purple-600", ring: "border-violet-200",  text: "text-violet-700"  },
 };
 
-function PlanCard({ plan, planExpiresAt }) {
-  const [loadingPortal, setLoadingPortal] = useState(false);
+function PlanCard({ plan, planExpiresAt, paymentProvider, onPlanChange }) {
+  const [loading, setLoading]     = useState(false);
+  const [cancelConfirm, setCancelConfirm] = useState(false);
+  const [err, setErr]             = useState("");
   const meta = PLAN_META[plan] || PLAN_META.free;
 
-  async function openPortal() {
-    setLoadingPortal(true);
+  async function openStripePortal() {
+    setLoading(true); setErr("");
     try {
       const { data } = await api.post("/subscription/portal");
       window.location.href = data.url;
-    } catch {
-      setLoadingPortal(false);
-    }
+    } catch { setLoading(false); setErr("Failed to open billing portal."); }
+  }
+
+  async function cancelPayPal() {
+    setLoading(true); setErr("");
+    try {
+      await api.post("/subscription/paypal/cancel");
+      setCancelConfirm(false);
+      if (onPlanChange) onPlanChange();
+    } catch (e) {
+      setErr(e?.response?.data?.message || "Failed to cancel PayPal subscription.");
+    } finally { setLoading(false); }
   }
 
   return (
@@ -70,6 +81,11 @@ function PlanCard({ plan, planExpiresAt }) {
           <div>
             <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Current Plan</div>
             <div className="mt-0.5 text-xl font-black">{meta.label}</div>
+            {paymentProvider && plan !== "free" && (
+              <div className="mt-1 text-[11px] text-white/60 capitalize">
+                via {paymentProvider}
+              </div>
+            )}
           </div>
           <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white/20 text-2xl">
             {plan === "pro" ? "👑" : plan === "explorer" ? "🧭" : "🆓"}
@@ -83,6 +99,8 @@ function PlanCard({ plan, planExpiresAt }) {
       </div>
 
       <div className="px-5 py-4">
+        {err && <p className="mb-3 text-xs font-semibold text-red-600">{err}</p>}
+
         {plan === "free" ? (
           <div className="space-y-3">
             <p className="text-sm text-slate-500">Upgrade to unlock PDF export, AI packing lists, trip sharing, and more generations.</p>
@@ -93,16 +111,51 @@ function PlanCard({ plan, planExpiresAt }) {
               View Plans
             </Link>
           </div>
+        ) : paymentProvider === "paypal" ? (
+          <div className="space-y-2">
+            <p className="text-sm text-slate-500">Your subscription is managed via PayPal.</p>
+            {!cancelConfirm ? (
+              <button
+                type="button"
+                onClick={() => setCancelConfirm(true)}
+                disabled={loading}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+              >
+                Cancel PayPal subscription
+              </button>
+            ) : (
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm">
+                <p className="font-semibold text-red-800">Are you sure? You'll lose access at the end of the period.</p>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={cancelPayPal}
+                    disabled={loading}
+                    className="flex-1 rounded-xl bg-red-600 py-2 text-xs font-bold text-white transition hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {loading ? "Cancelling…" : "Yes, cancel"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCancelConfirm(false)}
+                    className="flex-1 rounded-xl border border-slate-200 bg-white py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+                  >
+                    Keep plan
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             <p className="text-sm text-slate-500">Manage your subscription, update payment method, or cancel anytime.</p>
             <button
               type="button"
-              onClick={openPortal}
-              disabled={loadingPortal}
+              onClick={openStripePortal}
+              disabled={loading}
               className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
             >
-              {loadingPortal ? "Opening…" : "Manage billing"}
+              {loading ? "Opening…" : "Manage billing (Stripe)"}
             </button>
           </div>
         )}
@@ -116,7 +169,7 @@ export default function Profile() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const nav = useNavigate();
-  const { user, logout, setUser } = useAuth();
+  const { user, logout, setUser, refresh } = useAuth();
 
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -466,7 +519,12 @@ export default function Profile() {
         <div className="space-y-6 xl:col-span-5">
 
           {/* ── Plan card ── */}
-          <PlanCard plan={user?.plan || "free"} planExpiresAt={user?.planExpiresAt} />
+          <PlanCard
+            plan={user?.plan || "free"}
+            planExpiresAt={user?.planExpiresAt}
+            paymentProvider={user?.paymentProvider || null}
+            onPlanChange={refresh}
+          />
 
           <Card className="overflow-hidden border border-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.16)]">
             <CardHeader title={t("profile.supportInbox.title")} subtitle={t("profile.supportInbox.subtitle")}
