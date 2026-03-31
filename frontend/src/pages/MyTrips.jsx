@@ -97,8 +97,18 @@ export default function MyTrips() {
 
       if (loaded.length) {
         try {
+          // Seed photoMap immediately from photos already stored on the trip
+          const photoMap = {};
+          loaded.forEach((trip) => {
+            if (trip.coverPhoto) photoMap[trip._id] = [trip.coverPhoto];
+          });
+          setCoverPhotos({ ...photoMap });
+
+          // Only fetch from the external API for trips that don't have a stored photo
           const requests = [];
           loaded.forEach((trip) => {
+            if (trip.coverPhoto) return; // already have it
+
             if (trip.tripMode === "multi") {
               const cities = (
                 trip.multiCityMeta?.length
@@ -118,17 +128,19 @@ export default function MyTrips() {
               (trip.destination || "").split(/\s*→\s*/)[0].trim();
             requests.push({ tripId: trip._id, name });
           });
-          const places = requests.map(({ name }) => ({ query: name, title: name, destination: name }));
-          const { data: photoData } = await api.post("/places/photos", { places });
-          const results = Array.isArray(photoData?.results) ? photoData.results : [];
-          const photoMap = {};
-          requests.forEach(({ tripId }, i) => {
-            const url = results[i]?.photoUrl;
-            if (!url) return;
-            if (!photoMap[tripId]) photoMap[tripId] = [];
-            photoMap[tripId].push(url);
-          });
-          setCoverPhotos(photoMap);
+
+          if (requests.length) {
+            const places = requests.map(({ name }) => ({ query: name, title: name, destination: name }));
+            const { data: photoData } = await api.post("/places/photos", { places });
+            const results = Array.isArray(photoData?.results) ? photoData.results : [];
+            requests.forEach(({ tripId }, i) => {
+              const url = results[i]?.photoUrl;
+              if (!url) return;
+              if (!photoMap[tripId]) photoMap[tripId] = [];
+              photoMap[tripId].push(url);
+            });
+            setCoverPhotos({ ...photoMap });
+          }
         } catch { /* photos optional */ }
       }
     } catch (e) {

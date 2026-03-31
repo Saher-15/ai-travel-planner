@@ -123,6 +123,10 @@ const TripSchema = new mongoose.Schema(
 
     personalNotes: { type: String, default: "", trim: true },
 
+    // Resolved once and cached on the document — avoids repeat Wikipedia calls
+    coverPhoto:            { type: String,  default: "" },
+    coverPhotoAttribution: { type: Object,  default: null },
+
     status: {
       type: String,
       enum: ["planning", "upcoming", "completed"],

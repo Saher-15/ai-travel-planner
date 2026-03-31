@@ -2,6 +2,33 @@ import crypto from "crypto";
 import { Trip } from "../models/Trip.js";
 import { generateItinerary, generatePackingList } from "./openaiService.js";
 import { fetchDestinationEvents } from "./eventsService.js";
+import { getPhotosForPlaces } from "./photoService.js";
+
+/** Extract the primary city name from a trip for cover-photo lookup. */
+function tripPhotoQuery(trip) {
+  const name =
+    trip.placeMeta?.name ||
+    trip.placeMeta?.label ||
+    (trip.destination || "").split(/\s*→\s*/)[0].trim();
+  return name ? { query: name, title: name, destination: name } : null;
+}
+
+/**
+ * Resolve and persist the cover photo for a single trip.
+ * Silently ignored on error — cover photos are cosmetic.
+ */
+async function saveCoverPhoto(tripId, trip) {
+  try {
+    const place = tripPhotoQuery(trip);
+    if (!place) return;
+    const [result] = await getPhotosForPlaces([place]);
+    if (!result?.photoUrl) return;
+    await Trip.updateOne(
+      { _id: tripId },
+      { coverPhoto: result.photoUrl, coverPhotoAttribution: result.photoAttribution }
+    );
+  } catch { /* best-effort */ }
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -184,7 +211,7 @@ export async function generateAndSaveTrip(userId, body) {
     fetchDestinationEvents({ destination: cleanDests[0] || cleanDest, startDate, endDate, preferences: prefs }),
   ]);
 
-  return Trip.create({
+  const trip = await Trip.create({
     userId,
     tripMode:     mode,
     destination:  cleanDest,
@@ -197,6 +224,10 @@ export async function generateAndSaveTrip(userId, body) {
     placeMeta:    placeMeta && typeof placeMeta === "object" ? placeMeta : {},
     multiCityMeta: cleanMeta,
   });
+
+  // Resolve cover photo in the background — don't delay the response
+  saveCoverPhoto(trip._id, trip);
+  return trip;
 }
 
 export async function createTrip(userId, body) {
@@ -205,7 +236,7 @@ export async function createTrip(userId, body) {
   const cleanDest = String(destination || "").trim();
   const cleanDests = normalizeDestinations(destinations, cleanDest);
 
-  return Trip.create({
+  const trip = await Trip.create({
     userId,
     tripMode:     mode,
     destination:  cleanDest,
@@ -216,6 +247,9 @@ export async function createTrip(userId, body) {
     itinerary:    normalizeItinerary(itinerary),
     events:       normalizeEvents(events),
   });
+
+  saveCoverPhoto(trip._id, trip);
+  return trip;
 }
 
 export async function getTrips(userId, { page = 1, limit = 12, status, q } = {}) {
@@ -231,13 +265,20 @@ export async function getTrips(userId, { page = 1, limit = 12, status, q } = {})
   const skip = (page - 1) * limit;
   const [trips, total] = await Promise.all([
     Trip.find(filter)
-      .select("destination destinations tripMode startDate endDate preferences itinerary.tripSummary status shareToken createdAt placeMeta multiCityMeta")
+      .select("destination destinations tripMode startDate endDate preferences itinerary.tripSummary status shareToken createdAt placeMeta multiCityMeta coverPhoto coverPhotoAttribution")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean(),
     Trip.countDocuments(filter),
   ]);
+
+  // Fire-and-forget: persist cover photos for trips that don't have one yet.
+  // On first load some photos may be missing; they'll be stored for next time.
+  const missing = trips.filter((t) => !t.coverPhoto);
+  if (missing.length) {
+    Promise.all(missing.map((t) => saveCoverPhoto(t._id, t))).catch(() => {});
+  }
 
   return { trips, total, page, totalPages: Math.ceil(total / limit) };
 }
