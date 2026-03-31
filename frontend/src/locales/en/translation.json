@@ -1168,6 +1168,7 @@
     "event": "Event",
     "trip": "Trip",
     "unknownDate": "Unknown date",
+    "activitiesCount": "{{count}} activities",
     "placesCount": "{{count}} places",
     "travelers": "Travelers",
     "shareTrip": {

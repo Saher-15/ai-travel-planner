@@ -675,7 +675,7 @@ export default function ViewTrip() {
       <div className="mt-5" ref={pdfRef}>
         <div className="min-w-0">
           {activePanel === "itinerary" && (
-            <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+            <div className="grid gap-4 sm:gap-6">
               {trip?.itinerary?.days?.map((d, idx) => (
                 <DayCard
                   key={d.day}

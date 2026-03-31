@@ -1168,6 +1168,7 @@
     "event": "אירוע",
     "trip": "טיול",
     "unknownDate": "תאריך לא ידוע",
+    "activitiesCount": "{{count}} פעילויות",
     "placesCount": "{{count}} מקומות",
     "travelers": "נוסעים",
     "shareTrip": {
