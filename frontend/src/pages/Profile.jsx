@@ -8,7 +8,7 @@ import PasswordStrengthBar from "../components/PasswordStrengthBar.jsx";
 import { COUNTRIES } from "../utils/countries.js";
 import { useTranslation } from "react-i18next";
 
-const CURRENCIES = ["USD", "EUR", "GBP", "AED", "SAR", "JPY", "CNY", "INR", "CAD", "AUD", "CHF", "KRW", "BRL", "MXN", "SGD"];
+const CURRENCIES = ["USD", "EUR", "GBP", "ILS", "AED", "SAR", "JPY", "CNY", "INR", "CAD", "AUD", "CHF", "KRW", "BRL", "MXN", "SGD"];
 const TRAVEL_STYLES = [
   { value: "budget",   label: "Budget — hostels, street food, local transport" },
   { value: "standard", label: "Standard — mid-range hotels, mix of dining" },
