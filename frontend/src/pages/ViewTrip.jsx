@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthProvider.jsx";
 import {
@@ -361,6 +361,8 @@ function PanelIcon({ id, className = "h-5 w-5" }) {
 
 export default function ViewTrip() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const isFree = !user || (user.plan === "free" && user.role !== "admin");
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -599,7 +601,7 @@ export default function ViewTrip() {
     { id: "tips",      label: t("viewTrip.tripTips"),          subtitle: `${trip?.itinerary?.tips?.length || 0} travel tips`,          badge: trip?.itinerary?.tips?.length || 0, hidden: !trip?.itinerary?.tips?.length },
     { id: "budget",    label: t("viewTrip.budgetSummary"),     subtitle: "Estimated costs by category" },
     { id: "expenses",  label: t("viewTrip.expenseTracker"),    subtitle: "Track your spending" },
-    { id: "packing",   label: t("viewTrip.packingList.title"),  subtitle: "Packing checklist" },
+    { id: "packing",   label: t("viewTrip.packingList.title"),  subtitle: "Packing checklist", locked: isFree },
     { id: "hotels",    label: "Hotels",                        subtitle: "Find accommodation" },
     { id: "chat",      label: "AI Assistant",                  subtitle: "Ask about your trip" },
     { id: "notes",     label: "Personal Notes",                subtitle: "Your private notes" },
@@ -632,6 +634,7 @@ export default function ViewTrip() {
         tripStatus={tripStatus}
         statusBusy={statusBusy}
         onStatusChange={handleStatusChange}
+        isFree={isFree}
       />
 
       {/* ── Feature grid navigation ── */}
@@ -642,16 +645,25 @@ export default function ViewTrip() {
             <button
               key={p.id}
               type="button"
-              onClick={() => setActivePanel(p.id)}
+              onClick={() => p.locked ? nav("/pricing") : setActivePanel(p.id)}
               className={[
                 "group relative flex flex-col items-center gap-1.5 rounded-xl border p-2 text-center transition-all duration-150 sm:gap-2 sm:rounded-2xl sm:p-3",
                 active
                   ? "border-blue-500 bg-blue-600 shadow-md shadow-blue-200"
+                  : p.locked
+                  ? "border-slate-200 bg-white opacity-70 hover:border-amber-300 hover:bg-amber-50"
                   : "border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50",
               ].join(" ")}
             >
+              {/* Lock badge */}
+              {p.locked && (
+                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] text-white sm:h-5 sm:w-5 sm:text-[10px]">
+                  🔒
+                </span>
+              )}
+
               {/* Badge */}
-              {p.badge > 0 && (
+              {!p.locked && p.badge > 0 && (
                 <span className={`absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold leading-none sm:h-5 sm:min-w-5 sm:text-[10px] ${
                   active ? "bg-white text-blue-600" : "bg-blue-600 text-white"
                 }`}>
@@ -661,9 +673,9 @@ export default function ViewTrip() {
 
               {/* Icon */}
               <div className={`flex h-7 w-7 items-center justify-center rounded-lg transition-all duration-150 sm:h-9 sm:w-9 sm:rounded-xl ${
-                active ? "bg-white/20" : "bg-slate-100 group-hover:bg-blue-100"
+                active ? "bg-white/20" : p.locked ? "bg-slate-100" : "bg-slate-100 group-hover:bg-blue-100"
               }`}>
-                <PanelIcon id={p.id} className={`h-4 w-4 sm:h-5 sm:w-5 ${active ? "text-white" : "text-slate-500 group-hover:text-blue-600"}`} />
+                <PanelIcon id={p.id} className={`h-4 w-4 sm:h-5 sm:w-5 ${active ? "text-white" : p.locked ? "text-slate-400" : "text-slate-500 group-hover:text-blue-600"}`} />
               </div>
 
               {/* Label */}
@@ -812,6 +824,7 @@ function Header({
   tripStatus,
   statusBusy,
   onStatusChange,
+  isFree,
 }) {
   const { t } = useTranslation();
   const shareUrl = shareToken ? `${window.location.origin}/shared/${shareToken}` : "";
@@ -930,15 +943,28 @@ function Header({
             className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
             + {t("viewTrip.createNew")}
           </button>
-          <button type="button"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload?.(); }}
-            className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
-            ↓ {t("viewTrip.downloadPDF")}
-          </button>
+          {isFree ? (
+            <Link to="/pricing"
+              className="flex items-center gap-1.5 rounded-xl border border-amber-400/40 bg-amber-500/20 px-3.5 py-2 text-xs font-semibold text-amber-200 backdrop-blur-sm transition hover:bg-amber-500/30">
+              🔒 {t("viewTrip.downloadPDF")}
+            </Link>
+          ) : (
+            <button type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload?.(); }}
+              className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
+              ↓ {t("viewTrip.downloadPDF")}
+            </button>
+          )}
           <button type="button" onClick={onExportCalendar}
             className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
             📅 Calendar
           </button>
+          {isFree ? (
+            <Link to="/pricing"
+              className="flex items-center gap-1.5 rounded-xl border border-amber-400/40 bg-amber-500/20 px-3.5 py-2 text-xs font-semibold text-amber-200 backdrop-blur-sm transition hover:bg-amber-500/30">
+              🔒 Share
+            </Link>
+          ) : (
           <button type="button" disabled={shareBusy}
             onClick={shareToken ? () => setShareOpen((o) => !o) : onShare}
             className={`flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold backdrop-blur-sm transition ${
@@ -948,6 +974,7 @@ function Header({
             }`}>
             🔗 {shareBusy ? "..." : shareToken ? "Shared" : "Share"}
           </button>
+          )}
         </div>
       </div>
 
