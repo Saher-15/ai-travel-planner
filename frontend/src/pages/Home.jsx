@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ArrowRight, Baby, Calendar, Compass, FolderKanban,
+  ArrowRight, Baby, Calendar, ChevronDown, Compass, FolderKanban,
   MapPin, PlaneTakeoff, Search, Sparkles, Users, Wand2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -256,7 +256,7 @@ export default function Home() {
       {/* ── Hero ── */}
       <section className="relative -mx-4 -mt-8 overflow-hidden md:-mx-6">
         <img src={HERO_BG} alt="Travel" className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-linear-to-b from-slate-900/80 via-slate-900/65 to-slate-900/90" />
+        <div className="absolute inset-0 bg-linear-to-br from-slate-900/80 via-slate-900/50 to-transparent" />
 
         <div className="relative px-4 pb-0 pt-16 sm:px-8 sm:pt-24 md:pt-32">
           <div className="mx-auto max-w-2xl text-center">
@@ -298,6 +298,11 @@ export default function Home() {
           <div className="mx-auto mt-10 max-w-4xl">
             <QuickSearch />
           </div>
+
+          {/* Scroll indicator */}
+          <div className="flex justify-center pb-2 pt-6">
+            <ChevronDown size={26} className="animate-bounce text-white/50" />
+          </div>
         </div>
 
         <div className="h-16 bg-linear-to-b from-transparent to-white" />
@@ -336,8 +341,8 @@ export default function Home() {
               </div>
               <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/15 to-transparent" />
               <div className="absolute inset-x-0 bottom-0 p-4">
-                <div className="text-base font-bold text-white">{d.city}</div>
-                <div className="mt-0.5 flex items-center gap-1.5 text-xs text-white/65">
+                <div className="text-lg font-black tracking-tight text-white drop-shadow-md">{d.city}</div>
+                <div className="mt-0.5 flex items-center gap-1.5 text-xs font-semibold text-white/80">
                   <span>{d.emoji}</span>
                   <span>{d.country}</span>
                 </div>
@@ -354,7 +359,7 @@ export default function Home() {
       </section>
 
       {/* ── Features ── */}
-      <section className="mt-20">
+      <section className="mt-20 -mx-4 rounded-3xl bg-linear-to-b from-white to-slate-50/80 px-4 py-12 md:-mx-6 md:px-6">
         <div className="mb-10">
           <SectionHeader eyebrow={t("home.features.badge")} title={t("home.features.title")} center />
         </div>

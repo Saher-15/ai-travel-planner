@@ -70,7 +70,7 @@ export function Button({
       type={type}
       className={cx(
         "inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold",
-        "transition-all duration-200 focus:outline-none focus-visible:ring-4 focus-visible:ring-sky-200",
+        "transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2",
         "disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0 disabled:hover:shadow-md",
         variants[variant] || variants.primary,
         className

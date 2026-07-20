@@ -339,7 +339,9 @@ export default function Layout({ children }) {
       {/* ── Header ── */}
       <header role="banner" className={cx(
         "sticky top-0 z-50 bg-slate-950/95 backdrop-blur-2xl transition-all duration-300",
-        scrolled ? "shadow-[0_4px_40px_-8px_rgba(0,0,0,0.5)]" : "shadow-none"
+        scrolled
+          ? "border-b border-white/8 shadow-[0_4px_40px_-8px_rgba(0,0,0,0.6)] backdrop-blur-3xl"
+          : "shadow-none"
       )}>
         {/* Subtle top accent line */}
         <div className="h-px w-full bg-linear-to-r from-transparent via-sky-500/60 to-transparent" />
@@ -472,7 +474,9 @@ export default function Layout({ children }) {
                   <NavLink key={item.to} to={item.to}
                     className={({ isActive }) => cx(
                       "flex items-center justify-between px-4 py-3 text-sm font-semibold transition",
-                      isActive ? "bg-sky-500/15 text-sky-300" : "text-white/70 hover:bg-white/8 hover:text-white"
+                      isActive
+                        ? "border-l-2 border-sky-400 bg-sky-500/15 pl-3.5 text-sky-300"
+                        : "text-white/70 hover:bg-white/8 hover:text-white"
                     )}>
                     {item.label}
                     {item.badgeCount > 0 && (
@@ -486,12 +490,12 @@ export default function Layout({ children }) {
                   <>
                     <NavLink to="/admin/dashboard"
                       className={({ isActive }) => cx("px-4 py-3 text-sm font-semibold transition",
-                        isActive ? "bg-sky-500/15 text-sky-300" : "text-white/70 hover:bg-white/8 hover:text-white")}>
+                        isActive ? "border-l-2 border-sky-400 bg-sky-500/15 pl-3.5 text-sky-300" : "text-white/70 hover:bg-white/8 hover:text-white")}>
                       Dashboard
                     </NavLink>
                     <NavLink to="/admin/contacts"
                       className={({ isActive }) => cx("px-4 py-3 text-sm font-semibold transition",
-                        isActive ? "bg-sky-500/15 text-sky-300" : "text-white/70 hover:bg-white/8 hover:text-white")}>
+                        isActive ? "border-l-2 border-sky-400 bg-sky-500/15 pl-3.5 text-sky-300" : "text-white/70 hover:bg-white/8 hover:text-white")}>
                       {t("nav.adminContacts")}
                     </NavLink>
                   </>

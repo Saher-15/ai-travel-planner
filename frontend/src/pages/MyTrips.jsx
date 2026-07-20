@@ -7,9 +7,9 @@ import { useTranslation } from "react-i18next";
 import { fmtRange } from "../utils/helpers.js";
 
 const STATUS_BADGE = {
-  planning:  "border-amber-200 bg-amber-50 text-amber-700",
-  upcoming:  "border-sky-200 bg-sky-50 text-sky-700",
-  completed: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  planning:  "border-amber-200 bg-amber-100 text-amber-700",
+  upcoming:  "border-blue-200 bg-blue-100 text-blue-700",
+  completed: "border-green-200 bg-green-100 text-green-700",
 };
 const STATUS_LABEL = { planning: "📋 Planning", upcoming: "✈️ Upcoming", completed: "✅ Completed" };
 const PAGE_SIZE = 12;
@@ -394,7 +394,7 @@ const TripCard = memo(function TripCard({ trip, onView, onDelete, onDuplicate, o
   const activeCity  = cityNames[photoIdx] || null;
 
   return (
-    <div className="group overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_50px_-18px_rgba(15,23,42,0.22)]">
+    <div className="group overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-sky-200 hover:shadow-[0_22px_50px_-18px_rgba(15,23,42,0.22)]">
 
       {/* Cover */}
       <div className={`relative min-h-44 overflow-hidden bg-linear-to-br ${gradient}`}>
@@ -502,25 +502,25 @@ const TripCard = memo(function TripCard({ trip, onView, onDelete, onDuplicate, o
 function EmptyTrips({ onCreate, onClear, hasSearch }) {
   const { t } = useTranslation();
   return (
-    <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center shadow-sm">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-sky-500 to-blue-600 text-2xl shadow-lg shadow-sky-200">
+    <div className="rounded-3xl border border-dashed border-slate-200 bg-linear-to-b from-white to-slate-50/60 px-8 py-16 text-center shadow-sm">
+      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-linear-to-br from-sky-400 to-blue-600 text-4xl shadow-xl shadow-sky-200/60 ring-4 ring-sky-100">
         ✈️
       </div>
-      <h3 className="mt-5 text-xl font-black tracking-tight text-slate-900">
+      <h3 className="mt-6 text-2xl font-black tracking-tight text-slate-900">
         {hasSearch ? t("myTrips.empty.noTripsFound") : t("myTrips.empty.noTrips")}
       </h3>
-      <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
+      <p className="mx-auto mt-3 max-w-sm text-sm leading-7 text-slate-400">
         {hasSearch ? t("myTrips.empty.noTripsFoundText") : t("myTrips.empty.noTripsText")}
       </p>
-      <div className="mt-6 flex flex-wrap justify-center gap-3">
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
         {hasSearch && (
           <button onClick={onClear} type="button"
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
+            className="rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800">
             {t("myTrips.empty.clearSearch")}
           </button>
         )}
         <button onClick={onCreate} type="button"
-          className="inline-flex items-center gap-2 rounded-2xl bg-linear-to-r from-sky-500 to-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-sky-200/50 transition hover:-translate-y-0.5 hover:shadow-lg">
+          className="inline-flex items-center gap-2 rounded-2xl bg-linear-to-r from-sky-500 to-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-sky-200/60 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-sky-200/50">
           <Plus size={15} /> {t("myTrips.empty.createTrip")}
         </button>
       </div>

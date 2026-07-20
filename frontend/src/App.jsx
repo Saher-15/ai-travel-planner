@@ -66,6 +66,7 @@ function AppRoutes() {
     <Layout>
       <ScrollToTop />
       <Suspense fallback={<PageLoader />}>
+        <div key={location.pathname} className="page-fade-in">
         <Routes>
           <Route path="/"                      element={<Home />} />
           <Route path="/login"                 element={<Login />} />
@@ -98,6 +99,7 @@ function AppRoutes() {
           <Route path="/shared/:token"       element={<SharedTrip />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </div>
       </Suspense>
     </Layout>
   );
