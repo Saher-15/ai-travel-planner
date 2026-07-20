@@ -304,11 +304,11 @@ export default function Layout({ children }) {
     return () => clearInterval(timer);
   }, [loadUnreadCount, isLoggedIn]);
 
-  const onLogout = async () => {
+  const onLogout = useCallback(async () => {
     await logout();
     setUnreadReplyCount(0);
     navigate("/login");
-  };
+  }, [logout, navigate]);
 
   const bookingItems = useMemo(() => [
     { to: "/hotels",      icon: "🏨", label: t("nav.hotels") },

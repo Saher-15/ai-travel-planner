@@ -91,3 +91,28 @@ api.interceptors.response.use(
     return Promise.reject(err);
   }
 );
+
+// ── In-flight GET request deduplication ──────────────────────────────────────
+// If two GET requests for the same URL+params fire while the first is still
+// pending, the second caller receives the same Promise instead of a new request.
+// The entry is removed when the promise settles (success or error), so only
+// truly concurrent requests are deduplicated.
+{
+  const _inflightGets = new Map();
+  const _originalGet  = api.get.bind(api);
+
+  api.get = function dedupedGet(url, config) {
+    const paramsStr = config?.params
+      ? new URLSearchParams(config.params).toString()
+      : "";
+    const key = paramsStr ? `${url}?${paramsStr}` : url;
+
+    if (_inflightGets.has(key)) return _inflightGets.get(key);
+
+    const promise = _originalGet(url, config).finally(() => {
+      _inflightGets.delete(key);
+    });
+    _inflightGets.set(key, promise);
+    return promise;
+  };
+}
