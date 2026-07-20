@@ -56,26 +56,33 @@ export function requireFeature(feature) {
       if (feature === "aiGen") {
         if (limits.aiPerMonth !== Infinity) {
           const sameMonth = isSameMonth(user.aiGenerationsResetAt);
-          const used      = sameMonth ? (user.aiGenerationsThisMonth || 0) : 0;
+          const now       = new Date();
 
-          if (used >= limits.aiPerMonth) {
-            return res.status(403).json({
-              message: `You've used all ${limits.aiPerMonth} AI generations for this month. Upgrade to generate more trips.`,
-              upgradeRequired: true,
-              feature: "aiGen",
-              used,
-              limit: limits.aiPerMonth,
+          if (sameMonth) {
+            // Atomic increment: the filter condition enforces the quota so concurrent
+            // requests cannot both slip through a check-then-act gap.
+            const updated = await User.findOneAndUpdate(
+              { _id: user._id, aiGenerationsThisMonth: { $lt: limits.aiPerMonth } },
+              { $inc: { aiGenerationsThisMonth: 1 } },
+              { new: false }
+            );
+            if (!updated) {
+              // null → the quota condition failed; user is at or over the limit
+              return res.status(403).json({
+                message: `You've used all ${limits.aiPerMonth} AI generations for this month. Upgrade to generate more trips.`,
+                upgradeRequired: true,
+                feature: "aiGen",
+                used: user.aiGenerationsThisMonth || 0,
+                limit: limits.aiPerMonth,
+              });
+            }
+          } else {
+            // New calendar month — reset counter to 1 unconditionally
+            await User.findByIdAndUpdate(user._id, {
+              aiGenerationsThisMonth: 1,
+              aiGenerationsResetAt: now,
             });
           }
-
-          // Increment usage — fire-and-forget (don't block the response)
-          const now = new Date();
-          const update = sameMonth
-            ? { $inc: { aiGenerationsThisMonth: 1 } }
-            : { aiGenerationsThisMonth: 1, aiGenerationsResetAt: now };
-          User.findByIdAndUpdate(user._id, update).catch((e) =>
-            console.error("AI gen counter update failed:", e)
-          );
         }
       }
 

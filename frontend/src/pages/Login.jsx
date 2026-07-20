@@ -42,9 +42,14 @@ export default function Login() {
       setUser(data.user);
       nav(data?.user?.verified === false ? "/profile" : "/");
     } catch (e2) {
-      setErr(e2?.response?.status === 429
-        ? t("login.errors.tooManyAttempts")
-        : e2?.response?.data?.message || t("login.errors.loginFailed"));
+      if (!e2?.response) {
+        // Network error — server unreachable or request timed out
+        setErr("Cannot reach the server. Please check your connection or try again later.");
+      } else if (e2.response.status === 429) {
+        setErr(t("login.errors.tooManyAttempts"));
+      } else {
+        setErr(e2.response.data?.message || t("login.errors.loginFailed"));
+      }
     } finally {
       setLoading(false);
     }

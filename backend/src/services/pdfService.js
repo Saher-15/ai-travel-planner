@@ -26,6 +26,53 @@ const C = {
 
 const BLOCKS = ["morning", "afternoon", "evening"];
 
+const LABELS = {
+  en: {
+    travelerPreferences: "Traveler Preferences",
+    interests: "Interests",
+    notes: "Notes",
+    dailyItinerary: "Daily Itinerary",
+    dailySubtitle: "Your day-by-day personalized route",
+    events: "Events During Your Trip",
+    eventsSubtitle: "Live happenings and recommended stops",
+    recommendedPlaces: "Recommended Places",
+    recommendedSubtitle: "Top suggestions worth visiting",
+    travelTips: "Travel Tips",
+    foodSuggestion: "FOOD SUGGESTION",
+    backupPlan: "BACKUP PLAN",
+    day: "Day",
+    route: "Route",
+    multiCity: "Multi City",
+    singleCity: "Single City",
+    page: "Page",
+    morning: "MORNING",
+    afternoon: "AFTERNOON",
+    evening: "EVENING",
+  },
+  he: {
+    travelerPreferences: "העדפות נוסע",
+    interests: "תחומי עניין",
+    notes: "הערות",
+    dailyItinerary: "מסלול יומי",
+    dailySubtitle: "המסלול האישי שלך יום אחר יום",
+    events: "אירועים במסע שלך",
+    eventsSubtitle: "אירועים חיים ועצירות מומלצות",
+    recommendedPlaces: "מקומות מומלצים",
+    recommendedSubtitle: "המלצות מובחרות לביקור",
+    travelTips: "טיפים לנסיעה",
+    foodSuggestion: "המלצת מזון",
+    backupPlan: "תוכנית גיבוי",
+    day: "יום",
+    route: "מסלול",
+    multiCity: "ריבוי ערים",
+    singleCity: "עיר בודדת",
+    page: "עמוד",
+    morning: "בוקר",
+    afternoon: "צהריים",
+    evening: "ערב",
+  },
+};
+
 // ─── RTL / Hebrew helpers ──────────────────────────────────────────────────────
 
 /** Returns true if the string contains Hebrew characters */
@@ -105,7 +152,7 @@ function pill(doc, x, y, text, fill = "#eff6ff", color = C.blue) {
   return w;
 }
 
-function footer(doc, pageNum) {
+function footer(doc, pageNum, L = LABELS.en) {
   const { left, right, bottom } = doc.page.margins;
   const pw = doc.page.width, ph = doc.page.height;
   const ly = ph - 30, ty = ph - 24;
@@ -116,20 +163,20 @@ function footer(doc, pageNum) {
   doc.page.margins.bottom = 0;
   doc.font(FONT_REG).fontSize(9).fillColor(C.soft);
   doc.text("AI Travel Planner", left, ty, { width: 200, lineBreak: false });
-  doc.text(`Page ${pageNum}`, pw - right - 100, ty, { width: 100, align: "right", lineBreak: false });
+  doc.text(`${L.page} ${pageNum}`, pw - right - 100, ty, { width: 100, align: "right", lineBreak: false });
   doc.page.margins.bottom = bottom;
   doc.restore();
   doc.x = px; doc.y = py;
 }
 
-function dayHeader(doc, day) {
+function dayHeader(doc, day, L = LABELS.en) {
   ensureSpace(doc, 80);
   const x = pageLeft(doc), y = doc.y, w = pageWidth(doc), h = 48;
   doc.save();
   doc.roundedRect(x, y, w, h, 14).fill(C.navy);
   doc.restore();
 
-  const titleText = `Day ${day.day}${day.title ? ` · ${day.title}` : ""}`;
+  const titleText = `${L.day} ${day.day}${day.title ? ` · ${day.title}` : ""}`;
   const titleRtl  = isHebrew(titleText);
   doc.font(FONT_BOLD).fontSize(14).fillColor(C.white);
   writeText(doc, titleText, x + 16, y + 12, { width: w - 32, lineBreak: false, align: titleRtl ? "right" : "left" });
@@ -141,7 +188,7 @@ function dayHeader(doc, day) {
   doc.y = y + h + 12;
 }
 
-function block(doc, label, items = []) {
+function block(doc, label, items = [], L = LABELS.en) {
   if (!items.length) return;
 
   const theme = {
@@ -149,6 +196,7 @@ function block(doc, label, items = []) {
     afternoon: { fill: "#fef3c7", text: "#b45309" },
     evening:   { fill: "#f3e8ff", text: "#7c3aed" },
   }[label] || { fill: "#f1f5f9", text: "#334155" };
+  const displayLabel = L[label] || label.toUpperCase();
 
   const x = pageLeft(doc), w = pageWidth(doc);
 
@@ -174,7 +222,7 @@ function block(doc, label, items = []) {
   doc.save();
   doc.roundedRect(x + 14, y + 14, 92, 22, 11).fill(theme.fill);
   doc.restore();
-  doc.font(FONT_BOLD).fontSize(10).fillColor(theme.text).text(label.toUpperCase(), x + 25, y + 20, { lineBreak: false });
+  doc.font(FONT_BOLD).fontSize(10).fillColor(theme.text).text(displayLabel, x + 25, y + 20, { lineBreak: false });
 
   let cy = y + 48;
   for (const [i, a] of items.entries()) {
@@ -196,7 +244,7 @@ function block(doc, label, items = []) {
   doc.y = y + estimatedH + 12;
 }
 
-function bullets(doc, title, items = []) {
+function bullets(doc, title, items = [], L = LABELS.en) {
   if (!items.length) return;
   sectionTitle(doc, title);
   const x = pageLeft(doc), w = pageWidth(doc);
@@ -216,9 +264,9 @@ function bullets(doc, title, items = []) {
   doc.moveDown(0.3);
 }
 
-function events(doc, evts = []) {
+function events(doc, evts = [], L = LABELS.en) {
   if (!evts.length) return;
-  sectionTitle(doc, "Events During Your Trip", "Live happenings and recommended stops");
+  sectionTitle(doc, L.events, L.eventsSubtitle);
   const x = pageLeft(doc), w = pageWidth(doc);
   evts.forEach((ev) => {
     const title = ev.name || "Event";
@@ -248,9 +296,9 @@ function events(doc, evts = []) {
   });
 }
 
-function recommendedPlaces(doc, places = []) {
+function recommendedPlaces(doc, places = [], L = LABELS.en) {
   if (!places.length) return;
-  sectionTitle(doc, "Recommended Places", "Top suggestions worth visiting");
+  sectionTitle(doc, L.recommendedPlaces, L.recommendedSubtitle);
   const x = pageLeft(doc), w = pageWidth(doc);
   places.forEach((p) => {
     const title  = p.name || "Place";
@@ -279,7 +327,8 @@ function recommendedPlaces(doc, places = []) {
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
-export function generateTripPDF(trip, res) {
+export function generateTripPDF(trip, res, lang = "en") {
+  const L = LABELS[lang] || LABELS.en;
   const fileBase = String(trip.destination || "trip").replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "-").slice(0, 80) || "trip";
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", `attachment; filename="trip-${fileBase}.pdf"`);
@@ -318,7 +367,7 @@ export function generateTripPDF(trip, res) {
   }
   if (trip.tripMode === "multi" && Array.isArray(trip.destinations) && trip.destinations.length) {
     doc.font(FONT_REG).fontSize(10).fillColor("#93c5fd");
-    writeText(doc, `Route: ${trip.destinations.join(" → ")}`, cx + 22, cy + 74, { width: cw - 44 });
+    writeText(doc, `${L.route}: ${trip.destinations.join(" → ")}`, cx + 22, cy + 74, { width: cw - 44 });
   }
   doc.y = cy + 128;
 
@@ -330,7 +379,7 @@ export function generateTripPDF(trip, res) {
     prefs.travelers  ? `${prefs.travelers} Traveler${prefs.travelers > 1 ? "s" : ""}` : "",
     summary.style || prefs.pace   || "",
     summary.budget || prefs.budget || "",
-    trip.tripMode === "multi" ? "Multi City" : "Single City",
+    trip.tripMode === "multi" ? L.multiCity : L.singleCity,
   ].filter(Boolean);
 
   const palette = [["#eff6ff", C.blue], ["#ecfeff", C.cyan], ["#f5f3ff", C.purple], ["#fff7ed", C.orange], ["#fdf2f8", C.pink]];
@@ -345,16 +394,16 @@ export function generateTripPDF(trip, res) {
 
   // ── Preferences ──
   if (prefs.interests?.length || prefs.notes) {
-    sectionTitle(doc, "Traveler Preferences");
+    sectionTitle(doc, L.travelerPreferences);
     if (prefs.interests?.length) {
-      doc.font(FONT_BOLD).fontSize(10).fillColor(C.navy).text("Interests");
+      doc.font(FONT_BOLD).fontSize(10).fillColor(C.navy).text(L.interests);
       doc.moveDown(0.25);
       doc.font(FONT_REG).fontSize(10.5).fillColor(C.text);
       writeText(doc, prefs.interests.join(" • "), pageLeft(doc), doc.y, { width: cw });
       doc.moveDown(0.7);
     }
     if (prefs.notes) {
-      doc.font(FONT_BOLD).fontSize(10).fillColor(C.navy).text("Notes");
+      doc.font(FONT_BOLD).fontSize(10).fillColor(C.navy).text(L.notes);
       doc.moveDown(0.25);
       doc.font(FONT_REG).fontSize(10.5).fillColor(C.text);
       writeText(doc, prefs.notes, pageLeft(doc), doc.y, { width: cw });
@@ -365,10 +414,10 @@ export function generateTripPDF(trip, res) {
   // ── Daily itinerary ──
   const days = trip?.itinerary?.days || [];
   if (days.length) {
-    sectionTitle(doc, "Daily Itinerary", "Your day-by-day personalized route");
+    sectionTitle(doc, L.dailyItinerary, L.dailySubtitle);
     for (const day of days) {
-      dayHeader(doc, day);
-      for (const b of BLOCKS) { if (day[b]?.length) block(doc, b, day[b]); }
+      dayHeader(doc, day, L);
+      for (const b of BLOCKS) { if (day[b]?.length) block(doc, b, day[b], L); }
 
       if (day.foodSuggestion) {
         doc.font(FONT_REG).fontSize(10.5);
@@ -378,7 +427,7 @@ export function generateTripPDF(trip, res) {
         const ch  = Math.max(52, 30 + th + 10);
         ensureSpace(doc, ch + 12); const y = doc.y;
         card(doc, { x: cx, y, w: cw, h: ch, fill: "#fff7ed", stroke: "#fed7aa" });
-        doc.font(FONT_BOLD).fontSize(10).fillColor(C.orange).text("FOOD SUGGESTION", cx + 14, y + 10, { lineBreak: false });
+        doc.font(FONT_BOLD).fontSize(10).fillColor(C.orange).text(L.foodSuggestion, cx + 14, y + 10, { lineBreak: false });
         doc.font(FONT_REG).fontSize(10.5).fillColor(C.text);
         writeText(doc, fs, cx + 14, y + 24, { width: cw - 28 });
         doc.y = y + ch + 12;
@@ -392,7 +441,7 @@ export function generateTripPDF(trip, res) {
         const ch  = Math.max(52, 30 + th + 10);
         ensureSpace(doc, ch + 12); const y = doc.y;
         card(doc, { x: cx, y, w: cw, h: ch, fill: "#f0fdf4", stroke: "#bbf7d0" });
-        doc.font(FONT_BOLD).fontSize(10).fillColor(C.green).text("BACKUP PLAN", cx + 14, y + 10, { lineBreak: false });
+        doc.font(FONT_BOLD).fontSize(10).fillColor(C.green).text(L.backupPlan, cx + 14, y + 10, { lineBreak: false });
         doc.font(FONT_REG).fontSize(10.5).fillColor(C.text);
         writeText(doc, bp, cx + 14, y + 24, { width: cw - 28 });
         doc.y = y + ch + 12;
@@ -402,15 +451,15 @@ export function generateTripPDF(trip, res) {
     }
   }
 
-  recommendedPlaces(doc, trip?.itinerary?.recommendedPlaces || []);
-  bullets(doc, "Travel Tips", trip?.itinerary?.tips || []);
-  events(doc, trip?.events || []);
+  recommendedPlaces(doc, trip?.itinerary?.recommendedPlaces || [], L);
+  bullets(doc, L.travelTips, trip?.itinerary?.tips || [], L);
+  events(doc, trip?.events || [], L);
 
   // ── Page footers ──
   const range = doc.bufferedPageRange();
   for (let i = range.start; i < range.start + range.count; i++) {
     doc.switchToPage(i);
-    footer(doc, i + 1);
+    footer(doc, i + 1, L);
   }
 
   doc.flushPages();

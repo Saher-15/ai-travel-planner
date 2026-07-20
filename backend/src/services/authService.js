@@ -120,7 +120,7 @@ export async function resendVerification(userId) {
 export async function loginUser(email, password) {
   const normalizedEmail = email.trim().toLowerCase();
 
-  const user = await User.findOne({ email: normalizedEmail });
+  const user = await User.findOne({ email: normalizedEmail }).select("+passwordHash");
   if (!user) {
     const err = new Error("Invalid credentials");
     err.statusCode = 400;

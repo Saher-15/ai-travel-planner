@@ -360,7 +360,7 @@ function PanelIcon({ id, className = "h-5 w-5" }) {
 }
 
 export default function ViewTrip() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const isFree = !user || (user.plan === "free" && user.role !== "admin");
 
@@ -538,7 +538,10 @@ export default function ViewTrip() {
     setUpgradeErr(null);
 
     try {
-      const res = await api.get(`/trips/${id}/pdf`, { responseType: "blob" });
+      const res = await api.get(`/trips/${id}/pdf`, {
+        responseType: "blob",
+        params: { lang: i18n.language || "en" },
+      });
 
       const contentType = res?.headers?.["content-type"] || "";
       if (!contentType.includes("pdf")) {

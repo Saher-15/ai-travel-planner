@@ -177,7 +177,7 @@ router.post("/login", async (req, res) => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    const user = await User.findOne({ email: normalizedEmail });
+    const user = await User.findOne({ email: normalizedEmail }).select("+passwordHash");
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }

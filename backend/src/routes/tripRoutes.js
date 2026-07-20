@@ -30,6 +30,17 @@ import { generateTripPDF } from "../services/pdfService.js";
 
 const router = express.Router();
 
+// ─── ObjectId guard ───────────────────────────────────────────────────────────
+// Validates the :id param on every route before the handler runs.
+// Prevents Mongoose CastErrors (which would surface as 500) from reaching handlers.
+const OBJECT_ID_RE = /^[a-f\d]{24}$/i;
+router.param("id", (req, res, next, id) => {
+  if (!OBJECT_ID_RE.test(id)) {
+    return res.status(400).json({ message: "Invalid trip ID" });
+  }
+  next();
+});
+
 // ─── Generate (no save) ───────────────────────────────────────────────────────
 
 router.post("/generate", authMiddleware, aiLimiter, requireFeature("aiGen"), async (req, res) => {
@@ -215,6 +226,7 @@ router.put("/:id/packing", authMiddleware, async (req, res) => {
 router.patch("/:id/personal-notes", authMiddleware, async (req, res) => {
   const { notes } = req.body;
   if (typeof notes !== "string") return res.status(400).json({ message: "notes must be a string" });
+  if (notes.length > 10_000) return res.status(400).json({ message: "notes cannot exceed 10,000 characters" });
   try {
     const trip = await Trip.findOneAndUpdate(
       { _id: req.params.id, userId: req.user.id },
@@ -300,7 +312,8 @@ router.get("/:id/pdf", authMiddleware, requireFeature("pdf"), async (req, res) =
   try {
     const trip = await getTrip(req.params.id, req.user.id);
     if (!trip) return res.status(404).json({ message: "Trip not found" });
-    generateTripPDF(trip, res);
+    const lang = ["en", "he"].includes(req.query.lang) ? req.query.lang : "en";
+    generateTripPDF(trip, res, lang);
   } catch (err) {
     console.error("PDF error:", err);
     if (!res.headersSent) return res.status(500).json({ message: "Failed to generate PDF" });
@@ -315,15 +328,21 @@ router.post("/:id/chat", authMiddleware, aiLimiter, async (req, res) => {
   if (!message || typeof message !== "string" || !message.trim()) {
     return res.status(400).json({ message: "message is required" });
   }
+  if (message.length > 2_000) {
+    return res.status(400).json({ message: "message cannot exceed 2,000 characters" });
+  }
 
   try {
     const trip = await getTrip(req.params.id, req.user.id);
     if (!trip) return res.status(404).json({ message: "Trip not found" });
 
+    // Limit history depth to prevent ballooning prompt costs
+    const safeHistory = Array.isArray(history) ? history.slice(-20) : [];
+
     const reply = await chatWithTripAssistant({
       trip,
       message: message.trim(),
-      history: Array.isArray(history) ? history : [],
+      history: safeHistory,
     });
 
     return res.json({ reply });

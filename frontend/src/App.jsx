@@ -8,6 +8,7 @@ function ScrollToTop() {
 }
 import Layout from "./components/Layout.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
+import AdminRoute from "./auth/AdminRoute.jsx";
 
 const Home            = lazy(() => import("./pages/Home.jsx"));
 const Login           = lazy(() => import("./pages/Login.jsx"));
@@ -39,6 +40,7 @@ const UpgradeSuccess  = lazy(() => import("./pages/UpgradeSuccess.jsx"));
 const NotFound        = lazy(() => import("./pages/NotFound.jsx"));
 
 const P = ({ children }) => <ProtectedRoute>{children}</ProtectedRoute>;
+const A = ({ children }) => <AdminRoute>{children}</AdminRoute>;
 
 function PageLoader() {
   return (
@@ -90,8 +92,8 @@ function AppRoutes() {
           <Route path="/trips"                element={<P><MyTrips /></P>} />
           <Route path="/trip/:id"             element={<P><ViewTrip /></P>} />
           <Route path="/trip/:id/edit"        element={<P><EditTrip /></P>} />
-          <Route path="/admin/contacts"        element={<P><AdminContacts /></P>} />
-          <Route path="/admin/dashboard"       element={<P><AdminDashboard /></P>} />
+          <Route path="/admin/contacts"        element={<A><AdminContacts /></A>} />
+          <Route path="/admin/dashboard"       element={<A><AdminDashboard /></A>} />
 
           <Route path="/shared/:token"       element={<SharedTrip />} />
           <Route path="*" element={<NotFound />} />

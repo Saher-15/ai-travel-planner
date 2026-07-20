@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema(
     firstName:   { type: String, default: "" },
     lastName:    { type: String, default: "" },
     email:       { type: String, required: true, unique: true },
-    passwordHash:{ type: String, required: true },
+    passwordHash:{ type: String, required: true, select: false },
 
     nationality:       { type: String, default: "" },
     phone:             { type: String, default: "" },
@@ -44,5 +44,9 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Sparse indexes for token lookups — only index non-null values
+userSchema.index({ verificationToken: 1 }, { sparse: true });
+userSchema.index({ resetToken: 1 },        { sparse: true });
 
 export const User = mongoose.model("User", userSchema);

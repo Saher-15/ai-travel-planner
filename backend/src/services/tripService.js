@@ -1,8 +1,11 @@
 import crypto from "crypto";
+import { LRUCache } from "lru-cache";
 import { Trip } from "../models/Trip.js";
 import { generateItinerary, generatePackingList } from "./openaiService.js";
 import { fetchDestinationEvents } from "./eventsService.js";
 import { getPhotosForPlaces } from "./photoService.js";
+
+const sharedTripCache = new LRUCache({ max: 200, ttl: 5 * 60_000 }); // 5-min TTL
 
 /** Extract the primary city name from a trip for cover-photo lookup. */
 function tripPhotoQuery(trip) {
@@ -288,9 +291,15 @@ export async function getTrip(id, userId) {
 }
 
 export async function getSharedTrip(shareToken) {
-  return Trip.findOne({ shareToken })
+  const cached = sharedTripCache.get(shareToken);
+  if (cached) return cached;
+
+  const trip = await Trip.findOne({ shareToken })
     .select("destination destinations tripMode startDate endDate preferences itinerary events placeMeta multiCityMeta status")
     .lean();
+
+  if (trip) sharedTripCache.set(shareToken, trip);
+  return trip;
 }
 
 export async function updateTrip(id, userId, body) {

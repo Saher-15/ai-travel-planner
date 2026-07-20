@@ -1,6 +1,13 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+// Fail fast: refuse to start without required secrets
+const REQUIRED_ENV = ["JWT_ACCESS_SECRET", "JWT_REFRESH_SECRET", "MONGO_URI"];
+const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
+if (missing.length) {
+  throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
+}
+
 export const {
   PORT,
   MONGO_URI,

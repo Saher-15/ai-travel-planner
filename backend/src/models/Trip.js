@@ -146,5 +146,6 @@ const TripSchema = new mongoose.Schema(
 // Compound index: user's trips sorted by newest first
 TripSchema.index({ userId: 1, createdAt: -1 });
 TripSchema.index({ shareToken: 1 }, { sparse: true });
+TripSchema.index({ destination: 1 });
 
 export const Trip = mongoose.model("Trip", TripSchema);
